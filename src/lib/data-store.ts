@@ -26,14 +26,33 @@ import type {
 
 const DATA_DIR = path.join(process.cwd(), "src", "data");
 
+// Serverless platforms (Vercel, AWS Lambda, ...) ship the app on a read-only
+// filesystem - only /tmp is writable, and it is wiped between cold starts
+// and never shared across instances. In that environment we copy the seed
+// JSON into /tmp on first read and read/write there from then on, so the
+// app stays usable for a demo instead of throwing on every save. Locally
+// (and on a normal long-running Node server) we keep reading/writing
+// src/data directly so admin edits persist to the repo like before.
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const WRITABLE_DIR = IS_SERVERLESS ? path.join("/tmp", "quot-data") : DATA_DIR;
+
+function ensureSeeded(file: string): string {
+  const target = path.join(WRITABLE_DIR, file);
+  if (IS_SERVERLESS && !fs.existsSync(target)) {
+    fs.mkdirSync(WRITABLE_DIR, { recursive: true });
+    fs.copyFileSync(path.join(DATA_DIR, file), target);
+  }
+  return target;
+}
+
 function readJson<T>(file: string): T {
-  const filePath = path.join(DATA_DIR, file);
+  const filePath = ensureSeeded(file);
   const raw = fs.readFileSync(filePath, "utf-8");
   return JSON.parse(raw) as T;
 }
 
 function writeJson<T>(file: string, data: T): void {
-  const filePath = path.join(DATA_DIR, file);
+  const filePath = ensureSeeded(file);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n", "utf-8");
 }
 
