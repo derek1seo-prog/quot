@@ -1,0 +1,56 @@
+[
+  { "id": "cr-north-THC-20ft", "regionId": "north-china", "chargeTypeId": "THC", "containerTypeId": "20ft", "currency": "KRW", "rate": 150000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-THC-40hq", "regionId": "north-china", "chargeTypeId": "THC", "containerTypeId": "40hq", "currency": "KRW", "rate": 210000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-north-WHARFAGE-20ft", "regionId": "north-china", "chargeTypeId": "WHARFAGE", "containerTypeId": "20ft", "currency": "KRW", "rate": 4200, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-WHARFAGE-40hq", "regionId": "north-china", "chargeTypeId": "WHARFAGE", "containerTypeId": "40hq", "currency": "KRW", "rate": 8400, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-north-CONTAINER_CLEANING-20ft", "regionId": "north-china", "chargeTypeId": "CONTAINER_CLEANING", "containerTypeId": "20ft", "currency": "KRW", "rate": 35000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-CONTAINER_CLEANING-40hq", "regionId": "north-china", "chargeTypeId": "CONTAINER_CLEANING", "containerTypeId": "40hq", "currency": "KRW", "rate": 50000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-north-PORT_SECURITY-20ft", "regionId": "north-china", "chargeTypeId": "PORT_SECURITY", "containerTypeId": "20ft", "currency": "KRW", "rate": 337, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-PORT_SECURITY-40hq", "regionId": "north-china", "chargeTypeId": "PORT_SECURITY", "containerTypeId": "40hq", "currency": "KRW", "rate": 674, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-north-DOC_FEE-20ft", "regionId": "north-china", "chargeTypeId": "DOC_FEE", "containerTypeId": "20ft", "currency": "KRW", "rate": 40000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-DOC_FEE-40ft", "regionId": "north-china", "chargeTypeId": "DOC_FEE", "containerTypeId": "40ft", "currency": "KRW", "rate": 40000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-DOC_FEE-40hq", "regionId": "north-china", "chargeTypeId": "DOC_FEE", "containerTypeId": "40hq", "currency": "KRW", "rate": 40000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-north-BAF-20ft", "regionId": "north-china", "chargeTypeId": "BAF", "containerTypeId": "20ft", "currency": "USD", "rate": 190, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-BAF-40hq", "regionId": "north-china", "chargeTypeId": "BAF", "containerTypeId": "40hq", "currency": "USD", "rate": 380, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-north-CAF-20ft", "regionId": "north-china", "chargeTypeId": "CAF", "containerTypeId": "20ft", "currency": "USD", "rate": 30, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-CAF-40hq", "regionId": "north-china", "chargeTypeId": "CAF", "containerTypeId": "40hq", "currency": "USD", "rate": 60, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-north-CRS-20ft", "regionId": "north-china", "chargeTypeId": "CRS", "containerTypeId": "20ft", "currency": "USD", "rate": 40, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-CRS-40hq", "regionId": "north-china", "chargeTypeId": "CRS", "containerTypeId": "40hq", "currency": "USD", "rate": 80, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-north-HANDLING_CHG-20ft", "regionId": "north-china", "chargeTypeId": "HANDLING_CHG", "containerTypeId": "20ft", "currency": "USD", "rate": 50, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-HANDLING_CHG-40ft", "regionId": "north-china", "chargeTypeId": "HANDLING_CHG", "containerTypeId": "40ft", "currency": "USD", "rate": 50, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-north-HANDLING_CHG-40hq", "regionId": "north-china", "chargeTypeId": "HANDLING_CHG", "containerTypeId": "40hq", "currency": "USD", "rate": 50, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-south-THC-20ft", "regionId": "south-china", "chargeTypeId": "THC", "containerTypeId": "20ft", "currency": "KRW", "rate": 150000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-THC-40hq", "regionId": "south-china", "chargeTypeId": "THC", "containerTypeId": "40hq", "currency": "KRW", "rate": 210000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-south-WHARFAGE-20ft", "regionId": "south-china", "chargeTypeId": "WHARFAGE", "containerTypeId": "20ft", "currency": "KRW", "rate": 4200, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-WHARFAGE-40hq", "regionId": "south-china", "chargeTypeId": "WHARFAGE", "containerTypeId": "40hq", "currency": "KRW", "rate": 8400, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-south-CONTAINER_CLEANING-20ft", "regionId": "south-china", "chargeTypeId": "CONTAINER_CLEANING", "containerTypeId": "20ft", "currency": "KRW", "rate": 35000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-CONTAINER_CLEANING-40hq", "regionId": "south-china", "chargeTypeId": "CONTAINER_CLEANING", "containerTypeId": "40hq", "currency": "KRW", "rate": 50000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-south-PORT_SECURITY-20ft", "regionId": "south-china", "chargeTypeId": "PORT_SECURITY", "containerTypeId": "20ft", "currency": "KRW", "rate": 337, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-PORT_SECURITY-40hq", "regionId": "south-china", "chargeTypeId": "PORT_SECURITY", "containerTypeId": "40hq", "currency": "KRW", "rate": 674, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-south-DOC_FEE-20ft", "regionId": "south-china", "chargeTypeId": "DOC_FEE", "containerTypeId": "20ft", "currency": "KRW", "rate": 40000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-DOC_FEE-40ft", "regionId": "south-china", "chargeTypeId": "DOC_FEE", "containerTypeId": "40ft", "currency": "KRW", "rate": 40000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-DOC_FEE-40hq", "regionId": "south-china", "chargeTypeId": "DOC_FEE", "containerTypeId": "40hq", "currency": "KRW", "rate": 40000, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-south-EBS-20ft", "regionId": "south-china", "chargeTypeId": "EBS", "containerTypeId": "20ft", "currency": "USD", "rate": 150, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-EBS-40hq", "regionId": "south-china", "chargeTypeId": "EBS", "containerTypeId": "40hq", "currency": "USD", "rate": 300, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-south-CRS-20ft", "regionId": "south-china", "chargeTypeId": "CRS", "containerTypeId": "20ft", "currency": "USD", "rate": 40, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-CRS-40hq", "regionId": "south-china", "chargeTypeId": "CRS", "containerTypeId": "40hq", "currency": "USD", "rate": 80, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+
+  { "id": "cr-south-HANDLING_CHG-20ft", "regionId": "south-china", "chargeTypeId": "HANDLING_CHG", "containerTypeId": "20ft", "currency": "USD", "rate": 30, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-HANDLING_CHG-40ft", "regionId": "south-china", "chargeTypeId": "HANDLING_CHG", "containerTypeId": "40ft", "currency": "USD", "rate": 30, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "cr-south-HANDLING_CHG-40hq", "regionId": "south-china", "chargeTypeId": "HANDLING_CHG", "containerTypeId": "40hq", "currency": "USD", "rate": 30, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" }
+]

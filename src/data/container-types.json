@@ -1,0 +1,5 @@
+[
+  { "id": "20ft", "label": "20FT", "excelCode": "20GP", "order": 1 },
+  { "id": "40ft", "label": "40FT", "excelCode": "40GP", "order": 2 },
+  { "id": "40hq", "label": "40HQ", "excelCode": "40HQ", "order": 3 }
+]

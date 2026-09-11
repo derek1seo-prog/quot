@@ -1,0 +1,5 @@
+[
+  { "id": "CN", "name": "China", "nameKo": "중국" },
+  { "id": "KR", "name": "Korea", "nameKo": "한국" },
+  { "id": "VN", "name": "Vietnam", "nameKo": "베트남" }
+]

@@ -1,0 +1,42 @@
+import { RegionRatesEditor } from "@/components/rates/RegionRatesEditor";
+import {
+  getChargeRates,
+  getContainerTypes,
+  getOceanFreightRates,
+  getPorts,
+} from "@/lib/data-store";
+import { getApplicableLocalChargeTypes } from "@/lib/quote-engine";
+
+const REGION_ID = "north-china";
+
+export const dynamic = "force-dynamic";
+
+export default function NorthChinaRatesPage() {
+  const ports = getPorts().filter((p) => p.regionId === REGION_ID);
+  const containerTypes = getContainerTypes();
+  const chargeTypes = getApplicableLocalChargeTypes(REGION_ID, "FCL");
+  const oceanFreightRates = getOceanFreightRates().filter((r) =>
+    ports.some((p) => p.id === r.portId),
+  );
+  const chargeRates = getChargeRates().filter((r) => r.regionId === REGION_ID);
+
+  return (
+    <div className="max-w-[1100px] mx-auto px-6 lg:px-10 py-10 lg:py-14">
+      <p className="text-[13px] font-medium text-[var(--accent)] mb-2">요율 관리</p>
+      <h1 className="text-[28px] font-semibold tracking-tight mb-1">북중국 / 동중국</h1>
+      <p className="text-[13px] text-[var(--muted)] mb-8">
+        BAF · CAF · CRS 부대비용이 적용되는 권역입니다. Qingdao, Xingang, Shantou, Shanghai, Ningbo
+      </p>
+
+      <RegionRatesEditor
+        regionId={REGION_ID}
+        regionNameKo="북중국 / 동중국"
+        ports={ports}
+        containerTypes={containerTypes}
+        chargeTypes={chargeTypes}
+        initialOceanFreightRates={oceanFreightRates}
+        initialChargeRates={chargeRates}
+      />
+    </div>
+  );
+}

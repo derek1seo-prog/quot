@@ -1,0 +1,123 @@
+[
+  {
+    "id": "OCEAN_FREIGHT",
+    "name": "Ocean Freight",
+    "nameKo": "해상 운임",
+    "category": "OCEAN_FREIGHT",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "ALL" },
+    "order": 0,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "THC",
+    "name": "Terminal Handling Fee",
+    "nameKo": "터미널화물처리비",
+    "category": "LOCAL",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "ALL" },
+    "order": 10,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "WHARFAGE",
+    "name": "Wharfage",
+    "nameKo": "부두사용료",
+    "category": "LOCAL",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "ALL" },
+    "order": 20,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "CONTAINER_CLEANING",
+    "name": "Container Cleaning Fee",
+    "nameKo": "컨테이너 청소비",
+    "category": "LOCAL",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "ALL" },
+    "order": 30,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "PORT_SECURITY",
+    "name": "Port Security Charge",
+    "nameKo": "항만보안료",
+    "category": "LOCAL",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "ALL" },
+    "order": 40,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "DOC_FEE",
+    "name": "Documentation Fee",
+    "nameKo": "서류발급비",
+    "category": "LOCAL",
+    "unit": "BL",
+    "vatRate": 0.1,
+    "visibility": { "scope": "ALL" },
+    "order": 50,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "BAF",
+    "name": "Bunker Adjustment Factor",
+    "nameKo": "유류할증료",
+    "category": "SURCHARGE",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "REGION_SPECIFIC", "regionIds": ["north-china"] },
+    "order": 60,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "CAF",
+    "name": "Currency Adjustment Factor",
+    "nameKo": "통화할증료",
+    "category": "SURCHARGE",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "REGION_SPECIFIC", "regionIds": ["north-china"] },
+    "order": 70,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "EBS",
+    "name": "Emergency Bunker Surcharge",
+    "nameKo": "긴급유류할증료",
+    "category": "SURCHARGE",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "REGION_SPECIFIC", "regionIds": ["south-china"] },
+    "order": 60,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "CRS",
+    "name": "Container Repositioning Surcharge",
+    "nameKo": "컨테이너 재배치 할증료",
+    "category": "SURCHARGE",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "ALL" },
+    "order": 80,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "HANDLING_CHG",
+    "name": "Handling Charge",
+    "nameKo": "핸들링차지",
+    "category": "LOCAL",
+    "unit": "BL",
+    "vatRate": 0.1,
+    "visibility": { "scope": "ALL" },
+    "order": 90,
+    "transportModes": ["FCL"]
+  }
+]
