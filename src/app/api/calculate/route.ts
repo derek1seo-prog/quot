@@ -5,7 +5,7 @@ import type { QuoteInput } from "@/lib/types";
 export async function POST(req: NextRequest) {
   const input = (await req.json()) as QuoteInput;
   try {
-    const result = calculateQuote(input);
+    const result = await calculateQuote(input);
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Calculation failed";

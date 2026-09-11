@@ -43,7 +43,7 @@ function round(n: number): number {
   return Math.round(n);
 }
 
-export function calculateQuote(input: QuoteInput): QuoteResult {
+export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
   const originPort = getPortById(input.originPortId);
   if (!originPort || !originPort.regionId) {
     throw new Error("Unknown or unsupported origin port for this transport mode.");
@@ -53,15 +53,17 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
     throw new Error("Origin port is not assigned to a rate region.");
   }
 
-  const exchangeRate =
-    input.exchangeRateOverride ?? getCurrentExchangeRate("USD")?.rate ?? 0;
+  const [currentExchangeRate, oceanFreightRates, chargeRates] = await Promise.all([
+    getCurrentExchangeRate("USD"),
+    getOceanFreightRates(),
+    getChargeRates(),
+  ]);
+  const exchangeRate = input.exchangeRateOverride ?? currentExchangeRate?.rate ?? 0;
 
   const containerTypes = getContainerTypes();
   const chargeTypes = getChargeTypes().filter((ct) =>
     ct.transportModes.includes(input.transportMode),
   );
-  const oceanFreightRates = getOceanFreightRates();
-  const chargeRates = getChargeRates();
 
   const applicableChargeTypes = chargeTypes
     .filter((ct) => ct.category !== "OCEAN_FREIGHT")

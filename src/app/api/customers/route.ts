@@ -4,7 +4,7 @@ import { generateId } from "@/lib/id";
 import type { Customer } from "@/lib/types";
 
 export async function GET() {
-  return NextResponse.json(getCustomers());
+  return NextResponse.json(await getCustomers());
 }
 
 export async function POST(req: NextRequest) {
@@ -21,6 +21,6 @@ export async function POST(req: NextRequest) {
     incotermsDefault: body.incotermsDefault,
     createdAt: new Date().toISOString(),
   };
-  addCustomer(customer);
+  await addCustomer(customer);
   return NextResponse.json(customer, { status: 201 });
 }

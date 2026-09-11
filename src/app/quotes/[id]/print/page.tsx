@@ -12,7 +12,7 @@ export default async function QuotePrintPage({
 }) {
   const { id } = await params;
   const { autoprint } = await searchParams;
-  const quote = getQuoteById(id);
+  const quote = await getQuoteById(id);
   if (!quote) notFound();
 
   const company = getCompany();

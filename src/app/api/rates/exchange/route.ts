@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentExchangeRate, upsertExchangeRate } from "@/lib/data-store";
 
 export async function GET() {
-  return NextResponse.json(getCurrentExchangeRate("USD"));
+  return NextResponse.json(await getCurrentExchangeRate("USD"));
 }
 
 export async function PUT(req: NextRequest) {
@@ -15,6 +15,6 @@ export async function PUT(req: NextRequest) {
     asOf: body.asOf ?? new Date().toISOString().slice(0, 10),
     updatedAt: new Date().toISOString().slice(0, 10),
   };
-  upsertExchangeRate(updated);
+  await upsertExchangeRate(updated);
   return NextResponse.json(updated);
 }

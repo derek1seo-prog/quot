@@ -6,8 +6,8 @@ import { FilePlus2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default function QuotesListPage() {
-  const quotes = getQuotes();
+export default async function QuotesListPage() {
+  const quotes = await getQuotes();
 
   return (
     <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-10 lg:py-14">

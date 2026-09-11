@@ -4,7 +4,7 @@ import { getChargeRates, upsertChargeRate } from "@/lib/data-store";
 import type { ChargeRate } from "@/lib/types";
 
 export async function GET() {
-  return NextResponse.json(getChargeRates());
+  return NextResponse.json(await getChargeRates());
 }
 
 export async function PUT(req: NextRequest) {
@@ -14,7 +14,7 @@ export async function PUT(req: NextRequest) {
     containerTypeId: string;
     rate: number;
   };
-  const existing = getChargeRates().find(
+  const existing = (await getChargeRates()).find(
     (r) =>
       r.regionId === body.regionId &&
       r.chargeTypeId === body.chargeTypeId &&
@@ -31,6 +31,6 @@ export async function PUT(req: NextRequest) {
     effectiveTo: body.effectiveTo ?? existing?.effectiveTo ?? null,
     updatedAt: new Date().toISOString().slice(0, 10),
   };
-  upsertChargeRate(updated);
+  await upsertChargeRate(updated);
   return NextResponse.json(updated);
 }

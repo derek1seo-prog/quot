@@ -8,10 +8,9 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
-  const quotes = getQuotes();
+export default async function DashboardPage() {
+  const [quotes, exchangeRate] = await Promise.all([getQuotes(), getCurrentExchangeRate("USD")]);
   const ports = getPorts().filter((p) => p.role !== "DESTINATION");
-  const exchangeRate = getCurrentExchangeRate("USD");
 
   const now = new Date();
   const thisMonth = quotes.filter((q) => {

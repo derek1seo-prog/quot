@@ -11,14 +11,18 @@ const REGION_ID = "south-china";
 
 export const dynamic = "force-dynamic";
 
-export default function SouthChinaRatesPage() {
+export default async function SouthChinaRatesPage() {
   const ports = getPorts().filter((p) => p.regionId === REGION_ID);
   const containerTypes = getContainerTypes();
   const chargeTypes = getApplicableLocalChargeTypes(REGION_ID, "FCL");
-  const oceanFreightRates = getOceanFreightRates().filter((r) =>
+  const [allOceanFreightRates, allChargeRates] = await Promise.all([
+    getOceanFreightRates(),
+    getChargeRates(),
+  ]);
+  const oceanFreightRates = allOceanFreightRates.filter((r) =>
     ports.some((p) => p.id === r.portId),
   );
-  const chargeRates = getChargeRates().filter((r) => r.regionId === REGION_ID);
+  const chargeRates = allChargeRates.filter((r) => r.regionId === REGION_ID);
 
   return (
     <div className="max-w-[1100px] mx-auto px-6 lg:px-10 py-10 lg:py-14">

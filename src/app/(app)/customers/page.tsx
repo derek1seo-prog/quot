@@ -4,8 +4,8 @@ import { getCustomers } from "@/lib/data-store";
 
 export const dynamic = "force-dynamic";
 
-export default function CustomersPage() {
-  const customers = getCustomers();
+export default async function CustomersPage() {
+  const customers = await getCustomers();
 
   return (
     <div className="max-w-[900px] mx-auto px-6 lg:px-10 py-10 lg:py-14">

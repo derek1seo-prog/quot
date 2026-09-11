@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const quote = getQuoteById(id);
+  const quote = await getQuoteById(id);
   if (!quote) {
     return NextResponse.json({ error: "Quote not found" }, { status: 404 });
   }
@@ -18,6 +18,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  deleteQuote(id);
+  await deleteQuote(id);
   return NextResponse.json({ ok: true });
 }

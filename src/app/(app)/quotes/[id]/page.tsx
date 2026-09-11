@@ -9,7 +9,7 @@ export default async function QuoteDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const quote = getQuoteById(id);
+  const quote = await getQuoteById(id);
   if (!quote) notFound();
 
   const company = getCompany();
