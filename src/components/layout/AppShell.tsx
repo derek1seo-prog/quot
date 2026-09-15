@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
@@ -52,9 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 inset-x-0 z-40 h-14 flex items-center justify-between px-4 bg-white/80 backdrop-blur border-b border-[var(--border-subtle)] no-print">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-[8px] bg-[var(--foreground)] flex items-center justify-center">
-            <span className="text-white text-[12px] font-bold">Q</span>
-          </div>
+          <Image src="/logo.png" alt="I.S. Sea & Air" width={79} height={79} className="w-7 h-7 object-contain" />
           <span className="text-[14px] font-semibold">QUOT</span>
         </Link>
         <button

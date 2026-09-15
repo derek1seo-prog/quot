@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { navSections } from "@/lib/nav";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavIcon } from "./nav-icons";
@@ -12,9 +13,7 @@ export function Sidebar() {
   return (
     <aside className="no-print hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-[var(--sidebar-bg)] border-r border-[var(--border-subtle)]">
       <Link href="/" className="px-6 h-16 flex items-center gap-2.5 shrink-0">
-        <div className="w-8 h-8 rounded-[9px] bg-[var(--foreground)] flex items-center justify-center">
-          <span className="text-white text-[13px] font-bold tracking-tight">Q</span>
-        </div>
+        <Image src="/logo.png" alt="I.S. Sea & Air" width={79} height={79} className="w-8 h-8 object-contain" />
         <div className="leading-tight">
           <p className="text-[14px] font-semibold text-[var(--foreground)]">QUOT</p>
           <p className="text-[11px] text-[var(--muted)]">Forwarding Quote System</p>
