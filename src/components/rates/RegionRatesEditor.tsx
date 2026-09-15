@@ -94,7 +94,7 @@ export function RegionRatesEditor({
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[13px]">
+            <table className="w-full min-w-[480px] border-collapse text-[13px]">
               <thead>
                 <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
                   <th className="text-left py-2 pr-3 font-medium">항구</th>
@@ -140,7 +140,7 @@ export function RegionRatesEditor({
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[13px]">
+            <table className="w-full min-w-[640px] border-collapse text-[13px]">
               <thead>
                 <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
                   <th className="text-left py-2 pr-3 font-medium">비용 항목</th>

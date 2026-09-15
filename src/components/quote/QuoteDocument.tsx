@@ -91,7 +91,7 @@ export function QuoteDocument({
 
         {/* Charges table */}
         <div className="mt-8 overflow-x-auto">
-          <table className="w-full border-collapse text-[13px]">
+          <table className="w-full min-w-[560px] border-collapse text-[13px]">
             <thead>
               <tr className="border-b-2 border-[var(--foreground)]">
                 <th className="text-left py-2.5 pr-3 font-semibold text-[12px] uppercase tracking-wide text-[var(--muted)]">
