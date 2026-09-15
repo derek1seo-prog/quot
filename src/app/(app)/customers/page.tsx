@@ -9,7 +9,7 @@ export default async function CustomersPage() {
   const customers = await getCustomers();
 
   return (
-    <div className="max-w-[900px] mx-auto px-6 lg:px-10 py-10 lg:py-14">
+    <div className="max-w-[900px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
       <div className="flex items-center justify-between mb-8">
         <div>
           <p className="text-[13px] font-medium text-[var(--accent)] mb-2">관리</p>

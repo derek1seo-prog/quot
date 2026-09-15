@@ -25,7 +25,7 @@ export default async function NorthChinaRatesPage() {
   const chargeRates = allChargeRates.filter((r) => r.regionId === REGION_ID);
 
   return (
-    <div className="max-w-[1100px] mx-auto px-6 lg:px-10 py-10 lg:py-14">
+    <div className="max-w-[1100px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
       <p className="text-[13px] font-medium text-[var(--accent)] mb-2">요율 관리</p>
       <h1 className="text-[28px] font-semibold tracking-tight mb-1">북중국 / 동중국</h1>
       <p className="text-[13px] text-[var(--muted)] mb-8">

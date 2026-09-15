@@ -17,7 +17,7 @@ export default async function QuoteDetailPage({
   const destinationPort = getPortById(quote.input.destinationPortId);
 
   return (
-    <div className="max-w-[1000px] mx-auto px-6 lg:px-10 py-10 lg:py-14">
+    <div className="max-w-[1000px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
       <QuoteActions quoteId={quote.id} quoteNumber={quote.quoteNumber} />
       <div id="quote-document-root">
         <QuoteDocument

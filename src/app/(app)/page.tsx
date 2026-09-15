@@ -43,11 +43,11 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-10 lg:py-14">
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
+    <div className="max-w-[1200px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10 lg:mb-14">
         <div>
           <p className="text-[13px] font-medium text-[var(--accent)] mb-2">Dashboard</p>
-          <h1 className="text-[32px] lg:text-[40px] font-semibold tracking-tight text-[var(--foreground)]">
+          <h1 className="text-[32px] lg:text-[36px] font-semibold tracking-tight text-[var(--foreground)]">
             중국발 수입 포워딩 견적
           </h1>
           <p className="text-[15px] text-[var(--muted)] mt-2 max-w-xl">
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
         </LinkButton>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
         {stats.map((s) => (
           <Card key={s.label} className="p-5">
             <div className="flex items-center justify-between mb-6">
