@@ -284,7 +284,11 @@ export default function NewQuotePage() {
             견적에 포함할 컨테이너 타입과 수량을 선택합니다. 여러 타입을 함께 비교할 수 있습니다.
           </p>
 
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div
+            className={`grid gap-4 ${
+              meta.containerTypes.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"
+            }`}
+          >
             {meta.containerTypes.map((ct) => {
               const qty = containerQty[ct.id] ?? 0;
               const selected = qty > 0;

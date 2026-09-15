@@ -80,9 +80,13 @@ src/
 
 `src/data/ocean-freight-rates.json`, `charge-rates.json`의 수치는 제공된 기존 견적서
 파일(북중국/남중국 시트)의 실제 값을 그대로 반영했습니다. 파일에 없는 항구(Qingdao,
-Xingang, Shantou, Shenzhen, Guangzhou, Nansha)와 40FT 컨테이너 운임은 임의로 추정하지
-않고 "미등록" 상태로 남겨두었으며, `/rates/north-china`, `/rates/south-china` 화면에서
-관리자가 직접 입력할 수 있습니다.
+Xingang, Shantou, Shenzhen, Guangzhou, Nansha)의 운임은 임의로 추정하지 않고 "미등록"
+상태로 남겨두었으며, `/rates/north-china`, `/rates/south-china` 화면에서 관리자가 직접
+입력할 수 있습니다.
+
+컨테이너 타입은 20FT와 40HQ만 지원합니다. 별도의 40FT(40GP) 옵션이 있었으나, 원본
+요율 파일에서 40FT 운임이 40HQ와 항상 동일했기 때문에 제거하고 40HQ 하나로
+통일했습니다.
 
 ## 주요 화면
 

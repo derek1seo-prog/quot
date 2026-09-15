@@ -47,7 +47,7 @@ export interface Port {
 }
 
 export interface ContainerType {
-  id: string; // "20ft" | "40ft" | "40hq"
+  id: string; // "20ft" | "40hq"
   label: string; // "20FT"
   excelCode: string; // "20GP" - kept for traceability back to source rate sheet
   order: number;
