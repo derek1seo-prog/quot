@@ -1,5 +1,6 @@
 import { LinkButton } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
+import { QuoteListCard } from "@/components/quote/QuoteListCard";
 import { QuoteListRow } from "@/components/quote/QuoteListRow";
 import { getQuotes } from "@/lib/data-store";
 import { FilePlus2 } from "lucide-react";
@@ -31,7 +32,8 @@ export default async function QuotesListPage() {
             </LinkButton>
           </CardContent>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left min-w-[760px]">
             <thead>
               <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--muted)] uppercase tracking-wide">
@@ -51,6 +53,13 @@ export default async function QuotesListPage() {
             </tbody>
           </table>
           </div>
+
+          <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
+            {quotes.map((q) => (
+              <QuoteListCard key={q.id} quote={q} />
+            ))}
+          </div>
+          </>
         )}
       </Card>
     </div>

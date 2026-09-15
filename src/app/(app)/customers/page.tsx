@@ -1,4 +1,5 @@
 import { AddCustomerForm } from "@/components/customers/AddCustomerForm";
+import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { getCustomers } from "@/lib/data-store";
 
@@ -23,7 +24,8 @@ export default async function CustomersPage() {
             등록된 고객이 없습니다.
           </CardContent>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left min-w-[560px]">
             <thead>
               <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--muted)] uppercase tracking-wide">
@@ -47,6 +49,21 @@ export default async function CustomersPage() {
             </tbody>
           </table>
           </div>
+
+          <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
+            {customers.map((c) => (
+              <div key={c.id} className="px-6 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[13.5px] font-medium text-[var(--foreground)]">{c.name}</p>
+                  {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
+                </div>
+                <p className="text-[12px] text-[var(--muted)] mt-1">
+                  {c.contactName ?? "-"} · {c.email ?? "-"}
+                </p>
+              </div>
+            ))}
+          </div>
+          </>
         )}
       </Card>
     </div>

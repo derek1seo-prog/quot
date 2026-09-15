@@ -102,7 +102,8 @@ export default async function DashboardPage() {
             </LinkButton>
           </CardContent>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left min-w-[640px]">
             <thead>
               <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--muted)] uppercase tracking-wide">
@@ -144,6 +145,33 @@ export default async function DashboardPage() {
             </tbody>
           </table>
           </div>
+
+          <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
+            {quotes.slice(0, 6).map((q) => (
+              <Link
+                key={q.id}
+                href={`/quotes/${q.id}`}
+                className="block px-6 py-4 active:bg-[var(--sidebar-bg)]/50"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[13.5px] font-medium text-[var(--accent)]">
+                    {q.quoteNumber}
+                  </span>
+                  <Badge tone="accent">{q.result.regionNameKo}</Badge>
+                </div>
+                <p className="text-[13.5px] text-[var(--foreground)] mt-1">{q.input.customerName}</p>
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-[12px] text-[var(--muted)]">
+                    {formatDate(q.input.quoteDate)}
+                  </span>
+                  <span className="text-[13.5px] font-semibold text-[var(--foreground)]">
+                    {formatCurrency(q.result.combinedGrandTotalKrw, "KRW")}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+          </>
         )}
       </Card>
 

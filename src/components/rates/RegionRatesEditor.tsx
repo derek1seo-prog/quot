@@ -93,7 +93,7 @@ export function RegionRatesEditor({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full min-w-[480px] border-collapse text-[13px]">
               <thead>
                 <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
@@ -128,6 +128,18 @@ export function RegionRatesEditor({
               </tbody>
             </table>
           </div>
+
+          <div className="sm:hidden space-y-3">
+            {ports.map((port) => (
+              <MobilePortRateCard
+                key={port.id}
+                port={port}
+                containerTypes={containerTypes}
+                findRate={findOceanFreight}
+                onSave={saveOceanFreight}
+              />
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -139,7 +151,7 @@ export function RegionRatesEditor({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full min-w-[640px] border-collapse text-[13px]">
               <thead>
                 <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
@@ -186,8 +198,110 @@ export function RegionRatesEditor({
               </tbody>
             </table>
           </div>
+
+          <div className="sm:hidden space-y-3">
+            {chargeTypes.map((chargeType) => (
+              <MobileChargeRateCard
+                key={chargeType.id}
+                chargeType={chargeType}
+                containerTypes={containerTypes}
+                findRate={findChargeRate}
+                onSave={saveChargeRate}
+              />
+            ))}
+          </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/** Mobile (< sm) equivalent of the ocean freight table: one card per port,
+ * each container type as its own editable row, using the exact same
+ * RateCell + save callback the table uses - just laid out vertically
+ * instead of as columns. */
+function MobilePortRateCard({
+  port,
+  containerTypes,
+  findRate,
+  onSave,
+}: {
+  port: Port;
+  containerTypes: ContainerType[];
+  findRate: (portId: string, containerTypeId: string) => OceanFreightRate | undefined;
+  onSave: (portId: string, containerTypeId: string, rate: number) => Promise<void>;
+}) {
+  return (
+    <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] p-4">
+      <p className="font-medium text-[var(--foreground)] text-[14px]">{port.nameKo}</p>
+      <p className="text-[11px] text-[var(--muted)]">{port.name}</p>
+      <div className="mt-3 space-y-2.5">
+        {containerTypes.map((ct) => {
+          const existing = findRate(port.id, ct.id);
+          return (
+            <div key={ct.id} className="flex items-center justify-between gap-3">
+              <span className="text-[13px] text-[var(--muted)] shrink-0">{ct.label}</span>
+              <div className="w-32">
+                <RateCell value={existing?.rate ?? null} onSave={(v) => onSave(port.id, ct.id, v)} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Mobile equivalent of the charges table: one card per charge type,
+ * currency/unit shown as badges (matching the table row), then each
+ * container type as its own editable row. */
+function MobileChargeRateCard({
+  chargeType,
+  containerTypes,
+  findRate,
+  onSave,
+}: {
+  chargeType: ChargeType;
+  containerTypes: ContainerType[];
+  findRate: (chargeTypeId: string, containerTypeId: string) => ChargeRate | undefined;
+  onSave: (
+    chargeTypeId: string,
+    containerTypeId: string,
+    rate: number,
+    currency: Currency,
+  ) => Promise<void>;
+}) {
+  const sampleRate = findRate(chargeType.id, containerTypes[0]?.id ?? "");
+  const currency = sampleRate?.currency ?? "KRW";
+
+  return (
+    <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium text-[var(--foreground)] text-[14px]">{chargeType.nameKo}</p>
+          <p className="text-[11px] text-[var(--muted)]">{chargeType.name}</p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Badge tone="neutral">{currency}</Badge>
+          <Badge tone="neutral">{chargeType.unit === "BL" ? "B/L당" : "컨테이너당"}</Badge>
+        </div>
+      </div>
+      <div className="mt-3 space-y-2.5">
+        {containerTypes.map((ct) => {
+          const existing = findRate(chargeType.id, ct.id);
+          return (
+            <div key={ct.id} className="flex items-center justify-between gap-3">
+              <span className="text-[13px] text-[var(--muted)] shrink-0">{ct.label}</span>
+              <div className="w-32">
+                <RateCell
+                  value={existing?.rate ?? null}
+                  onSave={(v) => onSave(chargeType.id, ct.id, v, existing?.currency ?? currency)}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -1,23 +1,14 @@
 "use client";
 
 import { Badge } from "@/components/ui/Badge";
+import { useDeleteQuote } from "@/lib/useDeleteQuote";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export function QuoteListRow({ quote }: { quote: Quote }) {
-  const router = useRouter();
-  const [deleting, setDeleting] = useState(false);
-
-  async function handleDelete() {
-    if (!confirm(`${quote.quoteNumber} 견적을 삭제할까요?`)) return;
-    setDeleting(true);
-    await fetch(`/api/quotes/${quote.id}`, { method: "DELETE" });
-    router.refresh();
-  }
+  const { deleting, handleDelete } = useDeleteQuote(quote.id, quote.quoteNumber);
 
   return (
     <tr className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--sidebar-bg)]/50 transition-colors group">
