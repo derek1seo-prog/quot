@@ -11,7 +11,7 @@ export function Sidebar() {
 
   return (
     <aside className="no-print hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-[var(--sidebar-bg)] border-r border-[var(--border-subtle)]">
-      <div className="px-6 h-16 flex items-center gap-2.5 shrink-0">
+      <Link href="/" className="px-6 h-16 flex items-center gap-2.5 shrink-0">
         <div className="w-8 h-8 rounded-[9px] bg-[var(--foreground)] flex items-center justify-center">
           <span className="text-white text-[13px] font-bold tracking-tight">Q</span>
         </div>
@@ -19,7 +19,7 @@ export function Sidebar() {
           <p className="text-[14px] font-semibold text-[var(--foreground)]">QUOT</p>
           <p className="text-[11px] text-[var(--muted)]">Forwarding Quote System</p>
         </div>
-      </div>
+      </Link>
 
       <nav className="flex-1 overflow-y-auto px-3 pb-6 space-y-6">
         {navSections.map((section, i) => (

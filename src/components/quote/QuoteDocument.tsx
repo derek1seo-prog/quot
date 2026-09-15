@@ -8,6 +8,10 @@ interface QuoteDocumentProps {
   result: QuoteResult;
   originLabel: string;
   destinationLabel: string;
+  /** Always render the full comparison table, even below the `sm` breakpoint.
+   * Used by the print route so printed/PDF output stays the formal letter
+   * layout regardless of viewport width. */
+  forceTable?: boolean;
 }
 
 function krw(n: number) {
@@ -26,6 +30,7 @@ export function QuoteDocument({
   result,
   originLabel,
   destinationLabel,
+  forceTable = false,
 }: QuoteDocumentProps) {
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
   const localRows = result.chargeCatalog.filter((c) => c.category !== "OCEAN_FREIGHT");
@@ -89,8 +94,35 @@ export function QuoteDocument({
           <InfoField label="EX-RATE" value={`USD 1 = ₩${result.exchangeRate.toLocaleString()}`} />
         </div>
 
-        {/* Charges table */}
-        <div className="mt-8 overflow-x-auto">
+        {/* Totals at a glance - shown before the itemized breakdown so the
+            bottom line is visible immediately, especially on a phone where
+            the full table below needs horizontal scrolling to reach it. */}
+        <div className="mt-6 flex flex-wrap gap-3">
+          {result.columns.map((col) => (
+            <div
+              key={col.containerTypeId}
+              className="flex-1 min-w-[140px] rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--accent-soft)] px-4 py-3"
+            >
+              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--muted)]">
+                {col.containerLabel}
+                {col.quantity > 1 ? ` ×${col.quantity}` : ""}
+              </p>
+              <p className="text-[19px] font-bold text-[var(--accent)] mt-0.5">
+                {krw(col.grandTotalKrw)}
+              </p>
+              {col.missingRate && (
+                <p className="text-[11px] font-medium text-[var(--warning)] mt-0.5">
+                  일부 요율 미등록
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Charges - a full comparison table at sm: and up (or always, when
+            forceTable is set for print/export); stacked cards below sm: so
+            a phone never needs to scroll sideways to see a total. */}
+        <div className={`mt-8 overflow-x-auto ${forceTable ? "" : "hidden sm:block"}`}>
           <table className="w-full min-w-[560px] border-collapse text-[13px]">
             <thead>
               <tr className="border-b-2 border-[var(--foreground)]">
@@ -187,6 +219,19 @@ export function QuoteDocument({
           </table>
         </div>
 
+        {!forceTable && (
+          <div className="sm:hidden mt-8 space-y-4">
+            {result.columns.map((col) => (
+              <MobileChargeCard
+                key={col.containerTypeId}
+                column={col}
+                oceanFreightRow={oceanFreightRow}
+                localRows={localRows}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Remarks */}
         <div className="mt-8 pt-5 border-t border-[var(--border-subtle)] text-[12px] text-[var(--muted)] leading-relaxed">
           <p className="font-semibold text-[var(--foreground)] mb-1.5">비고 / Remarks</p>
@@ -261,5 +306,120 @@ function ChargeRow({
         );
       })}
     </tr>
+  );
+}
+
+/** Mobile (< sm) equivalent of the charges table: one card per container
+ * type, stacked vertically instead of laid out as comparison columns, so a
+ * phone never needs to scroll sideways to reach a total. Mirrors the
+ * table's own grouping (ocean freight + its subtotal, local charges + its
+ * subtotal, grand total) rather than a simplified summary. */
+function MobileChargeCard({
+  column,
+  oceanFreightRow,
+  localRows,
+}: {
+  column: QuoteResult["columns"][number];
+  oceanFreightRow: QuoteResult["chargeCatalog"][number] | undefined;
+  localRows: QuoteResult["chargeCatalog"];
+}) {
+  return (
+    <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-[var(--sidebar-bg)]">
+        <span className="font-semibold text-[14px] text-[var(--foreground)]">
+          {column.containerLabel}
+          {column.quantity > 1 ? ` ×${column.quantity}` : ""}
+        </span>
+        <span className="text-[15px] font-bold text-[var(--accent)]">
+          {krw(column.grandTotalKrw)}
+        </span>
+      </div>
+
+      <div className="px-4">
+        {oceanFreightRow && (
+          <>
+            <MobileLineRow
+              label={oceanFreightRow.nameKo}
+              sublabel={oceanFreightRow.name}
+              column={column}
+              chargeTypeId={oceanFreightRow.chargeTypeId}
+            />
+            <MobileSubtotalRow label="Sub Total" amountKrw={column.oceanFreightSubtotalKrw} />
+          </>
+        )}
+
+        <p className="pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
+          국내 부대비용 / Local &amp; Regional Charges
+        </p>
+        {localRows.map((row) => (
+          <MobileLineRow
+            key={row.chargeTypeId}
+            label={row.nameKo}
+            sublabel={row.name}
+            column={column}
+            chargeTypeId={row.chargeTypeId}
+          />
+        ))}
+        <MobileSubtotalRow label="Sub Total" amountKrw={column.localSubtotalKrw} />
+      </div>
+
+      <div className="flex items-center justify-between px-4 py-3 bg-[var(--sidebar-bg)]/60 border-t border-[var(--border-subtle)]">
+        <span className="text-[13px] font-bold text-[var(--foreground)]">Grand Total</span>
+        <div className="text-right">
+          <span className="text-[15px] font-bold text-[var(--accent)]">
+            {krw(column.grandTotalKrw)}
+          </span>
+          {column.missingRate && (
+            <p className="text-[11px] font-normal text-[var(--warning)]">일부 요율 미등록</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileLineRow({
+  label,
+  sublabel,
+  column,
+  chargeTypeId,
+}: {
+  label: string;
+  sublabel: string;
+  column: QuoteResult["columns"][number];
+  chargeTypeId: string;
+}) {
+  const item = column.lineItems.find((li) => li.chargeTypeId === chargeTypeId);
+  return (
+    <div className="flex items-start justify-between gap-3 py-2.5 border-b border-[var(--border-subtle)] text-[13px]">
+      <div>
+        <p className="font-medium text-[var(--foreground)]">{label}</p>
+        <p className="text-[11px] text-[var(--muted)]">{sublabel}</p>
+      </div>
+      <div className="text-right shrink-0">
+        {item ? (
+          <>
+            <p className="text-[var(--foreground)]">{krw(item.amountKrw)}</p>
+            {item.currency !== "KRW" && (
+              <p className="text-[11px] text-[var(--muted)]">
+                {foreign(item.rate, item.currency)}
+                {item.quantity > 1 ? ` × ${item.quantity}` : ""}
+              </p>
+            )}
+          </>
+        ) : (
+          <span className="text-[var(--warning)] text-[12px]">미등록</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MobileSubtotalRow({ label, amountKrw }: { label: string; amountKrw: number }) {
+  return (
+    <div className="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] text-[12.5px] font-semibold text-[var(--muted)]">
+      <span>{label}</span>
+      <span>{krw(amountKrw)}</span>
+    </div>
   );
 }

@@ -33,6 +33,7 @@ export default async function QuotePrintPage({
             ? `${destinationPort.nameKo} (${destinationPort.name})`
             : quote.input.destinationPortId
         }
+        forceTable
       />
     </div>
   );
