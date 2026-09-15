@@ -12,7 +12,7 @@ export default async function QuotesListPage() {
 
   return (
     <div className="max-w-[1200px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <p className="text-[13px] font-medium text-[var(--accent)] mb-2">견적 관리</p>
           <h1 className="text-[28px] font-semibold tracking-tight">견적 목록</h1>
