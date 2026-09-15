@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
@@ -10,7 +9,13 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const [quotes, exchangeRate] = await Promise.all([getQuotes(), getCurrentExchangeRate("USD")]);
-  const ports = getPorts().filter((p) => p.role !== "DESTINATION");
+  const allPorts = getPorts();
+  const portNameById = new Map(allPorts.map((p) => [p.id, p.nameKo]));
+  const ports = allPorts.filter((p) => p.role !== "DESTINATION");
+
+  function routeLabel(originPortId: string, destinationPortId: string) {
+    return `${portNameById.get(originPortId) ?? originPortId} → ${portNameById.get(destinationPortId) ?? destinationPortId}`;
+  }
 
   const now = new Date();
   const thisMonth = quotes.filter((q) => {
@@ -132,7 +137,7 @@ export default async function DashboardPage() {
                     {q.input.customerName}
                   </td>
                   <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
-                    <Badge tone="accent">{q.result.regionNameKo}</Badge>
+                    {routeLabel(q.input.originPortId, q.input.destinationPortId)}
                   </td>
                   <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
                     {formatDate(q.input.quoteDate)}
@@ -157,7 +162,9 @@ export default async function DashboardPage() {
                   <span className="text-[13.5px] font-medium text-[var(--accent)]">
                     {q.quoteNumber}
                   </span>
-                  <Badge tone="accent">{q.result.regionNameKo}</Badge>
+                  <span className="text-[12px] text-[var(--muted)]">
+                    {routeLabel(q.input.originPortId, q.input.destinationPortId)}
+                  </span>
                 </div>
                 <p className="text-[13.5px] text-[var(--foreground)] mt-1">{q.input.customerName}</p>
                 <div className="flex items-center justify-between mt-1.5">

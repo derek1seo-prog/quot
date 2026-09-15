@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, regionLabel } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -11,7 +11,13 @@ import Link from "next/link";
  * same delete action, laid out as a card instead of a table row. The
  * delete button is always visible here since there's no hover state on
  * touch (QuoteListRow reveals it on group-hover instead). */
-export function QuoteListCard({ quote }: { quote: Quote }) {
+export function QuoteListCard({
+  quote,
+  portNameById,
+}: {
+  quote: Quote;
+  portNameById: Record<string, string>;
+}) {
   const { deleting, handleDelete } = useDeleteQuote(quote.id, quote.quoteNumber);
 
   return (
@@ -34,9 +40,10 @@ export function QuoteListCard({ quote }: { quote: Quote }) {
       </div>
       <p className="text-[13.5px] text-[var(--foreground)] mt-1">{quote.input.customerName}</p>
       <div className="flex items-center gap-2 mt-1.5">
-        <Badge tone="accent">{quote.result.regionNameKo}</Badge>
+        <Badge tone="accent">{regionLabel(quote.result.regionNameKo)}</Badge>
         <span className="text-[12px] text-[var(--muted)]">
-          {quote.input.originPortId} → {quote.input.destinationPortId}
+          {portNameById[quote.input.originPortId] ?? quote.input.originPortId} →{" "}
+          {portNameById[quote.input.destinationPortId] ?? quote.input.destinationPortId}
         </span>
       </div>
       <div className="flex items-center justify-between mt-1.5">

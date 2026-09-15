@@ -33,7 +33,7 @@ export interface Region {
   id: string;
   countryId: string;
   name: string; // e.g. "North & East China"
-  nameKo: string; // e.g. "북중국/동중국"
+  nameKo: string; // e.g. "북중국"
   description?: string;
 }
 

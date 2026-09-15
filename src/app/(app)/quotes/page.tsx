@@ -2,13 +2,14 @@ import { LinkButton } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { QuoteListCard } from "@/components/quote/QuoteListCard";
 import { QuoteListRow } from "@/components/quote/QuoteListRow";
-import { getQuotes } from "@/lib/data-store";
+import { getPorts, getQuotes } from "@/lib/data-store";
 import { FilePlus2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuotesListPage() {
   const quotes = await getQuotes();
+  const portNameById = Object.fromEntries(getPorts().map((p) => [p.id, p.nameKo]));
 
   return (
     <div className="max-w-[1200px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
@@ -48,7 +49,7 @@ export default async function QuotesListPage() {
             </thead>
             <tbody>
               {quotes.map((q) => (
-                <QuoteListRow key={q.id} quote={q} />
+                <QuoteListRow key={q.id} quote={q} portNameById={portNameById} />
               ))}
             </tbody>
           </table>
@@ -56,7 +57,7 @@ export default async function QuotesListPage() {
 
           <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
             {quotes.map((q) => (
-              <QuoteListCard key={q.id} quote={q} />
+              <QuoteListCard key={q.id} quote={q} portNameById={portNameById} />
             ))}
           </div>
           </>

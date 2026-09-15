@@ -211,7 +211,7 @@ export default function NewQuotePage() {
         <Card className="p-6 sm:p-8">
           <h2 className="text-[17px] font-semibold mb-1">출발지와 도착지를 선택하세요</h2>
           <p className="text-[13px] text-[var(--muted)] mb-6">
-            출발항을 선택하면 해당 권역(북중국/동중국 또는 남중국)의 부대비용 구조가 자동으로 적용됩니다.
+            출발항을 선택하면 해당 권역(북중국 또는 남중국)의 부대비용 구조가 자동으로 적용됩니다.
           </p>
 
           <div className="grid sm:grid-cols-2 gap-6">

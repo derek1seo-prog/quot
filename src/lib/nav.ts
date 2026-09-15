@@ -25,6 +25,8 @@ export const navSections: NavSectionDef[] = [
     items: [
       { href: "/rates/north-china", label: "북중국", icon: "region" },
       { href: "/rates/south-china", label: "남중국", icon: "region" },
+      { href: "/rates/vietnam", label: "베트남", icon: "region" },
+      { href: "/rates/thailand", label: "태국", icon: "region" },
     ],
   },
   {

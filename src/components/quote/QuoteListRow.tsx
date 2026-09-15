@@ -2,12 +2,18 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, regionLabel } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
 
-export function QuoteListRow({ quote }: { quote: Quote }) {
+export function QuoteListRow({
+  quote,
+  portNameById,
+}: {
+  quote: Quote;
+  portNameById: Record<string, string>;
+}) {
   const { deleting, handleDelete } = useDeleteQuote(quote.id, quote.quoteNumber);
 
   return (
@@ -22,10 +28,11 @@ export function QuoteListRow({ quote }: { quote: Quote }) {
       </td>
       <td className="px-6 py-4 text-[13.5px] text-[var(--foreground)]">{quote.input.customerName}</td>
       <td className="px-6 py-4 text-[13.5px] text-[var(--muted)]">
-        {quote.input.originPortId} → {quote.input.destinationPortId}
+        {portNameById[quote.input.originPortId] ?? quote.input.originPortId} →{" "}
+        {portNameById[quote.input.destinationPortId] ?? quote.input.destinationPortId}
       </td>
       <td className="px-6 py-4">
-        <Badge tone="accent">{quote.result.regionNameKo}</Badge>
+        <Badge tone="accent">{regionLabel(quote.result.regionNameKo)}</Badge>
       </td>
       <td className="px-6 py-4 text-[13.5px] text-[var(--muted)]">{formatDate(quote.input.quoteDate)}</td>
       <td className="px-6 py-4 text-[13.5px] font-medium text-right text-[var(--foreground)]">
