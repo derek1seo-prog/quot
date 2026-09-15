@@ -7,13 +7,13 @@ export interface Step {
 
 export function StepIndicator({ steps, current }: { steps: Step[]; current: number }) {
   return (
-    <div className="flex items-center w-full max-w-2xl mx-auto mb-10">
+    <div className="flex items-start w-full max-w-2xl mx-auto mb-10">
       {steps.map((step, i) => {
         const isDone = i < current;
         const isActive = i === current;
         return (
-          <div key={step.label} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-2">
+          <div key={step.label} className="contents">
+            <div className="flex flex-col items-center gap-2 shrink-0">
               <div
                 className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold transition-colors",
@@ -36,7 +36,7 @@ export function StepIndicator({ steps, current }: { steps: Step[]; current: numb
             {i < steps.length - 1 && (
               <div
                 className={cn(
-                  "flex-1 h-[1.5px] mx-2 mb-5 transition-colors",
+                  "flex-1 min-w-[8px] h-[1.5px] mx-2 mt-4 transition-colors",
                   isDone ? "bg-[var(--accent)]" : "bg-[var(--border)]",
                 )}
               />
