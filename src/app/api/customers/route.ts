@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addCustomer, getCustomers } from "@/lib/data-store";
+import { addCustomer, getCustomers, updateCustomer } from "@/lib/data-store";
 import { generateId } from "@/lib/id";
 import type { Customer } from "@/lib/types";
 
@@ -19,8 +19,39 @@ export async function POST(req: NextRequest) {
     email: body.email,
     phone: body.phone,
     incotermsDefault: body.incotermsDefault,
+    deliveryLocation: body.deliveryLocation,
+    incheonTruckingRate20ft: body.incheonTruckingRate20ft,
+    incheonTruckingRate40hq: body.incheonTruckingRate40hq,
+    busanTruckingRate20ft: body.busanTruckingRate20ft,
+    busanTruckingRate40hq: body.busanTruckingRate40hq,
     createdAt: new Date().toISOString(),
   };
   await addCustomer(customer);
   return NextResponse.json(customer, { status: 201 });
+}
+
+export async function PUT(req: NextRequest) {
+  const body = (await req.json()) as Partial<Customer> & { id: string };
+  if (!body.id) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+  const existing = (await getCustomers()).find((c) => c.id === body.id);
+  if (!existing) {
+    return NextResponse.json({ error: "customer not found" }, { status: 404 });
+  }
+  const updated: Customer = {
+    ...existing,
+    name: body.name ?? existing.name,
+    contactName: body.contactName ?? existing.contactName,
+    email: body.email ?? existing.email,
+    phone: body.phone ?? existing.phone,
+    incotermsDefault: body.incotermsDefault ?? existing.incotermsDefault,
+    deliveryLocation: body.deliveryLocation ?? existing.deliveryLocation,
+    incheonTruckingRate20ft: body.incheonTruckingRate20ft ?? existing.incheonTruckingRate20ft,
+    incheonTruckingRate40hq: body.incheonTruckingRate40hq ?? existing.incheonTruckingRate40hq,
+    busanTruckingRate20ft: body.busanTruckingRate20ft ?? existing.busanTruckingRate20ft,
+    busanTruckingRate40hq: body.busanTruckingRate40hq ?? existing.busanTruckingRate40hq,
+  };
+  await updateCustomer(updated);
+  return NextResponse.json(updated);
 }

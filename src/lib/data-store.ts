@@ -149,6 +149,11 @@ export async function getCustomers(): Promise<Customer[]> {
   return readMutable<Customer[]>("customers.json");
 }
 
+export async function getCustomerByName(name: string): Promise<Customer | undefined> {
+  const customers = await getCustomers();
+  return customers.find((c) => c.name === name);
+}
+
 export async function getQuotes(): Promise<Quote[]> {
   return readMutable<Quote[]>("quotes.json");
 }
@@ -187,6 +192,14 @@ export async function upsertExchangeRate(rate: ExchangeRate): Promise<void> {
 export async function addCustomer(customer: Customer): Promise<void> {
   const customers = await getCustomers();
   customers.push(customer);
+  await writeMutable("customers.json", customers);
+}
+
+export async function updateCustomer(customer: Customer): Promise<void> {
+  const customers = await getCustomers();
+  const idx = customers.findIndex((c) => c.id === customer.id);
+  if (idx >= 0) customers[idx] = customer;
+  else customers.push(customer);
   await writeMutable("customers.json", customers);
 }
 

@@ -115,6 +115,7 @@ export default function NewQuotePage() {
 
   const originPort = meta?.ports.find((p) => p.id === originPortId);
   const destinationPort = meta?.ports.find((p) => p.id === destinationPortId);
+  const matchedCustomer = meta?.customers.find((c) => c.name === customerName);
 
   function hasRateForContainer(containerTypeId: string) {
     if (!meta || !originPortId) return false;
@@ -367,11 +368,16 @@ export default function NewQuotePage() {
 
           <div className="grid sm:grid-cols-2 gap-6">
             <FieldGroup>
-              <FieldLabel>고객명</FieldLabel>
+              <FieldLabel>화주</FieldLabel>
               <Input
                 list="customer-list"
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setCustomerName(value);
+                  const matched = meta.customers.find((c) => c.name === value);
+                  if (matched?.contactName) setContactName(matched.contactName);
+                }}
                 placeholder="예: 지더블유파트너스"
               />
               <datalist id="customer-list">
@@ -379,6 +385,11 @@ export default function NewQuotePage() {
                   <option key={c.id} value={c.name} />
                 ))}
               </datalist>
+              {matchedCustomer && (
+                <p className="text-[11px] text-[var(--accent)] mt-1.5">
+                  ✓ 등록된 화주 정보가 연동되었습니다
+                </p>
+              )}
             </FieldGroup>
             <FieldGroup>
               <FieldLabel hint="선택">담당자</FieldLabel>

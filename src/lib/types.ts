@@ -121,6 +121,11 @@ export interface Customer {
   email?: string;
   phone?: string;
   incotermsDefault?: string;
+  deliveryLocation?: string; // 입고지
+  incheonTruckingRate20ft?: number; // KRW
+  incheonTruckingRate40hq?: number; // KRW
+  busanTruckingRate20ft?: number; // KRW
+  busanTruckingRate40hq?: number; // KRW
   createdAt: string;
 }
 

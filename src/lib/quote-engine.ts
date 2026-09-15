@@ -10,18 +10,38 @@ import {
   getChargeTypes,
   getContainerTypes,
   getCurrentExchangeRate,
+  getCustomerByName,
   getOceanFreightRates,
   getPortById,
   getRegionById,
 } from "./data-store";
 import type {
+  ChargeCatalogEntry,
   ChargeType,
   ContainerSelection,
+  Customer,
   QuoteColumn,
   QuoteInput,
   QuoteLineItem,
   QuoteResult,
 } from "./types";
+
+const INLAND_TRUCKING_CHARGE_TYPE_ID = "INLAND_TRUCKING";
+
+/** Customer-specific inland trucking rate for a destination port + container type, if on file. */
+function getTruckingRate(
+  customer: Customer,
+  prefix: "incheon" | "busan",
+  containerTypeId: string,
+): number | undefined {
+  if (containerTypeId === "20ft") {
+    return prefix === "incheon" ? customer.incheonTruckingRate20ft : customer.busanTruckingRate20ft;
+  }
+  if (containerTypeId === "40hq") {
+    return prefix === "incheon" ? customer.incheonTruckingRate40hq : customer.busanTruckingRate40hq;
+  }
+  return undefined;
+}
 
 export function chargeAppliesToRegion(chargeType: ChargeType, regionId: string): boolean {
   if (chargeType.visibility.scope === "ALL") return true;
@@ -53,12 +73,35 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     throw new Error("Origin port is not assigned to a rate region.");
   }
 
-  const [currentExchangeRate, oceanFreightRates, chargeRates] = await Promise.all([
+  const [currentExchangeRate, oceanFreightRates, chargeRates, customer] = await Promise.all([
     getCurrentExchangeRate("USD"),
     getOceanFreightRates(),
     getChargeRates(),
+    input.customerName ? getCustomerByName(input.customerName.trim()) : Promise.resolve(undefined),
   ]);
   const exchangeRate = input.exchangeRateOverride ?? currentExchangeRate?.rate ?? 0;
+
+  // Inland trucking is customer-specific (not region/rate-sheet driven like
+  // every other charge), so it's resolved separately here. Per product
+  // decision: only show it when the matched customer has a rate on file for
+  // EVERY selected container type at the quote's destination port - an
+  // incomplete set hides the row entirely rather than showing partial
+  // "미등록" cells like the region-driven charges below do.
+  const truckingPrefix: "incheon" | "busan" | null =
+    input.destinationPortId === "incheon"
+      ? "incheon"
+      : input.destinationPortId === "busan"
+        ? "busan"
+        : null;
+  const truckingRatesByContainer = new Map<string, number>();
+  const truckingComplete =
+    Boolean(customer && truckingPrefix) &&
+    input.containers.every((sel) => {
+      const rate = getTruckingRate(customer!, truckingPrefix!, sel.containerTypeId);
+      if (rate == null) return false;
+      truckingRatesByContainer.set(sel.containerTypeId, rate);
+      return true;
+    });
 
   const containerTypes = getContainerTypes();
   const chargeTypes = getChargeTypes().filter((ct) =>
@@ -141,6 +184,26 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
       });
     }
 
+    // Customer-specific inland trucking (see resolution above the column loop)
+    if (truckingComplete) {
+      const rate = truckingRatesByContainer.get(selection.containerTypeId)!;
+      const base = rate * qty;
+      lineItems.push({
+        chargeTypeId: INLAND_TRUCKING_CHARGE_TYPE_ID,
+        name: "Inland Trucking",
+        nameKo: "내륙운송료",
+        category: "LOCAL",
+        currency: "KRW",
+        unit: "CONTAINER",
+        rate,
+        vatRate: 0,
+        vatAmount: 0,
+        quantity: qty,
+        amountForeign: base,
+        amountKrw: base,
+      });
+    }
+
     const oceanFreightSubtotalKrw = lineItems
       .filter((li) => li.category === "OCEAN_FREIGHT")
       .reduce((sum, li) => sum + li.amountKrw, 0);
@@ -160,7 +223,7 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     };
   });
 
-  const chargeCatalog = [
+  const chargeCatalog: ChargeCatalogEntry[] = [
     ...(oceanFreightChargeType
       ? [
           {
@@ -179,6 +242,17 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
       category: ct.category,
       unit: ct.unit,
     })),
+    ...(truckingComplete
+      ? [
+          {
+            chargeTypeId: INLAND_TRUCKING_CHARGE_TYPE_ID,
+            name: "Inland Trucking",
+            nameKo: "내륙운송료",
+            category: "LOCAL" as const,
+            unit: "CONTAINER" as const,
+          },
+        ]
+      : []),
   ];
 
   return {
