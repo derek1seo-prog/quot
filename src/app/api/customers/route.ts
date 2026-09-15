@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addCustomer, getCustomers, updateCustomer } from "@/lib/data-store";
+import { addCustomer, deleteCustomer, getCustomers, updateCustomer } from "@/lib/data-store";
 import { generateId } from "@/lib/id";
 import type { Customer } from "@/lib/types";
 
@@ -54,4 +54,13 @@ export async function PUT(req: NextRequest) {
   };
   await updateCustomer(updated);
   return NextResponse.json(updated);
+}
+
+export async function DELETE(req: NextRequest) {
+  const id = req.nextUrl.searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+  await deleteCustomer(id);
+  return NextResponse.json({ ok: true });
 }

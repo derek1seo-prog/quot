@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { RateCell } from "@/components/rates/RateCell";
 import { TextCell } from "@/components/customers/TextCell";
 import type { Customer } from "@/lib/types";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
 type NumberField =
@@ -13,15 +14,29 @@ type NumberField =
   | "busanTruckingRate20ft"
   | "busanTruckingRate40hq";
 
-const RATE_FIELDS: { field: NumberField; label: string }[] = [
-  { field: "incheonTruckingRate20ft", label: "인천항 20FT" },
-  { field: "incheonTruckingRate40hq", label: "인천항 40HQ" },
-  { field: "busanTruckingRate20ft", label: "부산항 20FT" },
-  { field: "busanTruckingRate40hq", label: "부산항 40HQ" },
+/** Rate fields grouped by port - one heading per port instead of repeating
+ * "인천항"/"부산항" in every column label, so the table reads at a glance
+ * without needing every field spelled out in full. */
+const PORT_GROUPS: { label: string; fields: { field: NumberField; sub: string }[] }[] = [
+  {
+    label: "인천",
+    fields: [
+      { field: "incheonTruckingRate20ft", sub: "20FT" },
+      { field: "incheonTruckingRate40hq", sub: "40HQ" },
+    ],
+  },
+  {
+    label: "부산",
+    fields: [
+      { field: "busanTruckingRate20ft", sub: "20FT" },
+      { field: "busanTruckingRate40hq", sub: "40HQ" },
+    ],
+  },
 ];
 
 export function CustomersTable({ initialCustomers }: { initialCustomers: Customer[] }) {
   const [customers, setCustomers] = useState(initialCustomers);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function saveField(id: string, patch: Partial<Customer>) {
     const res = await fetch("/api/customers", {
@@ -32,6 +47,17 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     if (!res.ok) throw new Error("save failed");
     const updated = (await res.json()) as Customer;
     setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  }
+
+  async function handleDelete(customer: Customer) {
+    if (!confirm(`${customer.name} 화주를 삭제할까요?`)) return;
+    setDeletingId(customer.id);
+    try {
+      await fetch(`/api/customers?id=${customer.id}`, { method: "DELETE" });
+      setCustomers((prev) => prev.filter((c) => c.id !== customer.id));
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   if (customers.length === 0) {
@@ -47,34 +73,56 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   return (
     <Card className="overflow-hidden">
       <div className="hidden sm:block overflow-x-auto">
-        <table className="w-full text-left min-w-[960px]">
+        <table className="w-full text-left min-w-[880px]">
           <thead>
-            <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--muted)] uppercase tracking-wide">
-              <th className="px-6 py-3 font-medium">화주</th>
-              <th className="px-4 py-3 font-medium">담당자</th>
-              <th className="px-4 py-3 font-medium">이메일</th>
-              <th className="px-4 py-3 font-medium w-40">입고지</th>
-              {RATE_FIELDS.map(({ field, label }) => (
-                <th key={field} className="px-2 py-3 font-medium w-28 text-right">
-                  {label}
+            <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
+              <th rowSpan={2} className="px-6 py-3 font-medium whitespace-nowrap align-bottom">
+                화주
+              </th>
+              <th rowSpan={2} className="px-4 py-3 font-medium whitespace-nowrap align-bottom">
+                담당자
+              </th>
+              <th rowSpan={2} className="px-4 py-3 font-medium whitespace-nowrap align-bottom w-32">
+                입고지
+              </th>
+              {PORT_GROUPS.map((group) => (
+                <th
+                  key={group.label}
+                  colSpan={2}
+                  className="px-2 py-2 font-medium text-center whitespace-nowrap border-l border-[var(--border-subtle)]"
+                >
+                  {group.label}
                 </th>
               ))}
+              <th rowSpan={2} className="w-10" />
+            </tr>
+            <tr className="border-b border-[var(--border-subtle)] text-[11px] text-[var(--muted)]">
+              {PORT_GROUPS.flatMap((group) =>
+                group.fields.map((f, i) => (
+                  <th
+                    key={f.field}
+                    className={`px-2 py-1.5 font-medium text-right whitespace-nowrap w-32 ${
+                      i === 0 ? "border-l border-[var(--border-subtle)]" : ""
+                    }`}
+                  >
+                    {f.sub}
+                  </th>
+                )),
+              )}
             </tr>
           </thead>
           <tbody>
             {customers.map((c) => (
-              <tr key={c.id} className="border-b border-[var(--border-subtle)] last:border-0">
-                <td className="px-6 py-3 text-[13.5px] font-medium align-middle">
+              <tr key={c.id} className="border-b border-[var(--border-subtle)] last:border-0 group">
+                <td className="px-6 py-3 text-[13.5px] font-medium align-middle whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     {c.name}
                     {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-[13.5px] text-[var(--muted)] align-middle">
-                  {c.contactName ?? "-"}
-                </td>
-                <td className="px-4 py-3 text-[13.5px] text-[var(--muted)] align-middle">
-                  {c.email ?? "-"}
+                <td className="px-4 py-3 text-[13.5px] align-middle whitespace-nowrap">
+                  <p className="text-[var(--foreground)]">{c.contactName ?? "-"}</p>
+                  {c.email && <p className="text-[11px] text-[var(--muted)] mt-0.5">{c.email}</p>}
                 </td>
                 <td className="px-4 py-2 align-middle">
                   <TextCell
@@ -82,11 +130,30 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                     onSave={(v) => saveField(c.id, { deliveryLocation: v })}
                   />
                 </td>
-                {RATE_FIELDS.map(({ field }) => (
-                  <td key={field} className="px-2 py-2 align-middle">
-                    <RateCell value={c[field] ?? null} onSave={(v) => saveField(c.id, { [field]: v })} />
-                  </td>
-                ))}
+                {PORT_GROUPS.flatMap((group) =>
+                  group.fields.map((f, i) => (
+                    <td
+                      key={f.field}
+                      className={`px-1.5 py-2 align-middle ${i === 0 ? "border-l border-[var(--border-subtle)]" : ""}`}
+                    >
+                      <RateCell
+                        value={c[f.field] ?? null}
+                        onSave={(v) => saveField(c.id, { [f.field]: v })}
+                        placeholder="-"
+                      />
+                    </td>
+                  )),
+                )}
+                <td className="px-2 align-middle text-right">
+                  <button
+                    onClick={() => handleDelete(c)}
+                    disabled={deletingId === c.id}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50"
+                    aria-label="삭제"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -97,8 +164,18 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
         {customers.map((c) => (
           <div key={c.id} className="px-6 py-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-[13.5px] font-medium text-[var(--foreground)]">{c.name}</p>
-              {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
+              <div className="flex items-center gap-2">
+                <p className="text-[13.5px] font-medium text-[var(--foreground)]">{c.name}</p>
+                {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
+              </div>
+              <button
+                onClick={() => handleDelete(c)}
+                disabled={deletingId === c.id}
+                className="w-8 h-8 -mr-2 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] active:bg-red-50 active:text-[var(--danger)]"
+                aria-label="삭제"
+              >
+                <Trash2 size={15} />
+              </button>
             </div>
             <p className="text-[12px] text-[var(--muted)] mt-1">
               {c.contactName ?? "-"} · {c.email ?? "-"}
@@ -114,11 +191,18 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                   />
                 </div>
               </div>
-              {RATE_FIELDS.map(({ field, label }) => (
-                <div key={field} className="flex items-center justify-between gap-3">
-                  <span className="text-[13px] text-[var(--muted)] shrink-0">{label}</span>
-                  <div className="w-32">
-                    <RateCell value={c[field] ?? null} onSave={(v) => saveField(c.id, { [field]: v })} />
+              {PORT_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="text-[11px] text-[var(--muted)] uppercase tracking-wide mb-1.5">
+                    {group.label} 내륙운송료
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {group.fields.map((f) => (
+                      <div key={f.field}>
+                        <span className="text-[11px] text-[var(--muted)]">{f.sub}</span>
+                        <RateCell value={c[f.field] ?? null} onSave={(v) => saveField(c.id, { [f.field]: v })} />
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}

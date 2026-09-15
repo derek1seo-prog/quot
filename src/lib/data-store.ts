@@ -203,6 +203,11 @@ export async function updateCustomer(customer: Customer): Promise<void> {
   await writeMutable("customers.json", customers);
 }
 
+export async function deleteCustomer(id: string): Promise<void> {
+  const customers = (await getCustomers()).filter((c) => c.id !== id);
+  await writeMutable("customers.json", customers);
+}
+
 export async function addQuote(quote: Quote): Promise<void> {
   const quotes = await getQuotes();
   quotes.unshift(quote);
