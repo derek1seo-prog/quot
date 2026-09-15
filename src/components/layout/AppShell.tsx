@@ -83,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           onClick={() => setOpen(false)}
         />
         <div
-          className={`absolute inset-y-0 left-0 w-[82%] max-w-72 bg-[var(--sidebar-bg)] shadow-2xl flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform ${
+          className={`absolute inset-y-0 left-0 w-[82%] max-w-72 bg-[var(--sidebar-bg)] shadow-2xl flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
