@@ -1,13 +1,14 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { navSections } from "@/lib/nav";
+import { getActiveHref, navSections } from "@/lib/nav";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavIcon } from "./nav-icons";
 
 export function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
   const pathname = usePathname();
+  const activeHref = getActiveHref(pathname);
   let itemIndex = 0;
 
   return (
@@ -24,8 +25,7 @@ export function MobileSidebarContent({ onNavigate }: { onNavigate: () => void })
           )}
           <div className="space-y-0.5">
             {section.items.map((item) => {
-              const active =
-                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              const active = item.href === activeHref;
               const delay = itemIndex++ * 30;
               return (
                 <Link

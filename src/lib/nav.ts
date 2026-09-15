@@ -35,3 +35,16 @@ export const navSections: NavSectionDef[] = [
     ],
   },
 ];
+
+// Picks the single nav item that should read as "active" for a given
+// pathname. A pathname can match more than one item's href as a prefix
+// (e.g. "/quotes/new" starts with both "/quotes/new" and "/quotes"), so
+// among all matches we keep the most specific (longest) href.
+export function getActiveHref(pathname: string): string | undefined {
+  const matches = navSections
+    .flatMap((section) => section.items)
+    .filter((item) =>
+      item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/"),
+    );
+  return matches.sort((a, b) => b.href.length - a.href.length)[0]?.href;
+}
