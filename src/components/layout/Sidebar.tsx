@@ -15,7 +15,6 @@ export function Sidebar() {
       <Link href="/" className="px-6 h-16 flex items-center gap-2.5 shrink-0">
         <Image src="/logo.png" alt="I.S. Sea & Air" width={79} height={79} className="w-8 h-8 object-contain" />
         <div className="leading-tight">
-          <p className="text-[14px] font-semibold text-[var(--foreground)]">QUOT</p>
           <p className="text-[11px] text-[var(--muted)]">Forwarding Quote System</p>
         </div>
       </Link>
