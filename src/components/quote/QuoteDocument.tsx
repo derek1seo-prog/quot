@@ -36,8 +36,8 @@ export function QuoteDocument({
   const localRows = result.chargeCatalog.filter((c) => c.category !== "OCEAN_FREIGHT");
 
   const categoryColPct = 13;
-  const chargeColPct = 29;
-  const curColPct = 8;
+  const chargeColPct = 39;
+  const curColPct = 7;
   const containerColPct =
     (100 - categoryColPct - chargeColPct - curColPct) / Math.max(1, result.columns.length);
 
@@ -111,7 +111,7 @@ export function QuoteDocument({
           <div className="pt-3 text-[11px] text-[var(--foreground)] space-y-0.5">
             <p>
               수신 : <span className="font-medium">{input.customerName}</span>
-              {input.contactName ? ` / ${input.contactName}님` : ""}
+              {input.contactName ? ` / ${input.contactName}` : ""}
             </p>
             <p>
               발신 : <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
@@ -200,10 +200,10 @@ export function QuoteDocument({
             </colgroup>
             <thead>
               <tr className="border-b-2 border-[var(--foreground)]">
-                <th className={`text-left pr-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
+                <th className={`text-left px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
                   구분
                 </th>
-                <th className={`text-left pr-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
+                <th className={`text-left px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
                   Charge
                 </th>
                 <th className={`text-left px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
@@ -245,7 +245,7 @@ export function QuoteDocument({
               ))}
 
               <tr className="print:break-inside-avoid bg-[var(--accent)]">
-                <td colSpan={3} className={`pr-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
+                <td colSpan={3} className={`px-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
                   Grand Total
                 </td>
                 {result.columns.map((col) => (
@@ -361,14 +361,14 @@ function ChargeRow({
       {categoryCell && (
         <td
           rowSpan={categoryCell.rowSpan}
-          className={`pr-3.5 align-top font-semibold text-[var(--muted)] border-r border-[var(--border-subtle)] ${
+          className={`px-3.5 align-top font-semibold text-[var(--muted)] border-r border-[var(--border-subtle)] ${
             dense ? "py-1.5 text-[9.5px]" : "py-2 text-[12px]"
           }`}
         >
           {categoryCell.label}
         </td>
       )}
-      <td className={`pr-3.5 ${dense ? "py-1.5" : "py-2"}`}>
+      <td className={`px-3.5 ${dense ? "py-1.5" : "py-2"}`}>
         {dense ? (
           <p className="font-medium text-[var(--foreground)] text-[10.5px]">
             {label} <span className="text-[var(--muted)] text-[9px]">({sublabel})</span>
@@ -388,9 +388,9 @@ function ChargeRow({
             {item ? (
               <div>
                 <p className={`text-[var(--foreground)] ${dense ? "text-[10.5px]" : ""}`}>{krw(item.amountKrw)}</p>
-                {item.currency !== "KRW" && (
+                {(item.currency !== "KRW" || item.quantity > 1) && (
                   <p className={`text-[var(--muted)] ${dense ? "text-[9px]" : "text-[11px]"}`}>
-                    {foreign(item.rate, item.currency)}
+                    {item.currency !== "KRW" ? foreign(item.rate, item.currency) : krw(item.rate)}
                     {item.quantity > 1 ? ` × ${item.quantity}` : ""}
                   </p>
                 )}
