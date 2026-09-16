@@ -100,8 +100,8 @@
   },
   {
     "id": "CRS",
-    "name": "Container Repositioning Surcharge",
-    "nameKo": "컨테이너 재배치 할증료",
+    "name": "Cost Recovery Surcharge",
+    "nameKo": "비용 보전료",
     "category": "SURCHARGE",
     "unit": "CONTAINER",
     "vatRate": 0,
