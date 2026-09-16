@@ -22,7 +22,7 @@ export default async function DashboardPage() {
     const d = new Date(q.createdAt);
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   });
-  const totalValue = quotes.reduce((sum, q) => sum + q.result.combinedGrandTotalKrw, 0);
+  const totalValue = quotes.reduce((sum, q) => sum + q.result.column.grandTotalKrw, 0);
 
   const stats = [
     {
@@ -143,7 +143,7 @@ export default async function DashboardPage() {
                     {formatDate(q.input.quoteDate)}
                   </td>
                   <td className="px-6 py-4 text-[13.5px] font-medium text-right text-[var(--foreground)] whitespace-nowrap">
-                    {formatCurrency(q.result.combinedGrandTotalKrw, "KRW")}
+                    {formatCurrency(q.result.column.grandTotalKrw, "KRW")}
                   </td>
                 </tr>
               ))}
@@ -172,7 +172,7 @@ export default async function DashboardPage() {
                     {formatDate(q.input.quoteDate)}
                   </span>
                   <span className="text-[13.5px] font-semibold text-[var(--foreground)]">
-                    {formatCurrency(q.result.combinedGrandTotalKrw, "KRW")}
+                    {formatCurrency(q.result.column.grandTotalKrw, "KRW")}
                   </span>
                 </div>
               </Link>

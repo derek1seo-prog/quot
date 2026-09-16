@@ -36,7 +36,7 @@ export function QuoteListRow({
       </td>
       <td className="px-6 py-4 text-[13.5px] text-[var(--muted)]">{formatDate(quote.input.quoteDate)}</td>
       <td className="px-6 py-4 text-[13.5px] font-medium text-right text-[var(--foreground)]">
-        {formatCurrency(quote.result.combinedGrandTotalKrw, "KRW")}
+        {formatCurrency(quote.result.column.grandTotalKrw, "KRW")}
       </td>
       <td className="px-4 py-4 text-right">
         <button

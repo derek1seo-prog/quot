@@ -8,19 +8,14 @@ interface QuoteDocumentProps {
   result: QuoteResult;
   originLabel: string;
   destinationLabel: string;
-  /** Always render the full comparison table, even below the `sm` breakpoint,
-   * and switch to the compact, single-page letter layout (used by the print
+  /** Always render the full table, even below the `sm` breakpoint, and
+   * switch to the compact, single-page letter layout (used by the print
    * route and the PDF export) instead of the spacious on-screen preview. */
   forceTable?: boolean;
 }
 
 function krw(n: number) {
   return `₩${Math.round(n).toLocaleString("en-US")}`;
-}
-
-function foreign(n: number, currency: string) {
-  const symbol = currency === "USD" ? "$" : currency === "CNY" ? "¥" : "";
-  return `${symbol}${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
 
 export function QuoteDocument({
@@ -34,12 +29,13 @@ export function QuoteDocument({
 }: QuoteDocumentProps) {
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
   const localRows = result.chargeCatalog.filter((c) => c.category !== "OCEAN_FREIGHT");
+  const containerSummary = `${result.column.containerLabel} × ${result.column.quantity}`;
 
   const categoryColPct = 13;
-  const chargeColPct = 39;
-  const curColPct = 7;
-  const containerColPct =
-    (100 - categoryColPct - chargeColPct - curColPct) / Math.max(1, result.columns.length);
+  const itemColPct = 35;
+  const curColPct = 12;
+  const qtyColPct = 10;
+  const priceColPct = 30;
 
   return (
     <div
@@ -107,37 +103,27 @@ export function QuoteDocument({
           </div>
         )}
 
-        {forceTable ? (
-          <div className="pt-3 text-[11px] text-[var(--foreground)] space-y-0.5">
-            <p>
-              수신 : <span className="font-medium">{input.customerName}</span>
-              {input.contactName ? ` / ${input.contactName}` : ""}
-            </p>
-            <p>
-              발신 : <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
-            </p>
-          </div>
-        ) : (
-          /* Salutation (on-screen preview) */
-          <div className="pt-6 pb-2 text-[13px] leading-relaxed text-[var(--foreground)]">
-            <p>
-              수신: <span className="font-medium">{input.customerName}</span>
-              {input.contactName ? ` (${input.contactName})` : ""} 귀중
-            </p>
-            <p>
-              발신: <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
-            </p>
-            <p className="mt-3 text-[var(--muted)]">
-              요청하신 견적 운임을 하기와 같이 안내 드리오니 검토 부탁드립니다.
-            </p>
-          </div>
-        )}
+        {/* Addressee - same 수신/발신 format on-screen and in print/PDF */}
+        <div
+          className={`text-[var(--foreground)] space-y-0.5 ${
+            forceTable ? "pt-3 text-[11px]" : "pt-6 pb-2 text-[13px] leading-relaxed"
+          }`}
+        >
+          <p>
+            수신 : <span className="font-medium">{input.customerName}</span>
+            {input.contactName ? ` / ${input.contactName}` : ""}
+          </p>
+          <p>
+            발신 : <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
+          </p>
+        </div>
 
         {forceTable ? (
           <div className="mt-3 grid grid-cols-3 gap-x-6 gap-y-2 py-3 border-t border-b border-[var(--border-subtle)]">
             <InfoField dense label="INCOTERMS" value={input.incoterms} />
             <InfoField dense label="POL" value={originLabel} />
             <InfoField dense label="POD" value={destinationLabel} />
+            <InfoField dense label="CONTAINER" value={containerSummary} />
             <InfoField dense label="VALID UNTIL" value={formatDate(input.validUntil)} />
             <InfoField dense label="EX-RATE" value={`USD 1 = ₩${result.exchangeRate.toLocaleString()}`} />
             {input.hsCode && <InfoField dense label="HS CODE" value={input.hsCode} />}
@@ -149,54 +135,26 @@ export function QuoteDocument({
             <InfoField label="INCOTERMS" value={input.incoterms} />
             <InfoField label="POL" value={originLabel} />
             <InfoField label="POD" value={destinationLabel} />
+            <InfoField label="CONTAINER" value={containerSummary} />
             <InfoField label="VALID UNTIL" value={formatDate(input.validUntil)} />
             <InfoField label="HS CODE" value={input.hsCode || "-"} />
-            <InfoField label="TRANSPORT" value={input.transportMode} />
             <InfoField label="EX-RATE" value={`USD 1 = ₩${result.exchangeRate.toLocaleString()}`} />
           </div>
         )}
 
-        {/* Totals at a glance - on-screen only. In print/PDF the full table
-            (forceTable) always renders, so this would just duplicate the
-            Grand Total row below for no new information. */}
-        {!forceTable && (
-          <div className="mt-6 flex flex-wrap gap-3">
-            {result.columns.map((col) => (
-              <div
-                key={col.containerTypeId}
-                className="flex-1 min-w-[140px] rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--accent-soft)] px-4 py-3"
-              >
-                <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--muted)]">
-                  {col.containerLabel}
-                  {col.quantity > 1 ? ` ×${col.quantity}` : ""}
-                </p>
-                <p className="text-[19px] font-bold text-[var(--accent)] mt-0.5">
-                  {krw(col.grandTotalKrw)}
-                </p>
-                {col.missingRate && (
-                  <p className="text-[11px] font-medium text-[var(--warning)] mt-0.5">
-                    일부 요율 미등록
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Charges - a full comparison table at sm: and up (or always, when
-            forceTable is set for print/export); stacked cards below sm: so
-            a phone never needs to scroll sideways to see a total. */}
+        {/* Charges - a flat table at sm: and up (or always, when forceTable
+            is set for print/export); a stacked card below sm: so a phone
+            never needs to scroll sideways. */}
         <div className={`${forceTable ? "mt-4" : "mt-8"} overflow-x-auto ${forceTable ? "" : "hidden sm:block"}`}>
           <table
-            className={`w-full border-collapse table-fixed ${forceTable ? "text-[10.5px]" : "text-[13px] min-w-[560px]"}`}
+            className={`w-full border-collapse table-fixed ${forceTable ? "text-[10.5px]" : "text-[13px] min-w-[480px]"}`}
           >
             <colgroup>
               <col style={{ width: `${categoryColPct}%` }} />
-              <col style={{ width: `${chargeColPct}%` }} />
+              <col style={{ width: `${itemColPct}%` }} />
               <col style={{ width: `${curColPct}%` }} />
-              {result.columns.map((col) => (
-                <col key={col.containerTypeId} style={{ width: `${containerColPct}%` }} />
-              ))}
+              <col style={{ width: `${qtyColPct}%` }} />
+              <col style={{ width: `${priceColPct}%` }} />
             </colgroup>
             <thead>
               <tr className="border-b-2 border-[var(--foreground)]">
@@ -204,20 +162,17 @@ export function QuoteDocument({
                   구분
                 </th>
                 <th className={`text-left px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
-                  Charge
+                  항목
                 </th>
                 <th className={`text-left px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
-                  CUR
+                  기준통화
                 </th>
-                {result.columns.map((col) => (
-                  <th
-                    key={col.containerTypeId}
-                    className={`text-right px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}
-                  >
-                    {col.containerLabel}
-                    {col.quantity > 1 ? ` ×${col.quantity}` : ""}
-                  </th>
-                ))}
+                <th className={`text-right px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
+                  수량
+                </th>
+                <th className={`text-right px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
+                  견적가
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -225,7 +180,7 @@ export function QuoteDocument({
                 <ChargeRow
                   label={oceanFreightRow.nameKo}
                   sublabel={oceanFreightRow.name}
-                  columns={result.columns}
+                  column={result.column}
                   chargeTypeId={oceanFreightRow.chargeTypeId}
                   dense={forceTable}
                   categoryCell={{ label: "해상운임", rowSpan: 1 }}
@@ -237,7 +192,7 @@ export function QuoteDocument({
                   key={row.chargeTypeId}
                   label={row.nameKo}
                   sublabel={row.name}
-                  columns={result.columns}
+                  column={result.column}
                   chargeTypeId={row.chargeTypeId}
                   dense={forceTable}
                   categoryCell={i === 0 ? { label: "국내 부대비용", rowSpan: localRows.length } : undefined}
@@ -245,36 +200,27 @@ export function QuoteDocument({
               ))}
 
               <tr className="print:break-inside-avoid bg-[var(--accent)]">
-                <td colSpan={3} className={`px-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
-                  Grand Total
+                <td colSpan={4} className={`px-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
+                  최종가격(VAT 별도)
                 </td>
-                {result.columns.map((col) => (
-                  <td key={col.containerTypeId} className={`px-3.5 text-right ${forceTable ? "py-2.5" : "py-3"}`}>
-                    <span className={`font-bold text-white ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}>
-                      {krw(col.grandTotalKrw)}
-                    </span>
-                    {col.missingRate && (
-                      <p className="text-[11px] font-normal text-white/90 mt-0.5">
-                        일부 요율 미등록
-                      </p>
-                    )}
-                  </td>
-                ))}
+                <td className={`px-3.5 text-right ${forceTable ? "py-2.5" : "py-3"}`}>
+                  <span className={`font-bold text-white ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}>
+                    KRW {result.column.grandTotalKrw.toLocaleString()}
+                  </span>
+                  {result.column.missingRate && (
+                    <p className="text-[11px] font-normal text-white/90 mt-0.5">
+                      일부 요율 미등록
+                    </p>
+                  )}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
         {!forceTable && (
-          <div className="sm:hidden mt-8 space-y-4">
-            {result.columns.map((col) => (
-              <MobileChargeCard
-                key={col.containerTypeId}
-                column={col}
-                oceanFreightRow={oceanFreightRow}
-                localRows={localRows}
-              />
-            ))}
+          <div className="sm:hidden mt-8">
+            <MobileChargeCard column={result.column} oceanFreightRow={oceanFreightRow} localRows={localRows} />
           </div>
         )}
 
@@ -336,14 +282,14 @@ function InfoField({ label, value, dense = false }: { label: string; value: stri
 function ChargeRow({
   label,
   sublabel,
-  columns,
+  column,
   chargeTypeId,
   dense = false,
   categoryCell,
 }: {
   label: string;
   sublabel: string;
-  columns: QuoteResult["columns"];
+  column: QuoteResult["column"];
   chargeTypeId: string;
   dense?: boolean;
   /** Renders a rowSpan-merged 구분 (category) cell as the row's first cell -
@@ -352,9 +298,7 @@ function ChargeRow({
    * them. */
   categoryCell?: { label: string; rowSpan: number };
 }) {
-  const firstWithItem = columns
-    .map((c) => c.lineItems.find((li) => li.chargeTypeId === chargeTypeId))
-    .find(Boolean);
+  const item = column.lineItems.find((li) => li.chargeTypeId === chargeTypeId);
 
   return (
     <tr className="border-b border-[var(--border-subtle)] print:break-inside-avoid">
@@ -380,42 +324,27 @@ function ChargeRow({
           </>
         )}
       </td>
-      <td className={`px-3.5 text-[var(--muted)] ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{firstWithItem?.currency ?? "-"}</td>
-      {columns.map((col) => {
-        const item = col.lineItems.find((li) => li.chargeTypeId === chargeTypeId);
-        return (
-          <td key={col.containerTypeId} className={`px-3.5 text-right ${dense ? "py-1.5" : "py-2"}`}>
-            {item ? (
-              <div>
-                <p className={`text-[var(--foreground)] ${dense ? "text-[10.5px]" : ""}`}>{krw(item.amountKrw)}</p>
-                {(item.currency !== "KRW" || item.quantity > 1) && (
-                  <p className={`text-[var(--muted)] ${dense ? "text-[9px]" : "text-[11px]"}`}>
-                    {item.currency !== "KRW" ? foreign(item.rate, item.currency) : krw(item.rate)}
-                    {item.quantity > 1 ? ` × ${item.quantity}` : ""}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <span className={`text-[var(--warning)] ${dense ? "text-[10.5px]" : "text-[12px]"}`}>미등록</span>
-            )}
-          </td>
-        );
-      })}
+      <td className={`px-3.5 text-[var(--muted)] ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.currency ?? "-"}</td>
+      <td className={`px-3.5 text-right text-[var(--muted)] ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.quantity ?? "-"}</td>
+      <td className={`px-3.5 text-right ${dense ? "py-1.5" : "py-2"}`}>
+        {item ? (
+          <span className={`text-[var(--foreground)] ${dense ? "text-[10.5px]" : ""}`}>{krw(item.amountKrw)}</span>
+        ) : (
+          <span className={`text-[var(--warning)] ${dense ? "text-[10.5px]" : "text-[12px]"}`}>미등록</span>
+        )}
+      </td>
     </tr>
   );
 }
 
-/** Mobile (< sm) equivalent of the charges table: one card per container
- * type, stacked vertically instead of laid out as comparison columns, so a
- * phone never needs to scroll sideways to reach a total. Mirrors the
- * table's own grouping (ocean freight, then local charges, then grand
- * total) rather than a simplified summary. */
+/** Mobile (< sm) equivalent of the charges table: one card, stacked line
+ * items instead of a table, so a phone never needs to scroll sideways. */
 function MobileChargeCard({
   column,
   oceanFreightRow,
   localRows,
 }: {
-  column: QuoteResult["columns"][number];
+  column: QuoteResult["column"];
   oceanFreightRow: QuoteResult["chargeCatalog"][number] | undefined;
   localRows: QuoteResult["chargeCatalog"];
 }) {
@@ -440,10 +369,6 @@ function MobileChargeCard({
             chargeTypeId={oceanFreightRow.chargeTypeId}
           />
         )}
-
-        <p className="pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
-          국내 부대비용 / Local &amp; Regional Charges
-        </p>
         {localRows.map((row) => (
           <MobileLineRow
             key={row.chargeTypeId}
@@ -456,10 +381,10 @@ function MobileChargeCard({
       </div>
 
       <div className="flex items-center justify-between px-4 py-3 bg-[var(--sidebar-bg)]/60 border-t border-[var(--border-subtle)]">
-        <span className="text-[13px] font-bold text-[var(--foreground)]">Grand Total</span>
+        <span className="text-[13px] font-bold text-[var(--foreground)]">최종가격(VAT 별도)</span>
         <div className="text-right">
           <span className="text-[15px] font-bold text-[var(--accent)]">
-            {krw(column.grandTotalKrw)}
+            KRW {column.grandTotalKrw.toLocaleString()}
           </span>
           {column.missingRate && (
             <p className="text-[11px] font-normal text-[var(--warning)]">일부 요율 미등록</p>
@@ -478,7 +403,7 @@ function MobileLineRow({
 }: {
   label: string;
   sublabel: string;
-  column: QuoteResult["columns"][number];
+  column: QuoteResult["column"];
   chargeTypeId: string;
 }) {
   const item = column.lineItems.find((li) => li.chargeTypeId === chargeTypeId);
@@ -492,11 +417,8 @@ function MobileLineRow({
         {item ? (
           <>
             <p className="text-[var(--foreground)]">{krw(item.amountKrw)}</p>
-            {item.currency !== "KRW" && (
-              <p className="text-[11px] text-[var(--muted)]">
-                {foreign(item.rate, item.currency)}
-                {item.quantity > 1 ? ` × ${item.quantity}` : ""}
-              </p>
+            {item.quantity > 1 && (
+              <p className="text-[11px] text-[var(--muted)]">수량 × {item.quantity}</p>
             )}
           </>
         ) : (

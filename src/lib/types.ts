@@ -146,7 +146,7 @@ export interface QuoteInput {
   destinationPortId: string;
   incoterms: string;
   hsCode?: string;
-  containers: ContainerSelection[];
+  container: ContainerSelection;
   exchangeRateOverride?: number; // if omitted, use current stored exchange rate
   remarks?: string;
 }
@@ -190,9 +190,8 @@ export interface QuoteResult {
   regionNameKo: string;
   exchangeRate: number;
   exchangeRateCurrency: Currency;
-  columns: QuoteColumn[];
-  combinedGrandTotalKrw: number;
-  /** Canonical, ordered list of every charge row this region/mode can show - used to render a stable table across columns even when a rate is missing. */
+  column: QuoteColumn;
+  /** Canonical, ordered list of every charge row this region/mode can show - used to render a stable table even when a rate is missing. */
   chargeCatalog: ChargeCatalogEntry[];
 }
 

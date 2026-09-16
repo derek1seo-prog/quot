@@ -64,8 +64,9 @@ export default function NewQuotePage() {
   const [incoterms, setIncoterms] = useState("FOB");
   const transportMode: TransportMode = "FCL";
 
-  // Step 2 - containers
-  const [containerQty, setContainerQty] = useState<Record<string, number>>({});
+  // Step 2 - container
+  const [containerTypeId, setContainerTypeId] = useState("");
+  const [containerQuantity, setContainerQuantity] = useState(1);
 
   // Step 3 - basic info
   const [customerName, setCustomerName] = useState("");
@@ -120,14 +121,6 @@ export default function NewQuotePage() {
     [destinationPorts],
   );
 
-  const selectedContainers = useMemo(
-    () =>
-      Object.entries(containerQty)
-        .filter(([, qty]) => qty > 0)
-        .map(([containerTypeId, quantity]) => ({ containerTypeId, quantity })),
-    [containerQty],
-  );
-
   const originPort = meta?.ports.find((p) => p.id === originPortId);
   const destinationPort = meta?.ports.find((p) => p.id === destinationPortId);
   const matchedCustomer = meta?.customers.find((c) => c.name === customerName);
@@ -153,7 +146,7 @@ export default function NewQuotePage() {
       destinationPortId,
       incoterms,
       hsCode,
-      containers: selectedContainers,
+      container: { containerTypeId, quantity: containerQuantity },
       remarks,
     };
   }
@@ -204,7 +197,7 @@ export default function NewQuotePage() {
   }
 
   const step1Valid = Boolean(originPortId && destinationPortId && incoterms);
-  const step2Valid = selectedContainers.length > 0;
+  const step2Valid = Boolean(containerTypeId);
   const step3Valid = Boolean(customerName && preparedBy && quoteDate && validUntil);
 
   if (!meta) {
@@ -279,7 +272,7 @@ export default function NewQuotePage() {
         <Card className="p-6 sm:p-8">
           <h2 className="text-[17px] font-semibold mb-1">컨테이너 타입을 선택하세요</h2>
           <p className="text-[13px] text-[var(--muted)] mb-6">
-            견적에 포함할 컨테이너 타입과 수량을 선택합니다. 여러 타입을 함께 비교할 수 있습니다.
+            견적에 포함할 컨테이너 타입과 수량을 선택합니다.
           </p>
 
           <div
@@ -288,16 +281,13 @@ export default function NewQuotePage() {
             }`}
           >
             {meta.containerTypes.map((ct) => {
-              const qty = containerQty[ct.id] ?? 0;
-              const selected = qty > 0;
+              const selected = ct.id === containerTypeId;
               const rateAvailable = hasRateForContainer(ct.id);
               return (
                 <button
                   key={ct.id}
                   type="button"
-                  onClick={() =>
-                    setContainerQty((prev) => ({ ...prev, [ct.id]: selected ? 0 : 1 }))
-                  }
+                  onClick={() => setContainerTypeId(selected ? "" : ct.id)}
                   className={`text-left p-5 rounded-[var(--radius-md)] border-2 transition-all ${
                     selected
                       ? "border-[var(--accent)] bg-[var(--accent-soft)]"
@@ -329,14 +319,9 @@ export default function NewQuotePage() {
                       <input
                         type="number"
                         min={1}
-                        value={qty}
+                        value={containerQuantity}
                         onFocus={(e) => e.target.select()}
-                        onChange={(e) =>
-                          setContainerQty((prev) => ({
-                            ...prev,
-                            [ct.id]: Math.max(1, Number(e.target.value) || 1),
-                          }))
-                        }
+                        onChange={(e) => setContainerQuantity(Math.max(1, Number(e.target.value) || 1))}
                         className="w-16 h-8 rounded-[var(--radius-sm)] border border-[var(--border)] px-2 text-[13px] bg-white"
                       />
                     </div>

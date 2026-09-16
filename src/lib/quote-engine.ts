@@ -93,15 +93,11 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
       : input.destinationPortId === "busan"
         ? "busan"
         : null;
-  const truckingRatesByContainer = new Map<string, number>();
-  const truckingComplete =
-    Boolean(customer && truckingPrefix) &&
-    input.containers.every((sel) => {
-      const rate = getTruckingRate(customer!, truckingPrefix!, sel.containerTypeId);
-      if (rate == null) return false;
-      truckingRatesByContainer.set(sel.containerTypeId, rate);
-      return true;
-    });
+  const truckingRate =
+    customer && truckingPrefix
+      ? getTruckingRate(customer, truckingPrefix, input.container.containerTypeId)
+      : undefined;
+  const truckingComplete = truckingRate != null;
 
   const containerTypes = getContainerTypes();
   const chargeTypes = getChargeTypes().filter((ct) =>
@@ -113,7 +109,8 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     .filter((ct) => chargeAppliesToRegion(ct, region.id));
   const oceanFreightChargeType = chargeTypes.find((ct) => ct.id === "OCEAN_FREIGHT");
 
-  const columns: QuoteColumn[] = input.containers.map((selection: ContainerSelection) => {
+  const selection: ContainerSelection = input.container;
+  const column: QuoteColumn = (() => {
     const containerType = containerTypes.find((c) => c.id === selection.containerTypeId);
     const label = containerType?.label ?? selection.containerTypeId;
     const qty = Math.max(1, selection.quantity || 1);
@@ -184,9 +181,9 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
       });
     }
 
-    // Customer-specific inland trucking (see resolution above the column loop)
+    // Customer-specific inland trucking (see resolution above)
     if (truckingComplete) {
-      const rate = truckingRatesByContainer.get(selection.containerTypeId)!;
+      const rate = truckingRate!;
       const base = rate * qty;
       lineItems.push({
         chargeTypeId: INLAND_TRUCKING_CHARGE_TYPE_ID,
@@ -221,7 +218,7 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
       grandTotalKrw: oceanFreightSubtotalKrw + localSubtotalKrw,
       missingRate,
     };
-  });
+  })();
 
   const chargeCatalog: ChargeCatalogEntry[] = [
     ...(oceanFreightChargeType
@@ -260,8 +257,7 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     regionNameKo: region.nameKo,
     exchangeRate,
     exchangeRateCurrency: "USD",
-    columns,
-    combinedGrandTotalKrw: columns.reduce((sum, c) => sum + c.grandTotalKrw, 0),
+    column,
     chargeCatalog,
   };
 }

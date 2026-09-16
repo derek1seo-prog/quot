@@ -49,7 +49,7 @@ export function QuoteListCard({
       <div className="flex items-center justify-between mt-1.5">
         <span className="text-[12px] text-[var(--muted)]">{formatDate(quote.input.quoteDate)}</span>
         <span className="text-[13.5px] font-semibold text-[var(--foreground)]">
-          {formatCurrency(quote.result.combinedGrandTotalKrw, "KRW")}
+          {formatCurrency(quote.result.column.grandTotalKrw, "KRW")}
         </span>
       </div>
     </div>
