@@ -13,6 +13,15 @@ type NumberField =
   | "busanTruckingRate20ft"
   | "busanTruckingRate40hq";
 
+// Column widths as percentages of the table (sums to 100) - table-fixed
+// makes these exact regardless of content, so the two ports' columns stay
+// identical width instead of the browser's auto layout redistributing
+// space unevenly between them.
+const nameColPct = 21;
+const contactColPct = 14;
+const rateColPct = 16; // x4 port/size columns = 64
+const actionColWidth = 44; // px - fixed so the hover-delete column never grows past its button
+
 /** Rate fields grouped by port - one heading per port instead of repeating
  * "인천항"/"부산항" in every column label, so the table reads at a glance
  * without needing every field spelled out in full. */
@@ -97,13 +106,19 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     <Card className="overflow-hidden">
       <div className="hidden sm:block relative">
         <div ref={scrollRef} className="overflow-x-auto">
-          <table className="w-full text-left min-w-[600px]">
+          <table className="w-full table-fixed text-left min-w-[760px]">
+            <colgroup>
+              <col style={{ width: `${nameColPct}%` }} />
+              <col style={{ width: `${contactColPct}%` }} />
+              {PORT_GROUPS.flatMap((group) => group.fields.map((f) => <col key={f.field} style={{ width: `${rateColPct}%` }} />))}
+              <col style={{ width: `${actionColWidth}px` }} />
+            </colgroup>
             <thead>
               <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
-                <th rowSpan={2} className="px-4 py-3 font-medium whitespace-nowrap align-bottom">
+                <th rowSpan={2} className="px-4 py-3 font-medium align-bottom">
                   화주
                 </th>
-                <th rowSpan={2} className="px-3 py-3 font-medium whitespace-nowrap align-bottom">
+                <th rowSpan={2} className="px-3 py-3 font-medium align-bottom">
                   담당자
                 </th>
                 {PORT_GROUPS.map((group) => (
@@ -115,14 +130,14 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                     {group.label}
                   </th>
                 ))}
-                <th rowSpan={2} className="w-10" />
+                <th rowSpan={2} />
               </tr>
               <tr className="border-b border-[var(--border-subtle)] text-[11px] text-[var(--muted)]">
                 {PORT_GROUPS.flatMap((group) =>
                   group.fields.map((f, i) => (
                     <th
                       key={f.field}
-                      className={`px-1.5 py-1.5 font-medium text-right whitespace-nowrap w-24 ${
+                      className={`px-1.5 py-1.5 font-medium text-right whitespace-nowrap ${
                         i === 0 ? "border-l border-[var(--border-subtle)]" : ""
                       }`}
                     >
@@ -135,20 +150,20 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
             <tbody>
               {customers.map((c) => (
                 <tr key={c.id} className="border-b border-[var(--border-subtle)] last:border-0 group">
-                  <td className="px-4 py-3 text-[13.5px] font-medium align-middle whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {c.name}
+                  <td className="px-4 py-3 text-[13.5px] font-medium align-middle">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="truncate">{c.name}</span>
                       {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
                     </div>
                   </td>
-                  <td className="px-3 py-3 text-[13.5px] text-[var(--foreground)] align-middle whitespace-nowrap">
+                  <td className="px-3 py-3 text-[13.5px] text-[var(--foreground)] align-middle truncate">
                     {c.contactName ?? "-"}
                   </td>
                   {PORT_GROUPS.flatMap((group) =>
                     group.fields.map((f, i) => (
                       <td
                         key={f.field}
-                        className={`px-1 py-2 align-middle ${i === 0 ? "border-l border-[var(--border-subtle)]" : ""}`}
+                        className={`px-1.5 py-2 align-middle ${i === 0 ? "border-l border-[var(--border-subtle)]" : ""}`}
                       >
                         <RateCell
                           value={c[f.field] ?? null}
