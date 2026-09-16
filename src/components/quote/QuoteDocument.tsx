@@ -18,6 +18,11 @@ function krw(n: number) {
   return `₩${Math.round(n).toLocaleString("en-US")}`;
 }
 
+function foreign(n: number, currency: string) {
+  const symbol = currency === "USD" ? "$" : currency === "CNY" ? "¥" : "";
+  return `${symbol}${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+}
+
 export function QuoteDocument({
   company,
   quoteNumber,
@@ -32,10 +37,11 @@ export function QuoteDocument({
   const containerSummary = `${result.column.containerLabel} × ${result.column.quantity}`;
 
   const categoryColPct = 13;
-  const itemColPct = 35;
-  const curColPct = 12;
-  const qtyColPct = 10;
-  const priceColPct = 30;
+  const itemColPct = 36;
+  const curColPct = 13;
+  const rateColPct = 11;
+  const qtyColPct = 7;
+  const priceColPct = 20;
 
   return (
     <div
@@ -153,6 +159,7 @@ export function QuoteDocument({
               <col style={{ width: `${categoryColPct}%` }} />
               <col style={{ width: `${itemColPct}%` }} />
               <col style={{ width: `${curColPct}%` }} />
+              <col style={{ width: `${rateColPct}%` }} />
               <col style={{ width: `${qtyColPct}%` }} />
               <col style={{ width: `${priceColPct}%` }} />
             </colgroup>
@@ -166,6 +173,9 @@ export function QuoteDocument({
                 </th>
                 <th className={`text-left px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
                   기준통화
+                </th>
+                <th className={`text-right px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
+                  단가
                 </th>
                 <th className={`text-right px-3.5 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1.5 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
                   수량
@@ -200,7 +210,7 @@ export function QuoteDocument({
               ))}
 
               <tr className="print:break-inside-avoid bg-[var(--accent)]">
-                <td colSpan={4} className={`px-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
+                <td colSpan={5} className={`px-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
                   최종가격(VAT 별도)
                 </td>
                 <td className={`px-3.5 text-right ${forceTable ? "py-2.5" : "py-3"}`}>
@@ -325,6 +335,9 @@ function ChargeRow({
         )}
       </td>
       <td className={`px-3.5 text-[var(--muted)] ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.currency ?? "-"}</td>
+      <td className={`px-3.5 text-right text-[var(--muted)] ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>
+        {item ? item.rate.toLocaleString("en-US") : "-"}
+      </td>
       <td className={`px-3.5 text-right text-[var(--muted)] ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.quantity ?? "-"}</td>
       <td className={`px-3.5 text-right ${dense ? "py-1.5" : "py-2"}`}>
         {item ? (
@@ -352,8 +365,7 @@ function MobileChargeCard({
     <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-[var(--sidebar-bg)]">
         <span className="font-semibold text-[14px] text-[var(--foreground)]">
-          {column.containerLabel}
-          {column.quantity > 1 ? ` ×${column.quantity}` : ""}
+          {column.quantity}× {column.containerLabel}
         </span>
         <span className="text-[15px] font-bold text-[var(--accent)]">
           {krw(column.grandTotalKrw)}
@@ -417,8 +429,15 @@ function MobileLineRow({
         {item ? (
           <>
             <p className="text-[var(--foreground)]">{krw(item.amountKrw)}</p>
-            {item.quantity > 1 && (
-              <p className="text-[11px] text-[var(--muted)]">수량 × {item.quantity}</p>
+            {item.currency !== "KRW" ? (
+              <p className="text-[11px] text-[var(--muted)]">
+                {foreign(item.rate, item.currency)}
+                {item.quantity > 1 ? ` × ${item.quantity}` : ""}
+              </p>
+            ) : (
+              item.quantity > 1 && (
+                <p className="text-[11px] text-[var(--muted)]">수량 × {item.quantity}</p>
+              )
             )}
           </>
         ) : (
