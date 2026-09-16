@@ -130,7 +130,7 @@ export function RegionRatesEditor({
               <thead>
                 <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
                   <th rowSpan={2} className="text-left py-2 pr-3 font-medium align-bottom">
-                    항구
+                    항구 (USD)
                   </th>
                   {DESTINATION_PORTS.map((dest) => (
                     <th
@@ -290,8 +290,13 @@ function MobilePortRateCard({
 }) {
   return (
     <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] p-4">
-      <p className="font-medium text-[var(--foreground)] text-[14px]">{port.nameKo}</p>
-      <p className="text-[11px] text-[var(--muted)]">{port.name}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium text-[var(--foreground)] text-[14px]">{port.nameKo}</p>
+          <p className="text-[11px] text-[var(--muted)]">{port.name}</p>
+        </div>
+        <Badge tone="neutral">USD</Badge>
+      </div>
       <div className="mt-3 space-y-3">
         {DESTINATION_PORTS.map((dest) => (
           <div key={dest.portId}>
