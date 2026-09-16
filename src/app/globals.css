@@ -72,9 +72,14 @@ body {
   .print-only {
     display: block !important;
   }
+  /* Margin lives on QuoteDocument's own forceTable padding instead of here -
+     that's the one place that applies to both a real browser print AND the
+     "PDF 다운로드" path (html2canvas screenshotting an off-screen node,
+     which never triggers @page). Margin here would only double it up for
+     real prints and do nothing for the PDF export. */
   @page {
     size: A4;
-    margin: 12mm;
+    margin: 0;
   }
 }
 

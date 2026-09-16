@@ -35,9 +35,11 @@ export function QuoteDocument({
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
   const localRows = result.chargeCatalog.filter((c) => c.category !== "OCEAN_FREIGHT");
 
-  const chargeColPct = 40;
+  const categoryColPct = 13;
+  const chargeColPct = 29;
   const curColPct = 8;
-  const containerColPct = (100 - chargeColPct - curColPct) / Math.max(1, result.columns.length);
+  const containerColPct =
+    (100 - categoryColPct - chargeColPct - curColPct) / Math.max(1, result.columns.length);
 
   return (
     <div
@@ -47,7 +49,7 @@ export function QuoteDocument({
           : "max-w-[900px] rounded-[var(--radius-lg)] border border-[var(--border-subtle)] shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
       }`}
     >
-      <div className={`print:p-0 ${forceTable ? "p-0" : "p-8 sm:p-12"}`}>
+      <div className={forceTable ? "p-[12mm]" : "p-8 sm:p-12"}>
         {forceTable ? (
           <div className="flex items-start justify-between gap-4 pb-3 border-b-2 border-[var(--foreground)]">
             <div className="flex items-center gap-2.5">
@@ -190,6 +192,7 @@ export function QuoteDocument({
             className={`w-full border-collapse table-fixed ${forceTable ? "text-[10.5px]" : "text-[13px] min-w-[560px]"}`}
           >
             <colgroup>
+              <col style={{ width: `${categoryColPct}%` }} />
               <col style={{ width: `${chargeColPct}%` }} />
               <col style={{ width: `${curColPct}%` }} />
               {result.columns.map((col) => (
@@ -198,6 +201,9 @@ export function QuoteDocument({
             </colgroup>
             <thead>
               <tr className="border-b-2 border-[var(--foreground)]">
+                <th className={`text-left pr-3 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
+                  구분
+                </th>
                 <th className={`text-left pr-3 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
                   Charge
                 </th>
@@ -217,37 +223,17 @@ export function QuoteDocument({
             </thead>
             <tbody>
               {oceanFreightRow && (
-                <>
-                  <ChargeRow
-                    label={oceanFreightRow.nameKo}
-                    sublabel={oceanFreightRow.name}
-                    columns={result.columns}
-                    chargeTypeId={oceanFreightRow.chargeTypeId}
-                    dense={forceTable}
-                  />
-                  <tr className="border-b border-[var(--border-subtle)] print:break-inside-avoid">
-                    <td colSpan={2} className={`pr-3 font-semibold text-[var(--muted)] ${forceTable ? "py-1.5 text-[11px]" : "py-2 text-[12.5px]"}`}>
-                      Sub Total
-                    </td>
-                    {result.columns.map((col) => (
-                      <td
-                        key={col.containerTypeId}
-                        className={`px-3 text-right font-semibold text-[var(--muted)] ${forceTable ? "py-1.5 text-[11px]" : "py-2 text-[12.5px]"}`}
-                      >
-                        {krw(col.oceanFreightSubtotalKrw)}
-                      </td>
-                    ))}
-                  </tr>
-                </>
+                <ChargeRow
+                  label={oceanFreightRow.nameKo}
+                  sublabel={oceanFreightRow.name}
+                  columns={result.columns}
+                  chargeTypeId={oceanFreightRow.chargeTypeId}
+                  dense={forceTable}
+                  categoryCell={{ label: "해상운임", rowSpan: 1 }}
+                />
               )}
 
-              <tr className="print:break-inside-avoid">
-                <td colSpan={2 + result.columns.length} className={`pb-1 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "pt-3 text-[9.5px]" : "pt-5 text-[11px]"}`}>
-                  국내 부대비용 / Local &amp; Regional Charges
-                </td>
-              </tr>
-
-              {localRows.map((row) => (
+              {localRows.map((row, i) => (
                 <ChargeRow
                   key={row.chargeTypeId}
                   label={row.nameKo}
@@ -255,34 +241,21 @@ export function QuoteDocument({
                   columns={result.columns}
                   chargeTypeId={row.chargeTypeId}
                   dense={forceTable}
+                  categoryCell={i === 0 ? { label: "국내 부대비용", rowSpan: localRows.length } : undefined}
                 />
               ))}
 
-              <tr className="border-b border-[var(--border-subtle)] print:break-inside-avoid">
-                <td colSpan={2} className={`pr-3 font-semibold text-[var(--muted)] ${forceTable ? "py-1.5 text-[11px]" : "py-2 text-[12.5px]"}`}>
-                  Sub Total
-                </td>
-                {result.columns.map((col) => (
-                  <td
-                    key={col.containerTypeId}
-                    className={`px-3 text-right font-semibold text-[var(--muted)] ${forceTable ? "py-1.5 text-[11px]" : "py-2 text-[12.5px]"}`}
-                  >
-                    {krw(col.localSubtotalKrw)}
-                  </td>
-                ))}
-              </tr>
-
-              <tr className="print:break-inside-avoid">
-                <td colSpan={2} className={`pr-3 font-bold ${forceTable ? "pt-3 text-[13.5px]" : "pt-4 text-[15px]"}`}>
+              <tr className="print:break-inside-avoid bg-[var(--accent)]">
+                <td colSpan={3} className={`pr-3 font-bold text-white ${forceTable ? "py-2 text-[13.5px]" : "py-3 text-[15px]"}`}>
                   Grand Total
                 </td>
                 {result.columns.map((col) => (
-                  <td key={col.containerTypeId} className={`px-3 text-right ${forceTable ? "pt-3" : "pt-4"}`}>
-                    <span className={`font-bold text-[var(--accent)] ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}>
+                  <td key={col.containerTypeId} className={`px-3 text-right ${forceTable ? "py-2" : "py-3"}`}>
+                    <span className={`font-bold text-white ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}>
                       {krw(col.grandTotalKrw)}
                     </span>
                     {col.missingRate && (
-                      <p className="text-[11px] font-normal text-[var(--warning)] mt-0.5">
+                      <p className="text-[11px] font-normal text-white/90 mt-0.5">
                         일부 요율 미등록
                       </p>
                     )}
@@ -367,12 +340,18 @@ function ChargeRow({
   columns,
   chargeTypeId,
   dense = false,
+  categoryCell,
 }: {
   label: string;
   sublabel: string;
   columns: QuoteResult["columns"];
   chargeTypeId: string;
   dense?: boolean;
+  /** Renders a rowSpan-merged 구분 (category) cell as the row's first cell -
+   * pass this only on the first row of a category group; later rows in the
+   * same group omit it, since the earlier cell's rowSpan already covers
+   * them. */
+  categoryCell?: { label: string; rowSpan: number };
 }) {
   const firstWithItem = columns
     .map((c) => c.lineItems.find((li) => li.chargeTypeId === chargeTypeId))
@@ -380,6 +359,16 @@ function ChargeRow({
 
   return (
     <tr className="border-b border-[var(--border-subtle)] print:break-inside-avoid">
+      {categoryCell && (
+        <td
+          rowSpan={categoryCell.rowSpan}
+          className={`pr-3 align-top font-semibold text-[var(--muted)] border-r border-[var(--border-subtle)] ${
+            dense ? "py-1 text-[9.5px]" : "py-2 text-[12px]"
+          }`}
+        >
+          {categoryCell.label}
+        </td>
+      )}
       <td className={`pr-3 ${dense ? "py-1" : "py-2"}`}>
         {dense ? (
           <p className="font-medium text-[var(--foreground)] text-[10.5px]">
@@ -420,8 +409,8 @@ function ChargeRow({
 /** Mobile (< sm) equivalent of the charges table: one card per container
  * type, stacked vertically instead of laid out as comparison columns, so a
  * phone never needs to scroll sideways to reach a total. Mirrors the
- * table's own grouping (ocean freight + its subtotal, local charges + its
- * subtotal, grand total) rather than a simplified summary. */
+ * table's own grouping (ocean freight, then local charges, then grand
+ * total) rather than a simplified summary. */
 function MobileChargeCard({
   column,
   oceanFreightRow,
@@ -445,15 +434,12 @@ function MobileChargeCard({
 
       <div className="px-4">
         {oceanFreightRow && (
-          <>
-            <MobileLineRow
-              label={oceanFreightRow.nameKo}
-              sublabel={oceanFreightRow.name}
-              column={column}
-              chargeTypeId={oceanFreightRow.chargeTypeId}
-            />
-            <MobileSubtotalRow label="Sub Total" amountKrw={column.oceanFreightSubtotalKrw} />
-          </>
+          <MobileLineRow
+            label={oceanFreightRow.nameKo}
+            sublabel={oceanFreightRow.name}
+            column={column}
+            chargeTypeId={oceanFreightRow.chargeTypeId}
+          />
         )}
 
         <p className="pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
@@ -468,7 +454,6 @@ function MobileChargeCard({
             chargeTypeId={row.chargeTypeId}
           />
         ))}
-        <MobileSubtotalRow label="Sub Total" amountKrw={column.localSubtotalKrw} />
       </div>
 
       <div className="flex items-center justify-between px-4 py-3 bg-[var(--sidebar-bg)]/60 border-t border-[var(--border-subtle)]">
@@ -519,15 +504,6 @@ function MobileLineRow({
           <span className="text-[var(--warning)] text-[12px]">미등록</span>
         )}
       </div>
-    </div>
-  );
-}
-
-function MobileSubtotalRow({ label, amountKrw }: { label: string; amountKrw: number }) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] text-[12.5px] font-semibold text-[var(--muted)]">
-      <span>{label}</span>
-      <span>{krw(amountKrw)}</span>
     </div>
   );
 }
