@@ -16,6 +16,22 @@ interface Props {
   initialChargeRates: ChargeRate[];
 }
 
+// The Korea-side leg (Incheon vs Busan) changes ocean freight just as much
+// as origin port and container type do, so every origin port needs a rate
+// per destination x container type - grouped headers, same pattern as the
+// customer trucking-rate table.
+const DESTINATION_PORTS: { portId: "incheon" | "busan"; label: string }[] = [
+  { portId: "incheon", label: "인천" },
+  { portId: "busan", label: "부산" },
+];
+
+// Column widths as percentages of the table (sums to 100) - table-fixed
+// makes these exact regardless of content, so all four rate columns stay
+// identical width instead of the browser's auto layout redistributing
+// space unevenly between them (see CustomersTable for the same fix).
+const oceanPortColPct = 24;
+const oceanRateColPct = 19; // x4 destination/size columns = 76
+
 export function RegionRatesEditor({
   regionId,
   regionNameKo,
@@ -28,17 +44,25 @@ export function RegionRatesEditor({
   const [oceanFreightRates, setOceanFreightRates] = useState(initialOceanFreightRates);
   const [chargeRates, setChargeRates] = useState(initialChargeRates);
 
-  function findOceanFreight(portId: string, containerTypeId: string) {
+  function findOceanFreight(portId: string, destinationPortId: string, containerTypeId: string) {
     return oceanFreightRates.find(
-      (r) => r.portId === portId && r.containerTypeId === containerTypeId,
+      (r) =>
+        r.portId === portId &&
+        r.destinationPortId === destinationPortId &&
+        r.containerTypeId === containerTypeId,
     );
   }
 
-  async function saveOceanFreight(portId: string, containerTypeId: string, rate: number) {
+  async function saveOceanFreight(
+    portId: string,
+    destinationPortId: string,
+    containerTypeId: string,
+    rate: number,
+  ) {
     const res = await fetch("/api/rates/ocean-freight", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ portId, containerTypeId, rate, currency: "USD" }),
+      body: JSON.stringify({ portId, destinationPortId, containerTypeId, rate, currency: "USD" }),
     });
     if (!res.ok) throw new Error("save failed");
     const updated = (await res.json()) as OceanFreightRate;
@@ -94,15 +118,43 @@ export function RegionRatesEditor({
         </CardHeader>
         <CardContent>
           <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full min-w-[480px] border-collapse text-[13px]">
+            <table className="w-full table-fixed min-w-[680px] border-collapse text-[13px]">
+              <colgroup>
+                <col style={{ width: `${oceanPortColPct}%` }} />
+                {DESTINATION_PORTS.flatMap((dest) =>
+                  containerTypes.map((ct) => (
+                    <col key={`${dest.portId}-${ct.id}`} style={{ width: `${oceanRateColPct}%` }} />
+                  )),
+                )}
+              </colgroup>
               <thead>
                 <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
-                  <th className="text-left py-2 pr-3 font-medium">항구</th>
-                  {containerTypes.map((ct) => (
-                    <th key={ct.id} className="text-right py-2 px-2 font-medium w-32">
-                      {ct.label}
+                  <th rowSpan={2} className="text-left py-2 pr-3 font-medium align-bottom">
+                    항구
+                  </th>
+                  {DESTINATION_PORTS.map((dest) => (
+                    <th
+                      key={dest.portId}
+                      colSpan={containerTypes.length}
+                      className="py-2 px-2 font-medium text-center border-l border-[var(--border-subtle)]"
+                    >
+                      {dest.label}
                     </th>
                   ))}
+                </tr>
+                <tr className="border-b border-[var(--border-subtle)] text-[11px] text-[var(--muted)]">
+                  {DESTINATION_PORTS.flatMap((dest) =>
+                    containerTypes.map((ct, i) => (
+                      <th
+                        key={`${dest.portId}-${ct.id}`}
+                        className={`py-1.5 px-2 font-medium text-right ${
+                          i === 0 ? "border-l border-[var(--border-subtle)]" : ""
+                        }`}
+                      >
+                        {ct.label}
+                      </th>
+                    )),
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -112,17 +164,22 @@ export function RegionRatesEditor({
                       <p className="font-medium text-[var(--foreground)]">{port.nameKo}</p>
                       <p className="text-[11px] text-[var(--muted)]">{port.name}</p>
                     </td>
-                    {containerTypes.map((ct) => {
-                      const existing = findOceanFreight(port.id, ct.id);
-                      return (
-                        <td key={ct.id} className="py-2 px-2">
-                          <RateCell
-                            value={existing?.rate ?? null}
-                            onSave={(v) => saveOceanFreight(port.id, ct.id, v)}
-                          />
-                        </td>
-                      );
-                    })}
+                    {DESTINATION_PORTS.flatMap((dest) =>
+                      containerTypes.map((ct, i) => {
+                        const existing = findOceanFreight(port.id, dest.portId, ct.id);
+                        return (
+                          <td
+                            key={`${dest.portId}-${ct.id}`}
+                            className={`py-2 px-2 ${i === 0 ? "border-l border-[var(--border-subtle)]" : ""}`}
+                          >
+                            <RateCell
+                              value={existing?.rate ?? null}
+                              onSave={(v) => saveOceanFreight(port.id, dest.portId, ct.id, v)}
+                            />
+                          </td>
+                        );
+                      }),
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -216,10 +273,10 @@ export function RegionRatesEditor({
   );
 }
 
-/** Mobile (< sm) equivalent of the ocean freight table: one card per port,
- * each container type as its own editable row, using the exact same
- * RateCell + save callback the table uses - just laid out vertically
- * instead of as columns. */
+/** Mobile (< sm) equivalent of the ocean freight table: one card per
+ * origin port, grouped by destination (Incheon/Busan) then container
+ * type, using the exact same RateCell + save callback the table uses -
+ * just laid out vertically instead of as columns. */
 function MobilePortRateCard({
   port,
   containerTypes,
@@ -228,25 +285,33 @@ function MobilePortRateCard({
 }: {
   port: Port;
   containerTypes: ContainerType[];
-  findRate: (portId: string, containerTypeId: string) => OceanFreightRate | undefined;
-  onSave: (portId: string, containerTypeId: string, rate: number) => Promise<void>;
+  findRate: (portId: string, destinationPortId: string, containerTypeId: string) => OceanFreightRate | undefined;
+  onSave: (portId: string, destinationPortId: string, containerTypeId: string, rate: number) => Promise<void>;
 }) {
   return (
     <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] p-4">
       <p className="font-medium text-[var(--foreground)] text-[14px]">{port.nameKo}</p>
       <p className="text-[11px] text-[var(--muted)]">{port.name}</p>
-      <div className="mt-3 space-y-2.5">
-        {containerTypes.map((ct) => {
-          const existing = findRate(port.id, ct.id);
-          return (
-            <div key={ct.id} className="flex items-center justify-between gap-3">
-              <span className="text-[13px] text-[var(--muted)] shrink-0">{ct.label}</span>
-              <div className="w-32">
-                <RateCell value={existing?.rate ?? null} onSave={(v) => onSave(port.id, ct.id, v)} />
-              </div>
+      <div className="mt-3 space-y-3">
+        {DESTINATION_PORTS.map((dest) => (
+          <div key={dest.portId}>
+            <p className="text-[11px] text-[var(--muted)] uppercase tracking-wide mb-1.5">{dest.label}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {containerTypes.map((ct) => {
+                const existing = findRate(port.id, dest.portId, ct.id);
+                return (
+                  <div key={ct.id}>
+                    <span className="text-[11px] text-[var(--muted)]">{ct.label}</span>
+                    <RateCell
+                      value={existing?.rate ?? null}
+                      onSave={(v) => onSave(port.id, dest.portId, ct.id, v)}
+                    />
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

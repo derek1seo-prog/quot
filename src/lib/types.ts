@@ -66,10 +66,13 @@ export interface ChargeType {
   transportModes: TransportMode[]; // which modes this charge applies to
 }
 
-/** Ocean freight is keyed by (portId, containerTypeId) - it is lane specific. */
+/** Ocean freight is keyed by (portId, destinationPortId, containerTypeId) -
+ * it is lane specific, and the Korea-side leg (Incheon vs Busan) changes the
+ * rate just as much as the origin port and container type do. */
 export interface OceanFreightRate {
   id: string;
   portId: string;
+  destinationPortId: string;
   containerTypeId: string;
   currency: Currency;
   rate: number;

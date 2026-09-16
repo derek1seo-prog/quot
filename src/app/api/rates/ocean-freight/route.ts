@@ -10,15 +10,20 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   const body = (await req.json()) as Partial<OceanFreightRate> & {
     portId: string;
+    destinationPortId: string;
     containerTypeId: string;
     rate: number;
   };
   const existing = (await getOceanFreightRates()).find(
-    (r) => r.portId === body.portId && r.containerTypeId === body.containerTypeId,
+    (r) =>
+      r.portId === body.portId &&
+      r.destinationPortId === body.destinationPortId &&
+      r.containerTypeId === body.containerTypeId,
   );
   const updated: OceanFreightRate = {
     id: existing?.id ?? generateId("of"),
     portId: body.portId,
+    destinationPortId: body.destinationPortId,
     containerTypeId: body.containerTypeId,
     currency: body.currency ?? existing?.currency ?? "USD",
     rate: body.rate,

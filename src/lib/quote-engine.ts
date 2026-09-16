@@ -118,9 +118,12 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     const lineItems: QuoteLineItem[] = [];
     let missingRate = false;
 
-    // Ocean freight - port + container specific
+    // Ocean freight - origin port + destination port + container specific
     const oceanFreight = oceanFreightRates.find(
-      (r) => r.portId === originPort.id && r.containerTypeId === selection.containerTypeId,
+      (r) =>
+        r.portId === originPort.id &&
+        r.destinationPortId === input.destinationPortId &&
+        r.containerTypeId === selection.containerTypeId,
     );
     if (!oceanFreight) {
       missingRate = true;

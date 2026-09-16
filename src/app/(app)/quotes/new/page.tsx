@@ -126,9 +126,12 @@ export default function NewQuotePage() {
   const matchedCustomer = meta?.customers.find((c) => c.name === customerName);
 
   function hasRateForContainer(containerTypeId: string) {
-    if (!meta || !originPortId) return false;
+    if (!meta || !originPortId || !destinationPortId) return false;
     return meta.oceanFreightRates.some(
-      (r) => r.portId === originPortId && r.containerTypeId === containerTypeId,
+      (r) =>
+        r.portId === originPortId &&
+        r.destinationPortId === destinationPortId &&
+        r.containerTypeId === containerTypeId,
     );
   }
 

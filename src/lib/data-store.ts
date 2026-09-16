@@ -132,8 +132,30 @@ async function writeMutable<T>(file: string, data: T): Promise<void> {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n", "utf-8");
 }
 
+/** Ocean freight rates saved before the Incheon/Busan split were keyed by
+ * (portId, containerTypeId) only, with a single rate that applied to both
+ * Korea-side destinations. Expand each legacy record into one per
+ * destination on read (duplicating its rate as a starting point - same
+ * number, now editable independently) so existing quotes keep working
+ * instead of every lane suddenly showing "미등록". Mirrors the
+ * container/column normalization below: this only affects the read
+ * result, though a later write naturally persists the expanded shape. */
+function normalizeOceanFreightRates(
+  rates: (OceanFreightRate & { destinationPortId?: string })[],
+): OceanFreightRate[] {
+  return rates.flatMap((r) => {
+    if (r.destinationPortId) return [r as OceanFreightRate];
+    return (["incheon", "busan"] as const).map((destinationPortId) => ({
+      ...r,
+      id: `${r.id}-${destinationPortId}`,
+      destinationPortId,
+    }));
+  });
+}
+
 export async function getOceanFreightRates(): Promise<OceanFreightRate[]> {
-  return readMutable<OceanFreightRate[]>("ocean-freight-rates.json");
+  const rates = await readMutable<OceanFreightRate[]>("ocean-freight-rates.json");
+  return normalizeOceanFreightRates(rates);
 }
 
 export async function getChargeRates(): Promise<ChargeRate[]> {

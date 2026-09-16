@@ -1,10 +1,16 @@
 [
-  { "id": "of-shanghai-20ft", "portId": "shanghai", "containerTypeId": "20ft", "currency": "USD", "rate": 300, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
-  { "id": "of-shanghai-40hq", "portId": "shanghai", "containerTypeId": "40hq", "currency": "USD", "rate": 590, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-shanghai-incheon-20ft", "portId": "shanghai", "destinationPortId": "incheon", "containerTypeId": "20ft", "currency": "USD", "rate": 300, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-shanghai-incheon-40hq", "portId": "shanghai", "destinationPortId": "incheon", "containerTypeId": "40hq", "currency": "USD", "rate": 590, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-shanghai-busan-20ft", "portId": "shanghai", "destinationPortId": "busan", "containerTypeId": "20ft", "currency": "USD", "rate": 300, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-shanghai-busan-40hq", "portId": "shanghai", "destinationPortId": "busan", "containerTypeId": "40hq", "currency": "USD", "rate": 590, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
 
-  { "id": "of-ningbo-20ft", "portId": "ningbo", "containerTypeId": "20ft", "currency": "USD", "rate": 300, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
-  { "id": "of-ningbo-40hq", "portId": "ningbo", "containerTypeId": "40hq", "currency": "USD", "rate": 590, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-ningbo-incheon-20ft", "portId": "ningbo", "destinationPortId": "incheon", "containerTypeId": "20ft", "currency": "USD", "rate": 300, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-ningbo-incheon-40hq", "portId": "ningbo", "destinationPortId": "incheon", "containerTypeId": "40hq", "currency": "USD", "rate": 590, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-ningbo-busan-20ft", "portId": "ningbo", "destinationPortId": "busan", "containerTypeId": "20ft", "currency": "USD", "rate": 300, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-ningbo-busan-40hq", "portId": "ningbo", "destinationPortId": "busan", "containerTypeId": "40hq", "currency": "USD", "rate": 590, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
 
-  { "id": "of-shekou-20ft", "portId": "shekou", "containerTypeId": "20ft", "currency": "USD", "rate": 60, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
-  { "id": "of-shekou-40hq", "portId": "shekou", "containerTypeId": "40hq", "currency": "USD", "rate": 110, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" }
+  { "id": "of-shekou-incheon-20ft", "portId": "shekou", "destinationPortId": "incheon", "containerTypeId": "20ft", "currency": "USD", "rate": 60, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-shekou-incheon-40hq", "portId": "shekou", "destinationPortId": "incheon", "containerTypeId": "40hq", "currency": "USD", "rate": 110, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-shekou-busan-20ft", "portId": "shekou", "destinationPortId": "busan", "containerTypeId": "20ft", "currency": "USD", "rate": 60, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" },
+  { "id": "of-shekou-busan-40hq", "portId": "shekou", "destinationPortId": "busan", "containerTypeId": "40hq", "currency": "USD", "rate": 110, "effectiveFrom": "2026-09-01", "effectiveTo": "2026-09-30", "updatedAt": "2026-09-11" }
 ]
