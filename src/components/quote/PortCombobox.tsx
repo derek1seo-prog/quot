@@ -87,13 +87,22 @@ export function PortCombobox({
     }
   }
 
+  const showSelectedIcon = !open && Boolean(selectedPort);
+
   return (
     <div className="relative" ref={wrapperRef}>
+      {showSelectedIcon && (
+        <Ship
+          size={14}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+        />
+      )}
       <Input
         ref={inputRef}
         type="text"
         value={open ? query : selectedPort ? portLabel(selectedPort) : ""}
         placeholder={placeholder}
+        className={showSelectedIcon ? "pl-8" : ""}
         onFocus={() => {
           setOpen(true);
           setQuery("");
