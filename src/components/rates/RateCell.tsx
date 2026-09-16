@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { formatNumber } from "@/lib/format";
 import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 
@@ -16,6 +17,7 @@ export function RateCell({
   placeholder?: string;
 }) {
   const [draft, setDraft] = useState<string>(value != null ? String(value) : "");
+  const [focused, setFocused] = useState(false);
   const [state, setState] = useState<SaveState>("idle");
 
   async function commit() {
@@ -32,14 +34,24 @@ export function RateCell({
     }
   }
 
+  const displayValue = focused ? draft : draft !== "" ? formatNumber(Number(draft)) : "";
+
   return (
     <div className="relative">
       <input
-        type="number"
-        value={draft}
+        type="text"
+        inputMode="numeric"
+        value={displayValue}
         placeholder={placeholder}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
+        onFocus={(e) => {
+          setFocused(true);
+          e.target.select();
+        }}
+        onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, ""))}
+        onBlur={() => {
+          setFocused(false);
+          commit();
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") (e.target as HTMLInputElement).blur();
         }}
