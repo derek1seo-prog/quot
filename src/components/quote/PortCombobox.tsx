@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/Field";
 import { useDebouncedValue } from "@/lib/hooks";
 import type { Port } from "@/lib/types";
+import { Ship } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface PortOption {
@@ -125,10 +126,11 @@ export function PortCombobox({
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => selectOption(option.port)}
-                    className={`w-full text-left px-3 py-2 text-[13.5px] text-[var(--foreground)] ${
+                    className={`w-full flex items-center gap-2 text-left px-3 py-2 text-[13.5px] text-[var(--foreground)] ${
                       index === clampedHighlightedIndex ? "bg-[var(--sidebar-bg)]" : "hover:bg-[var(--sidebar-bg)]"
                     }`}
                   >
+                    <Ship size={14} className="shrink-0 text-[var(--muted)]" />
                     {portLabel(option.port)}
                   </button>
                 </div>
