@@ -8,9 +8,9 @@ interface QuoteDocumentProps {
   result: QuoteResult;
   originLabel: string;
   destinationLabel: string;
-  /** Always render the full comparison table, even below the `sm` breakpoint.
-   * Used by the print route so printed/PDF output stays the formal letter
-   * layout regardless of viewport width. */
+  /** Always render the full comparison table, even below the `sm` breakpoint,
+   * and switch to the compact, single-page letter layout (used by the print
+   * route and the PDF export) instead of the spacious on-screen preview. */
   forceTable?: boolean;
 }
 
@@ -35,107 +35,179 @@ export function QuoteDocument({
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
   const localRows = result.chargeCatalog.filter((c) => c.category !== "OCEAN_FREIGHT");
 
+  const chargeColPct = 40;
+  const curColPct = 8;
+  const containerColPct = (100 - chargeColPct - curColPct) / Math.max(1, result.columns.length);
+
   return (
-    <div className="bg-white text-[var(--foreground)] w-full max-w-[900px] mx-auto rounded-[var(--radius-lg)] border border-[var(--border-subtle)] shadow-[0_1px_3px_rgba(0,0,0,0.06)] print:shadow-none print:border-0 print:rounded-none overflow-hidden">
-      <div className="p-8 sm:p-12 print:p-0">
-        {/* Letterhead */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b-2 border-[var(--foreground)]">
-          <div>
-            <h1 className="text-[22px] font-bold tracking-tight">{company.name}</h1>
-            {company.nameKo && (
-              <p className="text-[13px] text-[var(--muted)] mt-0.5">{company.nameKo}</p>
-            )}
-            <p className="text-[12px] text-[var(--muted)] mt-3 leading-relaxed max-w-sm">
-              {company.addressLines.join(", ")}
-            </p>
-            <p className="text-[12px] text-[var(--muted)] mt-1">
-              TEL {company.tel}
-              {company.fax ? `  ·  FAX ${company.fax}` : ""}
-            </p>
-            <p className="text-[12px] text-[var(--muted)]">
-              {company.email}
-              {company.website ? `  ·  ${company.website}` : ""}
-            </p>
-          </div>
-          <div className="text-left sm:text-right shrink-0">
-            <p className="text-[12px] uppercase tracking-wide text-[var(--muted)] font-medium">
-              Freight Quotation
-            </p>
-            <p className="text-[13px] font-semibold mt-1">
-              {quoteNumber ?? <span className="text-[var(--warning)]">DRAFT</span>}
-            </p>
-            <p className="text-[12px] text-[var(--muted)] mt-0.5">{formatDate(input.quoteDate)}</p>
-          </div>
-        </div>
-
-        {/* Salutation */}
-        <div className="pt-6 pb-2 text-[13px] leading-relaxed text-[var(--foreground)]">
-          <p>
-            수신: <span className="font-medium">{input.customerName}</span>
-            {input.contactName ? ` (${input.contactName})` : ""} 귀중
-          </p>
-          <p>
-            발신: <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
-          </p>
-          <p className="mt-3 text-[var(--muted)]">
-            요청하신 견적 운임을 하기와 같이 안내 드리오니 검토 부탁드립니다.
-          </p>
-        </div>
-
-        {/* Basic info */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4 py-5 px-5 bg-[var(--sidebar-bg)] rounded-[var(--radius-md)]">
-          <InfoField label="CUSTOMER" value={input.customerName} />
-          <InfoField label="INCOTERMS" value={input.incoterms} />
-          <InfoField label="POL" value={originLabel} />
-          <InfoField label="POD" value={destinationLabel} />
-          <InfoField label="VALID UNTIL" value={formatDate(input.validUntil)} />
-          <InfoField label="HS CODE" value={input.hsCode || "-"} />
-          <InfoField label="TRANSPORT" value={input.transportMode} />
-          <InfoField label="EX-RATE" value={`USD 1 = ₩${result.exchangeRate.toLocaleString()}`} />
-        </div>
-
-        {/* Totals at a glance - shown before the itemized breakdown so the
-            bottom line is visible immediately, especially on a phone where
-            the full table below needs horizontal scrolling to reach it. */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          {result.columns.map((col) => (
-            <div
-              key={col.containerTypeId}
-              className="flex-1 min-w-[140px] rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--accent-soft)] px-4 py-3"
-            >
-              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--muted)]">
-                {col.containerLabel}
-                {col.quantity > 1 ? ` ×${col.quantity}` : ""}
-              </p>
-              <p className="text-[19px] font-bold text-[var(--accent)] mt-0.5">
-                {krw(col.grandTotalKrw)}
-              </p>
-              {col.missingRate && (
-                <p className="text-[11px] font-medium text-[var(--warning)] mt-0.5">
-                  일부 요율 미등록
-                </p>
-              )}
+    <div
+      className={`bg-white text-[var(--foreground)] w-full mx-auto overflow-hidden print:shadow-none print:border-0 print:rounded-none print:max-w-none print:w-full ${
+        forceTable
+          ? "max-w-none rounded-none border-0 shadow-none"
+          : "max-w-[900px] rounded-[var(--radius-lg)] border border-[var(--border-subtle)] shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+      }`}
+    >
+      <div className={`print:p-0 ${forceTable ? "p-0" : "p-8 sm:p-12"}`}>
+        {forceTable ? (
+          <div className="flex items-start justify-between gap-4 pb-3 border-b-2 border-[var(--foreground)]">
+            <div className="flex items-center gap-2.5">
+              {/* Plain <img>, not next/image: this markup is also captured
+                  by html2canvas for the PDF export, which needs the image
+                  already resolved in the DOM rather than behind Next's
+                  optimization proxy/srcset. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="" className="w-10 h-10 object-contain" />
+              <div>
+                <h1 className="text-[15px] font-bold tracking-tight">{company.name}</h1>
+                {company.nameKo && (
+                  <p className="text-[10.5px] text-[var(--muted)]">{company.nameKo}</p>
+                )}
+              </div>
             </div>
-          ))}
-        </div>
+            <div className="text-right shrink-0">
+              <p className="text-[10.5px] uppercase tracking-wide text-[var(--muted)] font-semibold">
+                {input.transportMode} Freight Quotation
+              </p>
+              <p className="text-[12px] font-semibold mt-1">
+                {quoteNumber ?? <span className="text-[var(--warning)]">DRAFT</span>}
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* Letterhead (on-screen preview) */
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b-2 border-[var(--foreground)]">
+            <div>
+              <h1 className="text-[22px] font-bold tracking-tight">{company.name}</h1>
+              {company.nameKo && (
+                <p className="text-[13px] text-[var(--muted)] mt-0.5">{company.nameKo}</p>
+              )}
+              <p className="text-[12px] text-[var(--muted)] mt-3 leading-relaxed max-w-sm">
+                {company.addressLines.join(", ")}
+              </p>
+              <p className="text-[12px] text-[var(--muted)] mt-1">
+                TEL {company.tel}
+                {company.fax ? `  ·  FAX ${company.fax}` : ""}
+              </p>
+              <p className="text-[12px] text-[var(--muted)]">
+                {company.email}
+                {company.website ? `  ·  ${company.website}` : ""}
+              </p>
+            </div>
+            <div className="text-left sm:text-right shrink-0">
+              <p className="text-[12px] uppercase tracking-wide text-[var(--muted)] font-medium">
+                Freight Quotation
+              </p>
+              <p className="text-[13px] font-semibold mt-1">
+                {quoteNumber ?? <span className="text-[var(--warning)]">DRAFT</span>}
+              </p>
+              <p className="text-[12px] text-[var(--muted)] mt-0.5">{formatDate(input.quoteDate)}</p>
+            </div>
+          </div>
+        )}
+
+        {forceTable ? (
+          <div className="pt-3 text-[11px] text-[var(--foreground)]">
+            <p>
+              수신: <span className="font-medium">{input.customerName}</span>
+              {input.contactName ? ` (${input.contactName})` : ""} 귀중
+              <span className="text-[var(--muted)]">
+                {" "}
+                · 담당 {input.preparedBy} · 발행 {formatDate(input.quoteDate)}
+              </span>
+            </p>
+          </div>
+        ) : (
+          /* Salutation (on-screen preview) */
+          <div className="pt-6 pb-2 text-[13px] leading-relaxed text-[var(--foreground)]">
+            <p>
+              수신: <span className="font-medium">{input.customerName}</span>
+              {input.contactName ? ` (${input.contactName})` : ""} 귀중
+            </p>
+            <p>
+              발신: <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
+            </p>
+            <p className="mt-3 text-[var(--muted)]">
+              요청하신 견적 운임을 하기와 같이 안내 드리오니 검토 부탁드립니다.
+            </p>
+          </div>
+        )}
+
+        {forceTable ? (
+          <div className="mt-3 grid grid-cols-3 gap-x-6 gap-y-2 py-3 border-t border-b border-[var(--border-subtle)]">
+            <InfoField dense label="INCOTERMS" value={input.incoterms} />
+            <InfoField dense label="POL" value={originLabel} />
+            <InfoField dense label="POD" value={destinationLabel} />
+            <InfoField dense label="VALID UNTIL" value={formatDate(input.validUntil)} />
+            <InfoField dense label="EX-RATE" value={`USD 1 = ₩${result.exchangeRate.toLocaleString()}`} />
+            {input.hsCode && <InfoField dense label="HS CODE" value={input.hsCode} />}
+          </div>
+        ) : (
+          /* Basic info (on-screen preview) */
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4 py-5 px-5 bg-[var(--sidebar-bg)] rounded-[var(--radius-md)]">
+            <InfoField label="CUSTOMER" value={input.customerName} />
+            <InfoField label="INCOTERMS" value={input.incoterms} />
+            <InfoField label="POL" value={originLabel} />
+            <InfoField label="POD" value={destinationLabel} />
+            <InfoField label="VALID UNTIL" value={formatDate(input.validUntil)} />
+            <InfoField label="HS CODE" value={input.hsCode || "-"} />
+            <InfoField label="TRANSPORT" value={input.transportMode} />
+            <InfoField label="EX-RATE" value={`USD 1 = ₩${result.exchangeRate.toLocaleString()}`} />
+          </div>
+        )}
+
+        {/* Totals at a glance - on-screen only. In print/PDF the full table
+            (forceTable) always renders, so this would just duplicate the
+            Grand Total row below for no new information. */}
+        {!forceTable && (
+          <div className="mt-6 flex flex-wrap gap-3">
+            {result.columns.map((col) => (
+              <div
+                key={col.containerTypeId}
+                className="flex-1 min-w-[140px] rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--accent-soft)] px-4 py-3"
+              >
+                <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--muted)]">
+                  {col.containerLabel}
+                  {col.quantity > 1 ? ` ×${col.quantity}` : ""}
+                </p>
+                <p className="text-[19px] font-bold text-[var(--accent)] mt-0.5">
+                  {krw(col.grandTotalKrw)}
+                </p>
+                {col.missingRate && (
+                  <p className="text-[11px] font-medium text-[var(--warning)] mt-0.5">
+                    일부 요율 미등록
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Charges - a full comparison table at sm: and up (or always, when
             forceTable is set for print/export); stacked cards below sm: so
             a phone never needs to scroll sideways to see a total. */}
-        <div className={`mt-8 overflow-x-auto ${forceTable ? "" : "hidden sm:block"}`}>
-          <table className="w-full min-w-[560px] border-collapse text-[13px]">
+        <div className={`${forceTable ? "mt-4" : "mt-8"} overflow-x-auto ${forceTable ? "" : "hidden sm:block"}`}>
+          <table
+            className={`w-full border-collapse table-fixed ${forceTable ? "text-[10.5px]" : "text-[13px] min-w-[560px]"}`}
+          >
+            <colgroup>
+              <col style={{ width: `${chargeColPct}%` }} />
+              <col style={{ width: `${curColPct}%` }} />
+              {result.columns.map((col) => (
+                <col key={col.containerTypeId} style={{ width: `${containerColPct}%` }} />
+              ))}
+            </colgroup>
             <thead>
               <tr className="border-b-2 border-[var(--foreground)]">
-                <th className="text-left py-2.5 pr-3 font-semibold text-[12px] uppercase tracking-wide text-[var(--muted)]">
+                <th className={`text-left pr-3 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
                   Charge
                 </th>
-                <th className="text-left py-2.5 px-3 font-semibold text-[12px] uppercase tracking-wide text-[var(--muted)] w-16">
+                <th className={`text-left px-3 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1 text-[9.5px]" : "py-2.5 text-[12px]"}`}>
                   CUR
                 </th>
                 {result.columns.map((col) => (
                   <th
                     key={col.containerTypeId}
-                    className="text-right py-2.5 px-3 font-semibold text-[12px] uppercase tracking-wide text-[var(--muted)]"
+                    className={`text-right px-3 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "py-1 text-[9.5px]" : "py-2.5 text-[12px]"}`}
                   >
                     {col.containerLabel}
                     {col.quantity > 1 ? ` ×${col.quantity}` : ""}
@@ -151,15 +223,16 @@ export function QuoteDocument({
                     sublabel={oceanFreightRow.name}
                     columns={result.columns}
                     chargeTypeId={oceanFreightRow.chargeTypeId}
+                    dense={forceTable}
                   />
-                  <tr className="border-b border-[var(--border-subtle)]">
-                    <td colSpan={2} className="py-2 pr-3 text-[12.5px] font-semibold text-[var(--muted)]">
+                  <tr className="border-b border-[var(--border-subtle)] print:break-inside-avoid">
+                    <td colSpan={2} className={`pr-3 font-semibold text-[var(--muted)] ${forceTable ? "py-1.5 text-[11px]" : "py-2 text-[12.5px]"}`}>
                       Sub Total
                     </td>
                     {result.columns.map((col) => (
                       <td
                         key={col.containerTypeId}
-                        className="py-2 px-3 text-right text-[12.5px] font-semibold text-[var(--muted)]"
+                        className={`px-3 text-right font-semibold text-[var(--muted)] ${forceTable ? "py-1.5 text-[11px]" : "py-2 text-[12.5px]"}`}
                       >
                         {krw(col.oceanFreightSubtotalKrw)}
                       </td>
@@ -168,8 +241,8 @@ export function QuoteDocument({
                 </>
               )}
 
-              <tr>
-                <td colSpan={2 + result.columns.length} className="pt-5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
+              <tr className="print:break-inside-avoid">
+                <td colSpan={2 + result.columns.length} className={`pb-1 font-semibold uppercase tracking-wide text-[var(--muted)] ${forceTable ? "pt-3 text-[9.5px]" : "pt-5 text-[11px]"}`}>
                   국내 부대비용 / Local &amp; Regional Charges
                 </td>
               </tr>
@@ -181,30 +254,31 @@ export function QuoteDocument({
                   sublabel={row.name}
                   columns={result.columns}
                   chargeTypeId={row.chargeTypeId}
+                  dense={forceTable}
                 />
               ))}
 
-              <tr className="border-b border-[var(--border-subtle)]">
-                <td colSpan={2} className="py-2 pr-3 text-[12.5px] font-semibold text-[var(--muted)]">
+              <tr className="border-b border-[var(--border-subtle)] print:break-inside-avoid">
+                <td colSpan={2} className={`pr-3 font-semibold text-[var(--muted)] ${forceTable ? "py-1.5 text-[11px]" : "py-2 text-[12.5px]"}`}>
                   Sub Total
                 </td>
                 {result.columns.map((col) => (
                   <td
                     key={col.containerTypeId}
-                    className="py-2 px-3 text-right text-[12.5px] font-semibold text-[var(--muted)]"
+                    className={`px-3 text-right font-semibold text-[var(--muted)] ${forceTable ? "py-1.5 text-[11px]" : "py-2 text-[12.5px]"}`}
                   >
                     {krw(col.localSubtotalKrw)}
                   </td>
                 ))}
               </tr>
 
-              <tr>
-                <td colSpan={2} className="pt-4 pr-3 text-[15px] font-bold">
+              <tr className="print:break-inside-avoid">
+                <td colSpan={2} className={`pr-3 font-bold ${forceTable ? "pt-3 text-[13.5px]" : "pt-4 text-[15px]"}`}>
                   Grand Total
                 </td>
                 {result.columns.map((col) => (
-                  <td key={col.containerTypeId} className="pt-4 px-3 text-right">
-                    <span className="text-[17px] font-bold text-[var(--accent)]">
+                  <td key={col.containerTypeId} className={`px-3 text-right ${forceTable ? "pt-3" : "pt-4"}`}>
+                    <span className={`font-bold text-[var(--accent)] ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}>
                       {krw(col.grandTotalKrw)}
                     </span>
                     {col.missingRate && (
@@ -233,8 +307,12 @@ export function QuoteDocument({
         )}
 
         {/* Remarks */}
-        <div className="mt-8 pt-5 border-t border-[var(--border-subtle)] text-[12px] text-[var(--muted)] leading-relaxed">
-          <p className="font-semibold text-[var(--foreground)] mb-1.5">비고 / Remarks</p>
+        <div
+          className={`border-t border-[var(--border-subtle)] text-[var(--muted)] print:break-inside-avoid ${
+            forceTable ? "mt-4 pt-3 text-[9px] leading-snug" : "mt-8 pt-5 text-[12px] leading-relaxed"
+          }`}
+        >
+          <p className={`font-semibold text-[var(--foreground)] mb-1.5 ${forceTable ? "text-[9.5px]" : "text-[12px]"}`}>비고 / Remarks</p>
           <ul className="list-disc list-inside space-y-0.5">
             <li>상기 견적은 {formatDate(input.validUntil)} 까지 유효합니다.</li>
             <li>환율 변동 시 운임 및 부대비용이 재계산될 수 있습니다. (적용 환율: USD 1 = ₩{result.exchangeRate.toLocaleString()})</li>
@@ -244,21 +322,41 @@ export function QuoteDocument({
         </div>
 
         {/* Footer */}
-        <div className="mt-10 pt-4 border-t border-[var(--border-subtle)] text-[12px] text-[var(--muted)] text-right">
-          {company.sealText ?? company.name}
+        <div
+          className={`border-t border-[var(--border-subtle)] text-[var(--muted)] text-right ${
+            forceTable ? "mt-4 pt-3 text-[9px]" : "mt-10 pt-4 text-[12px]"
+          }`}
+        >
+          {forceTable ? (
+            <>
+              <p>
+                {company.addressLines.join(", ")}
+              </p>
+              <p>
+                TEL {company.tel}
+                {company.fax ? `  ·  FAX ${company.fax}` : ""}
+                {"  ·  "}
+                {company.email}
+                {company.website ? `  ·  ${company.website}` : ""}
+              </p>
+              <p className="mt-1 font-medium text-[var(--foreground)]">{company.sealText ?? company.name}</p>
+            </>
+          ) : (
+            company.sealText ?? company.name
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function InfoField({ label, value }: { label: string; value: string }) {
+function InfoField({ label, value, dense = false }: { label: string; value: string; dense?: boolean }) {
   return (
     <div>
-      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--muted)]">
+      <p className={`font-semibold uppercase tracking-wide text-[var(--muted)] ${dense ? "text-[8.5px]" : "text-[10.5px]"}`}>
         {label}
       </p>
-      <p className="text-[13.5px] font-medium mt-0.5 text-[var(--foreground)]">{value}</p>
+      <p className={`font-medium mt-0.5 text-[var(--foreground)] ${dense ? "text-[11px]" : "text-[13.5px]"}`}>{value}</p>
     </div>
   );
 }
@@ -268,39 +366,49 @@ function ChargeRow({
   sublabel,
   columns,
   chargeTypeId,
+  dense = false,
 }: {
   label: string;
   sublabel: string;
   columns: QuoteResult["columns"];
   chargeTypeId: string;
+  dense?: boolean;
 }) {
   const firstWithItem = columns
     .map((c) => c.lineItems.find((li) => li.chargeTypeId === chargeTypeId))
     .find(Boolean);
 
   return (
-    <tr className="border-b border-[var(--border-subtle)]">
-      <td className="py-2 pr-3">
-        <p className="font-medium text-[var(--foreground)]">{label}</p>
-        <p className="text-[11px] text-[var(--muted)]">{sublabel}</p>
+    <tr className="border-b border-[var(--border-subtle)] print:break-inside-avoid">
+      <td className={`pr-3 ${dense ? "py-1" : "py-2"}`}>
+        {dense ? (
+          <p className="font-medium text-[var(--foreground)] text-[10.5px]">
+            {label} <span className="text-[var(--muted)] text-[9px]">({sublabel})</span>
+          </p>
+        ) : (
+          <>
+            <p className="font-medium text-[var(--foreground)]">{label}</p>
+            <p className="text-[11px] text-[var(--muted)]">{sublabel}</p>
+          </>
+        )}
       </td>
-      <td className="py-2 px-3 text-[var(--muted)]">{firstWithItem?.currency ?? "-"}</td>
+      <td className={`px-3 text-[var(--muted)] ${dense ? "py-1 text-[10.5px]" : "py-2"}`}>{firstWithItem?.currency ?? "-"}</td>
       {columns.map((col) => {
         const item = col.lineItems.find((li) => li.chargeTypeId === chargeTypeId);
         return (
-          <td key={col.containerTypeId} className="py-2 px-3 text-right">
+          <td key={col.containerTypeId} className={`px-3 text-right ${dense ? "py-1" : "py-2"}`}>
             {item ? (
               <div>
-                <p className="text-[var(--foreground)]">{krw(item.amountKrw)}</p>
+                <p className={`text-[var(--foreground)] ${dense ? "text-[10.5px]" : ""}`}>{krw(item.amountKrw)}</p>
                 {item.currency !== "KRW" && (
-                  <p className="text-[11px] text-[var(--muted)]">
+                  <p className={`text-[var(--muted)] ${dense ? "text-[9px]" : "text-[11px]"}`}>
                     {foreign(item.rate, item.currency)}
                     {item.quantity > 1 ? ` × ${item.quantity}` : ""}
                   </p>
                 )}
               </div>
             ) : (
-              <span className="text-[var(--warning)] text-[12px]">미등록</span>
+              <span className={`text-[var(--warning)] ${dense ? "text-[10.5px]" : "text-[12px]"}`}>미등록</span>
             )}
           </td>
         );

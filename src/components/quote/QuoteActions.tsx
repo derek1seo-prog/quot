@@ -24,7 +24,7 @@ export function QuoteActions({
         import("html2canvas-pro"),
         import("jspdf"),
       ]);
-      const node = document.getElementById("quote-document-root");
+      const node = document.getElementById("quote-print-capture");
       if (!node) return;
 
       const canvas = await html2canvas(node, {
