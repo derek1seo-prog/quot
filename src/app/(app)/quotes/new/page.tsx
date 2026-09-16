@@ -44,10 +44,12 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function plusDaysIso(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+function endOfMonthIso(dateIso: string): string {
+  const [year, month] = dateIso.split("-").map(Number);
+  const lastDay = new Date(year, month, 0);
+  const mm = String(lastDay.getMonth() + 1).padStart(2, "0");
+  const dd = String(lastDay.getDate()).padStart(2, "0");
+  return `${lastDay.getFullYear()}-${mm}-${dd}`;
 }
 
 export default function NewQuotePage() {
@@ -70,7 +72,7 @@ export default function NewQuotePage() {
   const [contactName, setContactName] = useState("");
   const [preparedBy, setPreparedBy] = useState("");
   const [quoteDate, setQuoteDate] = useState(todayIso());
-  const [validUntil, setValidUntil] = useState(plusDaysIso(14));
+  const [validUntil, setValidUntil] = useState(endOfMonthIso(todayIso()));
   const [hsCode, setHsCode] = useState("");
   const [remarks, setRemarks] = useState("");
 
@@ -401,7 +403,15 @@ export default function NewQuotePage() {
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>견적일</FieldLabel>
-              <Input type="date" value={quoteDate} onChange={(e) => setQuoteDate(e.target.value)} />
+              <Input
+                type="date"
+                value={quoteDate}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setQuoteDate(next);
+                  setValidUntil(endOfMonthIso(next));
+                }}
+              />
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>유효기간</FieldLabel>
