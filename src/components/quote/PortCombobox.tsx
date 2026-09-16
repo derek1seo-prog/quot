@@ -13,7 +13,7 @@ export interface PortOption {
 }
 
 function portLabel(port: Port) {
-  return `${port.nameKo} (${port.name})`;
+  return `${port.nameKo}항 | ${port.name} port (${port.code})`;
 }
 
 export function PortCombobox({
@@ -41,7 +41,10 @@ export function PortCombobox({
     const q = debouncedQuery.trim().toLowerCase();
     if (!q) return options;
     return options.filter(
-      ({ port }) => port.nameKo.toLowerCase().includes(q) || port.name.toLowerCase().includes(q),
+      ({ port }) =>
+        port.nameKo.toLowerCase().includes(q) ||
+        port.name.toLowerCase().includes(q) ||
+        port.code.toLowerCase().includes(q),
     );
   }, [options, debouncedQuery]);
 

@@ -43,6 +43,7 @@ export interface Port {
   countryId: string;
   name: string;
   nameKo: string;
+  code: string; // UN/LOCODE, e.g. "CNTAO"
   role: "ORIGIN" | "DESTINATION" | "BOTH";
 }
 
