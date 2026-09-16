@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "QUOT | 중국발 수입 포워딩 자동 견적 시스템",
+  title: "아이에스씨앤에어(ISSEA&AIR) | 실시간 수출입 포워딩 운임 조회",
   description: "중국발 한국 수입 FCL 자동 견적 생성 시스템",
 };
 
