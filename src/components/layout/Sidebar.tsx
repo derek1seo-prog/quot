@@ -72,7 +72,7 @@ export function Sidebar() {
 
       <div className="p-4 border-t border-[var(--border-subtle)]">
         <div className="rounded-[var(--radius-md)] bg-white border border-[var(--border-subtle)] p-3">
-          <p className="text-[12px] font-medium text-[var(--foreground)]">중국 → 한국 FCL</p>
+          <p className="text-[12px] font-medium text-[var(--foreground)]">수출입 FCL</p>
           <p className="text-[11px] text-[var(--muted)] mt-0.5">MVP · v1.0</p>
         </div>
       </div>

@@ -53,7 +53,7 @@ export default async function DashboardPage() {
         <div>
           <p className="text-[13px] font-medium text-[var(--accent)] mb-2">Dashboard</p>
           <h1 className="text-[32px] lg:text-[36px] font-semibold tracking-tight text-[var(--foreground)]">
-            중국발 수입 포워딩 견적
+            수출입 포워딩 견적
           </h1>
           <p className="text-[15px] text-[var(--muted)] mt-2 max-w-xl">
             출발지와 컨테이너 타입만 선택하면 운임과 부대비용이 자동으로 계산되어,
