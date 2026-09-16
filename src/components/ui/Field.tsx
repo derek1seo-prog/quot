@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { forwardRef } from "react";
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 export function FieldLabel({ children, hint }: { children: ReactNode; hint?: string }) {
@@ -13,9 +14,11 @@ export function FieldLabel({ children, hint }: { children: ReactNode; hint?: str
 const controlClasses =
   "w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[14px] text-[var(--foreground)] outline-none transition-shadow focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] placeholder:text-[var(--muted)]";
 
-export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(controlClasses, className)} {...props} />;
-}
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
+  function Input({ className, ...props }, ref) {
+    return <input ref={ref} className={cn(controlClasses, className)} {...props} />;
+  },
+);
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (

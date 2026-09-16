@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldGroup, FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
+import { PortCombobox, type PortOption } from "@/components/quote/PortCombobox";
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
 import { Step, StepIndicator } from "@/components/quote/StepIndicator";
 import type {
@@ -104,6 +105,18 @@ export default function NewQuotePage() {
       ports: originPorts.filter((p) => p.regionId === region.id),
     }));
   }, [meta, originPorts]);
+
+  const polOptions: PortOption[] = useMemo(
+    () =>
+      portsByRegion.flatMap(({ region, ports }) =>
+        ports.map((port) => ({ port, groupLabel: region.nameKo })),
+      ),
+    [portsByRegion],
+  );
+  const podOptions: PortOption[] = useMemo(
+    () => destinationPorts.map((port) => ({ port })),
+    [destinationPorts],
+  );
 
   const selectedContainers = useMemo(
     () =>
@@ -217,18 +230,7 @@ export default function NewQuotePage() {
           <div className="grid sm:grid-cols-2 gap-6">
             <FieldGroup>
               <FieldLabel>출발항 (POL)</FieldLabel>
-              <Select value={originPortId} onChange={(e) => setOriginPortId(e.target.value)}>
-                <option value="">선택하세요</option>
-                {portsByRegion.map(({ region, ports }) => (
-                  <optgroup key={region.id} label={region.nameKo}>
-                    {ports.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.nameKo} ({p.name})
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </Select>
+              <PortCombobox value={originPortId} onChange={setOriginPortId} options={polOptions} />
               {originPort && (
                 <p className="text-[12px] text-[var(--muted)] mt-1.5">
                   적용 권역:{" "}
@@ -241,14 +243,7 @@ export default function NewQuotePage() {
 
             <FieldGroup>
               <FieldLabel>도착항 (POD)</FieldLabel>
-              <Select value={destinationPortId} onChange={(e) => setDestinationPortId(e.target.value)}>
-                <option value="">선택하세요</option>
-                {destinationPorts.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nameKo} ({p.name})
-                  </option>
-                ))}
-              </Select>
+              <PortCombobox value={destinationPortId} onChange={setDestinationPortId} options={podOptions} />
             </FieldGroup>
 
             <FieldGroup>
