@@ -1,15 +1,16 @@
 [
   { "id": "qingdao", "regionId": "north-china", "countryId": "CN", "name": "Qingdao", "nameKo": "칭다오/청도", "role": "ORIGIN" },
-  { "id": "xingang", "regionId": "north-china", "countryId": "CN", "name": "Xingang", "nameKo": "신강", "role": "ORIGIN" },
-  { "id": "shantou", "regionId": "north-china", "countryId": "CN", "name": "Shantou", "nameKo": "산터우", "role": "ORIGIN" },
   { "id": "shanghai", "regionId": "north-china", "countryId": "CN", "name": "Shanghai", "nameKo": "상해", "role": "ORIGIN" },
   { "id": "ningbo", "regionId": "north-china", "countryId": "CN", "name": "Ningbo", "nameKo": "닝보", "role": "ORIGIN" },
+  { "id": "xiamen", "regionId": "north-china", "countryId": "CN", "name": "Xiamen", "nameKo": "샤먼", "role": "ORIGIN" },
+  { "id": "shantou", "regionId": "north-china", "countryId": "CN", "name": "Shantou", "nameKo": "산터우", "role": "ORIGIN" },
+  { "id": "fuzhou", "regionId": "north-china", "countryId": "CN", "name": "Fuzhou", "nameKo": "푸저우", "role": "ORIGIN" },
+  { "id": "xingang", "regionId": "north-china", "countryId": "CN", "name": "Xingang", "nameKo": "천진", "role": "ORIGIN" },
 
-  { "id": "shenzhen", "regionId": "south-china", "countryId": "CN", "name": "Shenzhen", "nameKo": "심천", "role": "ORIGIN" },
-  { "id": "guangzhou", "regionId": "south-china", "countryId": "CN", "name": "Guangzhou", "nameKo": "광저우", "role": "ORIGIN" },
+  { "id": "shekou", "regionId": "south-china", "countryId": "CN", "name": "Shekou", "nameKo": "심천", "role": "ORIGIN" },
   { "id": "nansha", "regionId": "south-china", "countryId": "CN", "name": "Nansha", "nameKo": "난샤", "role": "ORIGIN" },
-  { "id": "shekou", "regionId": "south-china", "countryId": "CN", "name": "Shekou", "nameKo": "셔코우", "role": "ORIGIN" },
 
   { "id": "incheon", "regionId": null, "countryId": "KR", "name": "Incheon", "nameKo": "인천", "role": "DESTINATION" },
-  { "id": "busan", "regionId": null, "countryId": "KR", "name": "Busan", "nameKo": "부산", "role": "DESTINATION" }
+  { "id": "busan", "regionId": null, "countryId": "KR", "name": "Busan", "nameKo": "부산", "role": "DESTINATION" },
+  { "id": "pyeongtaek", "regionId": null, "countryId": "KR", "name": "Pyeongtaek", "nameKo": "평택", "role": "DESTINATION" }
 ]

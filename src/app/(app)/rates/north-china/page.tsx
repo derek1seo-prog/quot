@@ -31,7 +31,7 @@ export default async function NorthChinaRatesPage() {
       <p className="text-[13px] font-medium text-[var(--accent)] mb-2">요율 관리</p>
       <h1 className="text-[28px] font-semibold tracking-tight mb-1">{region?.nameKo ?? "북중국"}</h1>
       <p className="text-[13px] text-[var(--muted)] mb-8">
-        BAF · CAF · CRS 부대비용이 적용되는 권역입니다. Qingdao, Xingang, Shantou, Shanghai, Ningbo
+        BAF · CAF · CRS 부대비용이 적용되는 권역입니다. {ports.map((p) => p.name).join(", ")}
       </p>
 
       <RegionRatesEditor
