@@ -70,7 +70,7 @@ export default function NewQuotePage() {
   // Step 3 - basic info
   const [customerName, setCustomerName] = useState("");
   const [contactName, setContactName] = useState("");
-  const [preparedBy, setPreparedBy] = useState("");
+  const [preparedBy, setPreparedBy] = useState("김태현 대리");
   const [quoteDate, setQuoteDate] = useState(todayIso());
   const [validUntil, setValidUntil] = useState(endOfMonthIso(todayIso()));
   const [hsCode, setHsCode] = useState("");
