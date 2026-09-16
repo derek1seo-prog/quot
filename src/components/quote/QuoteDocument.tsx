@@ -429,9 +429,12 @@ function MobileLineRow({
         {item ? (
           <>
             <p className="text-[var(--foreground)]">{krw(item.amountKrw)}</p>
-            <p className="text-[11px] text-[var(--muted)]">
-              {item.currency === "KRW" ? krw(item.rate) : foreign(item.rate, item.currency)} × {item.quantity}
-            </p>
+            {!(item.quantity === 1 && item.currency === "KRW") && (
+              <p className="text-[11px] text-[var(--muted)]">
+                {item.currency === "KRW" ? krw(item.rate) : foreign(item.rate, item.currency)}
+                {item.quantity > 1 ? ` × ${item.quantity}` : ""}
+              </p>
+            )}
           </>
         ) : (
           <span className="text-[var(--warning)] text-[12px]">미등록</span>
