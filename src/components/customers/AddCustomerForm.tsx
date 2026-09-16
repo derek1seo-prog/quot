@@ -11,9 +11,7 @@ export function AddCustomerForm() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [contactName, setContactName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [deliveryLocation, setDeliveryLocation] = useState("");
   const [incheon20ft, setIncheon20ft] = useState("");
   const [incheon40hq, setIncheon40hq] = useState("");
   const [busan20ft, setBusan20ft] = useState("");
@@ -23,9 +21,7 @@ export function AddCustomerForm() {
   function reset() {
     setName("");
     setContactName("");
-    setEmail("");
     setPhone("");
-    setDeliveryLocation("");
     setIncheon20ft("");
     setIncheon40hq("");
     setBusan20ft("");
@@ -42,9 +38,7 @@ export function AddCustomerForm() {
         body: JSON.stringify({
           name,
           contactName,
-          email,
           phone,
-          deliveryLocation,
           incheonTruckingRate20ft: incheon20ft === "" ? undefined : Number(incheon20ft),
           incheonTruckingRate40hq: incheon40hq === "" ? undefined : Number(incheon40hq),
           busanTruckingRate20ft: busan20ft === "" ? undefined : Number(busan20ft),
@@ -77,14 +71,6 @@ export function AddCustomerForm() {
         <FieldGroup>
           <FieldLabel hint="선택">담당자</FieldLabel>
           <Input value={contactName} onChange={(e) => setContactName(e.target.value)} />
-        </FieldGroup>
-        <FieldGroup>
-          <FieldLabel hint="선택">이메일</FieldLabel>
-          <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-        </FieldGroup>
-        <FieldGroup>
-          <FieldLabel hint="선택">입고지</FieldLabel>
-          <Input value={deliveryLocation} onChange={(e) => setDeliveryLocation(e.target.value)} />
         </FieldGroup>
       </div>
 

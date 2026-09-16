@@ -40,8 +40,9 @@ export function ExchangeRateEditor({ initial }: { initial: ExchangeRate }) {
           className="text-right"
           value={focused ? rate : rate !== "" ? formatNumber(Number(rate)) : ""}
           onFocus={(e) => {
+            const el = e.target;
             setFocused(true);
-            e.target.select();
+            requestAnimationFrame(() => el.select());
           }}
           onChange={(e) => setRate(e.target.value.replace(/[^0-9]/g, ""))}
           onBlur={() => setFocused(false)}

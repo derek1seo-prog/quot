@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { RateCell } from "@/components/rates/RateCell";
-import { TextCell } from "@/components/customers/TextCell";
 import type { Customer } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -73,7 +72,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   return (
     <Card className="overflow-hidden">
       <div className="hidden sm:block overflow-x-auto">
-        <table className="w-full text-left min-w-[880px]">
+        <table className="w-full text-left min-w-[720px]">
           <thead>
             <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
               <th rowSpan={2} className="px-6 py-3 font-medium whitespace-nowrap align-bottom">
@@ -81,9 +80,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
               </th>
               <th rowSpan={2} className="px-4 py-3 font-medium whitespace-nowrap align-bottom">
                 담당자
-              </th>
-              <th rowSpan={2} className="px-4 py-3 font-medium whitespace-nowrap align-bottom w-32">
-                입고지
               </th>
               {PORT_GROUPS.map((group) => (
                 <th
@@ -120,15 +116,8 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                     {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-[13.5px] align-middle whitespace-nowrap">
-                  <p className="text-[var(--foreground)]">{c.contactName ?? "-"}</p>
-                  {c.email && <p className="text-[11px] text-[var(--muted)] mt-0.5">{c.email}</p>}
-                </td>
-                <td className="px-4 py-2 align-middle">
-                  <TextCell
-                    value={c.deliveryLocation ?? null}
-                    onSave={(v) => saveField(c.id, { deliveryLocation: v })}
-                  />
+                <td className="px-4 py-3 text-[13.5px] text-[var(--foreground)] align-middle whitespace-nowrap">
+                  {c.contactName ?? "-"}
                 </td>
                 {PORT_GROUPS.flatMap((group) =>
                   group.fields.map((f, i) => (
@@ -177,20 +166,9 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 <Trash2 size={15} />
               </button>
             </div>
-            <p className="text-[12px] text-[var(--muted)] mt-1">
-              {c.contactName ?? "-"} · {c.email ?? "-"}
-            </p>
+            <p className="text-[12px] text-[var(--muted)] mt-1">{c.contactName ?? "-"}</p>
 
             <div className="mt-3 space-y-2.5">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[13px] text-[var(--muted)] shrink-0">입고지</span>
-                <div className="w-40">
-                  <TextCell
-                    value={c.deliveryLocation ?? null}
-                    onSave={(v) => saveField(c.id, { deliveryLocation: v })}
-                  />
-                </div>
-              </div>
               {PORT_GROUPS.map((group) => (
                 <div key={group.label}>
                   <p className="text-[11px] text-[var(--muted)] uppercase tracking-wide mb-1.5">

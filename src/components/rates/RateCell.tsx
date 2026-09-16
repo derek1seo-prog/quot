@@ -44,8 +44,13 @@ export function RateCell({
         value={displayValue}
         placeholder={placeholder}
         onFocus={(e) => {
+          const el = e.target;
           setFocused(true);
-          e.target.select();
+          // Wait for the re-render that swaps the comma-formatted display
+          // value for the raw digits - selecting immediately selects the
+          // old formatted text, and the value swap right after collapses
+          // that selection instead of keeping it.
+          requestAnimationFrame(() => el.select());
         }}
         onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, ""))}
         onBlur={() => {
