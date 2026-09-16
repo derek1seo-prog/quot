@@ -1,14 +1,14 @@
 import { Card, CardContent } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
-import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
+import { getPorts, getQuotes } from "@/lib/data-store";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { ArrowUpRight, FilePlus2, Ship, TrendingUp, Users } from "lucide-react";
+import { ArrowUpRight, FilePlus2, Ship, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [quotes, exchangeRate] = await Promise.all([getQuotes(), getCurrentExchangeRate("USD")]);
+  const quotes = await getQuotes();
   const allPorts = getPorts();
   const portNameById = new Map(allPorts.map((p) => [p.id, p.nameKo]));
   const ports = allPorts.filter((p) => p.role !== "DESTINATION");
@@ -40,11 +40,6 @@ export default async function DashboardPage() {
       value: `${ports.length}개`,
       icon: <Ship size={18} />,
     },
-    {
-      label: "적용 환율 (USD)",
-      value: exchangeRate ? `₩${exchangeRate.rate.toLocaleString()}` : "미설정",
-      icon: <Users size={18} />,
-    },
   ];
 
   return (
@@ -65,7 +60,7 @@ export default async function DashboardPage() {
         </LinkButton>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5 mb-10 lg:mb-14">
         {stats.map((s) => (
           <Card key={s.label} className="p-5">
             <div className="flex items-center justify-between mb-6">

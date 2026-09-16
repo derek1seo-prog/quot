@@ -20,6 +20,7 @@ export default async function SettingsPage() {
           <CardTitle>환율</CardTitle>
           <CardDescription>
             견적 계산에 사용되는 기준 환율입니다. 모든 USD 항목은 이 환율로 원화 환산됩니다.
+            매일 아침 자동으로 최신 시장 환율로 갱신되며, 필요 시 아래에서 직접 수정할 수 있습니다.
           </CardDescription>
         </CardHeader>
         <CardContent>
