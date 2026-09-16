@@ -333,6 +333,7 @@ export default function NewQuotePage() {
                         type="number"
                         min={1}
                         value={qty}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) =>
                           setContainerQty((prev) => ({
                             ...prev,

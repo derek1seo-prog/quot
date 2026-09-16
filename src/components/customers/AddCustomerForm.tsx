@@ -93,19 +93,39 @@ export function AddCustomerForm() {
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup>
             <FieldLabel hint="선택">인천항 20FT</FieldLabel>
-            <Input type="number" value={incheon20ft} onChange={(e) => setIncheon20ft(e.target.value)} />
+            <Input
+              type="number"
+              value={incheon20ft}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setIncheon20ft(e.target.value)}
+            />
           </FieldGroup>
           <FieldGroup>
             <FieldLabel hint="선택">인천항 40HQ</FieldLabel>
-            <Input type="number" value={incheon40hq} onChange={(e) => setIncheon40hq(e.target.value)} />
+            <Input
+              type="number"
+              value={incheon40hq}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setIncheon40hq(e.target.value)}
+            />
           </FieldGroup>
           <FieldGroup>
             <FieldLabel hint="선택">부산항 20FT</FieldLabel>
-            <Input type="number" value={busan20ft} onChange={(e) => setBusan20ft(e.target.value)} />
+            <Input
+              type="number"
+              value={busan20ft}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setBusan20ft(e.target.value)}
+            />
           </FieldGroup>
           <FieldGroup>
             <FieldLabel hint="선택">부산항 40HQ</FieldLabel>
-            <Input type="number" value={busan40hq} onChange={(e) => setBusan40hq(e.target.value)} />
+            <Input
+              type="number"
+              value={busan40hq}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setBusan40hq(e.target.value)}
+            />
           </FieldGroup>
         </div>
       </div>

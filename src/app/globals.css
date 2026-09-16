@@ -82,6 +82,17 @@ body {
   display: none;
 }
 
+/* Hide the increment/decrement spinner on every number input site-wide. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Staggered entrance for the mobile nav drawer's menu items */
 @keyframes menu-item-in {
   from {
