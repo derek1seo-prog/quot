@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { RateCell } from "@/components/rates/RateCell";
 import type { Customer } from "@/lib/types";
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type NumberField =
   | "incheonTruckingRate20ft"
@@ -36,6 +36,30 @@ const PORT_GROUPS: { label: string; fields: { field: NumberField; sub: string }[
 export function CustomersTable({ initialCustomers }: { initialCustomers: Customer[] }) {
   const [customers, setCustomers] = useState(initialCustomers);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Native scrollbars are easy to miss on tablets (thin, auto-hiding), so the
+  // table can look like it's just cut off with no way to see the rest. Track
+  // scroll position ourselves and fade the edges in/out as an explicit cue.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    function update() {
+      if (!el) return;
+      setCanScrollLeft(el.scrollLeft > 1);
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    }
+    update();
+    el.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [customers.length]);
 
   async function saveField(id: string, patch: Partial<Customer>) {
     const res = await fetch("/api/customers", {
@@ -71,82 +95,90 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
 
   return (
     <Card className="overflow-hidden">
-      <div className="hidden sm:block overflow-x-auto">
-        <table className="w-full text-left min-w-[720px]">
-          <thead>
-            <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
-              <th rowSpan={2} className="px-6 py-3 font-medium whitespace-nowrap align-bottom">
-                화주
-              </th>
-              <th rowSpan={2} className="px-4 py-3 font-medium whitespace-nowrap align-bottom">
-                담당자
-              </th>
-              {PORT_GROUPS.map((group) => (
-                <th
-                  key={group.label}
-                  colSpan={2}
-                  className="px-2 py-2 font-medium text-center whitespace-nowrap border-l border-[var(--border-subtle)]"
-                >
-                  {group.label}
+      <div className="hidden sm:block relative">
+        <div ref={scrollRef} className="overflow-x-auto">
+          <table className="w-full text-left min-w-[600px]">
+            <thead>
+              <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide">
+                <th rowSpan={2} className="px-4 py-3 font-medium whitespace-nowrap align-bottom">
+                  화주
                 </th>
-              ))}
-              <th rowSpan={2} className="w-10" />
-            </tr>
-            <tr className="border-b border-[var(--border-subtle)] text-[11px] text-[var(--muted)]">
-              {PORT_GROUPS.flatMap((group) =>
-                group.fields.map((f, i) => (
+                <th rowSpan={2} className="px-3 py-3 font-medium whitespace-nowrap align-bottom">
+                  담당자
+                </th>
+                {PORT_GROUPS.map((group) => (
                   <th
-                    key={f.field}
-                    className={`px-2 py-1.5 font-medium text-right whitespace-nowrap w-32 ${
-                      i === 0 ? "border-l border-[var(--border-subtle)]" : ""
-                    }`}
+                    key={group.label}
+                    colSpan={2}
+                    className="px-2 py-2 font-medium text-center whitespace-nowrap border-l border-[var(--border-subtle)]"
                   >
-                    {f.sub}
+                    {group.label}
                   </th>
-                )),
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map((c) => (
-              <tr key={c.id} className="border-b border-[var(--border-subtle)] last:border-0 group">
-                <td className="px-6 py-3 text-[13.5px] font-medium align-middle whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    {c.name}
-                    {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-[13.5px] text-[var(--foreground)] align-middle whitespace-nowrap">
-                  {c.contactName ?? "-"}
-                </td>
+                ))}
+                <th rowSpan={2} className="w-10" />
+              </tr>
+              <tr className="border-b border-[var(--border-subtle)] text-[11px] text-[var(--muted)]">
                 {PORT_GROUPS.flatMap((group) =>
                   group.fields.map((f, i) => (
-                    <td
+                    <th
                       key={f.field}
-                      className={`px-1.5 py-2 align-middle ${i === 0 ? "border-l border-[var(--border-subtle)]" : ""}`}
+                      className={`px-1.5 py-1.5 font-medium text-right whitespace-nowrap w-24 ${
+                        i === 0 ? "border-l border-[var(--border-subtle)]" : ""
+                      }`}
                     >
-                      <RateCell
-                        value={c[f.field] ?? null}
-                        onSave={(v) => saveField(c.id, { [f.field]: v })}
-                        placeholder="-"
-                      />
-                    </td>
+                      {f.sub}
+                    </th>
                   )),
                 )}
-                <td className="px-2 align-middle text-right">
-                  <button
-                    onClick={() => handleDelete(c)}
-                    disabled={deletingId === c.id}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50"
-                    aria-label="삭제"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {customers.map((c) => (
+                <tr key={c.id} className="border-b border-[var(--border-subtle)] last:border-0 group">
+                  <td className="px-4 py-3 text-[13.5px] font-medium align-middle whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {c.name}
+                      {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-[13.5px] text-[var(--foreground)] align-middle whitespace-nowrap">
+                    {c.contactName ?? "-"}
+                  </td>
+                  {PORT_GROUPS.flatMap((group) =>
+                    group.fields.map((f, i) => (
+                      <td
+                        key={f.field}
+                        className={`px-1 py-2 align-middle ${i === 0 ? "border-l border-[var(--border-subtle)]" : ""}`}
+                      >
+                        <RateCell
+                          value={c[f.field] ?? null}
+                          onSave={(v) => saveField(c.id, { [f.field]: v })}
+                          placeholder="-"
+                        />
+                      </td>
+                    )),
+                  )}
+                  <td className="px-2 align-middle text-right">
+                    <button
+                      onClick={() => handleDelete(c)}
+                      disabled={deletingId === c.id}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50"
+                      aria-label="삭제"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {canScrollLeft && (
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[var(--surface)] to-transparent" />
+        )}
+        {canScrollRight && (
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--surface)] to-transparent" />
+        )}
       </div>
 
       <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
