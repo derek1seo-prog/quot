@@ -2,9 +2,43 @@
 
 import { Button } from "@/components/ui/Button";
 import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
+import { formatNumber } from "@/lib/format";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+/** Trucking-rate input: raw digits while focused, comma-formatted at rest -
+ * matches RateCell/ExchangeRateEditor, since a native number input can't
+ * display commas (browsers strip non-digit characters from its value). */
+function TruckingRateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <FieldGroup>
+      <FieldLabel hint="선택">{label}</FieldLabel>
+      <Input
+        type="text"
+        inputMode="numeric"
+        className="text-right"
+        value={focused ? value : value !== "" ? formatNumber(Number(value)) : ""}
+        onFocus={(e) => {
+          const el = e.target;
+          setFocused(true);
+          requestAnimationFrame(() => el.select());
+        }}
+        onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
+        onBlur={() => setFocused(false)}
+      />
+    </FieldGroup>
+  );
+}
 
 export function AddCustomerForm() {
   const router = useRouter();
@@ -77,42 +111,10 @@ export function AddCustomerForm() {
       <div>
         <p className="text-[13px] font-medium text-[var(--foreground)] mb-2">내륙운송료 (KRW)</p>
         <div className="grid grid-cols-2 gap-3">
-          <FieldGroup>
-            <FieldLabel hint="선택">인천항 20FT</FieldLabel>
-            <Input
-              type="number"
-              value={incheon20ft}
-              onFocus={(e) => e.target.select()}
-              onChange={(e) => setIncheon20ft(e.target.value)}
-            />
-          </FieldGroup>
-          <FieldGroup>
-            <FieldLabel hint="선택">인천항 40HQ</FieldLabel>
-            <Input
-              type="number"
-              value={incheon40hq}
-              onFocus={(e) => e.target.select()}
-              onChange={(e) => setIncheon40hq(e.target.value)}
-            />
-          </FieldGroup>
-          <FieldGroup>
-            <FieldLabel hint="선택">부산항 20FT</FieldLabel>
-            <Input
-              type="number"
-              value={busan20ft}
-              onFocus={(e) => e.target.select()}
-              onChange={(e) => setBusan20ft(e.target.value)}
-            />
-          </FieldGroup>
-          <FieldGroup>
-            <FieldLabel hint="선택">부산항 40HQ</FieldLabel>
-            <Input
-              type="number"
-              value={busan40hq}
-              onFocus={(e) => e.target.select()}
-              onChange={(e) => setBusan40hq(e.target.value)}
-            />
-          </FieldGroup>
+          <TruckingRateField label="인천항 20FT" value={incheon20ft} onChange={setIncheon20ft} />
+          <TruckingRateField label="인천항 40HQ" value={incheon40hq} onChange={setIncheon40hq} />
+          <TruckingRateField label="부산항 20FT" value={busan20ft} onChange={setBusan20ft} />
+          <TruckingRateField label="부산항 40HQ" value={busan40hq} onChange={setBusan40hq} />
         </div>
       </div>
 
