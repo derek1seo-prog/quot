@@ -21,6 +21,7 @@ import type {
   ChargeRate,
   ChargeType,
   CompanyInfo,
+  ContainerSelection,
   ContainerType,
   Country,
   Customer,
@@ -28,6 +29,9 @@ import type {
   OceanFreightRate,
   Port,
   Quote,
+  QuoteColumn,
+  QuoteInput,
+  QuoteResult,
   Region,
 } from "./types";
 
@@ -154,8 +158,32 @@ export async function getCustomerByName(name: string): Promise<Customer | undefi
   return customers.find((c) => c.name === name);
 }
 
+/** Quotes saved before the single-container refactor stored
+ * `input.containers: ContainerSelection[]` and `result.columns: QuoteColumn[]`
+ * instead of today's singular `container`/`column`. Normalize on read (taking
+ * the first entry - the wizard never actually offered more than one going
+ * forward) so old records still render instead of crashing pages that expect
+ * the current shape. This only affects the value handed back per read; it
+ * doesn't rewrite the stored record (though a later write via addQuote/
+ * deleteQuote, which round-trip through this function, will naturally
+ * persist the normalized shape). */
+function normalizeQuote(raw: Quote): Quote {
+  const rawInput = raw.input as QuoteInput & { containers?: ContainerSelection[] };
+  const input: QuoteInput = rawInput.container
+    ? raw.input
+    : { ...rawInput, container: rawInput.containers?.[0] as ContainerSelection };
+
+  const rawResult = raw.result as QuoteResult & { columns?: QuoteColumn[] };
+  const result: QuoteResult = rawResult.column
+    ? raw.result
+    : { ...rawResult, column: rawResult.columns?.[0] as QuoteColumn };
+
+  return { ...raw, input, result };
+}
+
 export async function getQuotes(): Promise<Quote[]> {
-  return readMutable<Quote[]>("quotes.json");
+  const quotes = await readMutable<Quote[]>("quotes.json");
+  return quotes.map(normalizeQuote);
 }
 
 export async function getQuoteById(id: string): Promise<Quote | undefined> {
