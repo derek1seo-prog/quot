@@ -46,12 +46,12 @@ export function QuoteDocument({
     });
   const containerSummary = `${result.column.containerLabel} × ${result.column.quantity}`;
 
-  const categoryColPct = 13;
-  const itemColPct = 36;
-  const curColPct = 13;
-  const rateColPct = 11;
+  const categoryColPct = 14;
+  const itemColPct = 28;
+  const curColPct = 10;
+  const rateColPct = 12;
   const qtyColPct = 7;
-  const priceColPct = 20;
+  const priceColPct = 29;
 
   return (
     <div
@@ -163,7 +163,7 @@ export function QuoteDocument({
             never needs to scroll sideways. */}
         <div className={`${forceTable ? "mt-4" : "mt-8"} overflow-x-auto ${forceTable ? "" : "hidden sm:block"}`}>
           <table
-            className={`w-full border-collapse table-fixed ${forceTable ? "text-[10.5px]" : "text-[13px] min-w-[480px]"}`}
+            className={`w-full border-collapse table-fixed ${forceTable ? "text-[10.5px]" : "text-[13px] min-w-[740px]"}`}
           >
             <colgroup>
               <col style={{ width: `${categoryColPct}%` }} />
@@ -334,7 +334,7 @@ function ChargeRow({
       {categoryCell && (
         <td
           rowSpan={categoryCell.rowSpan}
-          className={`px-3.5 align-top font-semibold text-[var(--muted)] border-r border-[var(--border-subtle)] ${
+          className={`px-3.5 align-top font-semibold text-[var(--muted)] border-r border-[var(--border-subtle)] whitespace-nowrap ${
             dense ? "py-1.5 text-[9.5px]" : "py-2 text-[12px]"
           }`}
         >
@@ -361,7 +361,7 @@ function ChargeRow({
       <td className={`px-3.5 text-right ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.quantity ?? "-"}</td>
       <td className={`px-3.5 text-right ${dense ? "py-1.5" : "py-2"}`}>
         {item ? (
-          <span className={`text-[var(--foreground)] ${dense ? "text-[10.5px]" : ""}`}>{krw(item.amountKrw)}</span>
+          <span className={`text-[var(--foreground)] whitespace-nowrap ${dense ? "text-[10.5px]" : ""}`}>{krw(item.amountKrw)}</span>
         ) : (
           <span className={`text-[var(--warning)] ${dense ? "text-[10.5px]" : "text-[12px]"}`}>미등록</span>
         )}
