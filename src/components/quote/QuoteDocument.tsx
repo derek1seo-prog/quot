@@ -23,6 +23,10 @@ function foreign(n: number, currency: string) {
   return `${symbol}${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
 
+// Charges VAT will be applied to separately - shaded in the table so
+// customers can see at a glance which lines that applies to.
+const VAT_APPLICABLE_CHARGE_TYPE_IDS = new Set(["INLAND_TRUCKING", "DOC_FEE", "HANDLING_CHG"]);
+
 export function QuoteDocument({
   company,
   quoteNumber,
@@ -312,9 +316,15 @@ function ChargeRow({
   categoryCell?: { label: string; rowSpan: number };
 }) {
   const item = column.lineItems.find((li) => li.chargeTypeId === chargeTypeId);
+  const vatApplies = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(chargeTypeId);
 
   return (
-    <tr className="border-b border-[var(--border-subtle)] print:break-inside-avoid">
+    <tr
+      className={`border-b border-[var(--border-subtle)] print:break-inside-avoid ${
+        vatApplies ? "bg-[var(--sidebar-bg)]" : ""
+      }`}
+      style={vatApplies ? { WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } : undefined}
+    >
       {categoryCell && (
         <td
           rowSpan={categoryCell.rowSpan}
@@ -423,8 +433,13 @@ function MobileLineRow({
   chargeTypeId: string;
 }) {
   const item = column.lineItems.find((li) => li.chargeTypeId === chargeTypeId);
+  const vatApplies = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(chargeTypeId);
   return (
-    <div className="flex items-start justify-between gap-3 py-2.5 border-b border-[var(--border-subtle)] text-[13px]">
+    <div
+      className={`flex items-start justify-between gap-3 py-2.5 border-b border-[var(--border-subtle)] text-[13px] ${
+        vatApplies ? "bg-[var(--sidebar-bg)] -mx-4 px-4" : ""
+      }`}
+    >
       <div>
         <p className="font-medium text-[var(--foreground)]">{label}</p>
         <p className="text-[11px] text-[var(--muted)]">{sublabel}</p>
