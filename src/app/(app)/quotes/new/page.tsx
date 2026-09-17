@@ -21,7 +21,7 @@ import type {
 } from "@/lib/types";
 import { AlertTriangle, ArrowLeft, ArrowRight, Loader2, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface MetaResponse {
   regions: Region[];
@@ -67,6 +67,7 @@ export default function NewQuotePage() {
   // Step 2 - container
   const [containerTypeId, setContainerTypeId] = useState("");
   const [containerQuantity, setContainerQuantity] = useState(1);
+  const quantityInputRef = useRef<HTMLInputElement>(null);
 
   // Step 3 - basic info
   const [customerName, setCustomerName] = useState("");
@@ -290,7 +291,12 @@ export default function NewQuotePage() {
                 <button
                   key={ct.id}
                   type="button"
-                  onClick={() => setContainerTypeId(selected ? "" : ct.id)}
+                  onClick={() => {
+                    setContainerTypeId(selected ? "" : ct.id);
+                    if (!selected) {
+                      requestAnimationFrame(() => quantityInputRef.current?.focus());
+                    }
+                  }}
                   className={`text-left p-5 rounded-[var(--radius-md)] border-2 transition-all ${
                     selected
                       ? "border-[var(--accent)] bg-[var(--accent-soft)]"
@@ -320,6 +326,7 @@ export default function NewQuotePage() {
                     >
                       <span className="text-[12px] text-[var(--muted)]">수량</span>
                       <input
+                        ref={quantityInputRef}
                         type="number"
                         min={1}
                         value={containerQuantity}
