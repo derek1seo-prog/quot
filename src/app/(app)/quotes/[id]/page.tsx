@@ -33,26 +33,6 @@ export default async function QuoteDetailPage({
           }
         />
       </div>
-      {/* Off-screen, laid-out-but-invisible copy of the formal print
-          layout, captured by the "PDF 다운로드" button instead of the
-          spacious on-screen preview above - so the PDF matches what
-          printing produces. Positioned off-canvas rather than
-          display:none so html2canvas can still measure/render it. */}
-      <div id="quote-print-capture" className="fixed -left-[10000px] top-0 w-[210mm]" aria-hidden>
-        <QuoteDocument
-          company={company}
-          quoteNumber={quote.quoteNumber}
-          input={quote.input}
-          result={quote.result}
-          originLabel={originPort ? `${originPort.nameKo} (${originPort.name})` : quote.input.originPortId}
-          destinationLabel={
-            destinationPort
-              ? `${destinationPort.nameKo} (${destinationPort.name})`
-              : quote.input.destinationPortId
-          }
-          forceTable
-        />
-      </div>
     </div>
   );
 }

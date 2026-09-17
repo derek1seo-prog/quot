@@ -55,10 +55,6 @@ export function QuoteDocument({
         {forceTable ? (
           <div className="flex items-start justify-between gap-4 pb-3 border-b-2 border-[var(--foreground)]">
             <div className="flex items-center gap-2.5">
-              {/* Plain <img>, not next/image: this markup is also captured
-                  by html2canvas for the PDF export, which needs the image
-                  already resolved in the DOM rather than behind Next's
-                  optimization proxy/srcset. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo.png" alt="" className="w-10 h-10 object-contain" />
               <div>
