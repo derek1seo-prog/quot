@@ -100,8 +100,8 @@
   },
   {
     "id": "CRS",
-    "name": "Cost Recovery Surcharge",
-    "nameKo": "비용 보전료",
+    "name": "Cost Recovery Charge",
+    "nameKo": "긴급 할증료",
     "category": "SURCHARGE",
     "unit": "CONTAINER",
     "vatRate": 0,

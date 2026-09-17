@@ -328,7 +328,7 @@ function ChargeRow({
       <td className={`px-3.5 ${dense ? "py-1.5" : "py-2"}`}>
         {dense ? (
           <div className="flex items-center font-medium text-[var(--foreground)] text-[10.5px]">
-            <span className="inline-block w-[78px] shrink-0 whitespace-nowrap">{label}</span>
+            <span className="inline-block w-[78px] shrink-0">{label}</span>
             <span className="text-[var(--muted)] text-[9px] whitespace-nowrap">({sublabel})</span>
           </div>
         ) : (
