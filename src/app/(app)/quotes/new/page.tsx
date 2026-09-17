@@ -57,6 +57,9 @@ export default function NewQuotePage() {
   const [meta, setMeta] = useState<MetaResponse | null>(null);
   const [company, setCompany] = useState<CompanyInfo | null>(null);
   const [step, setStep] = useState(0);
+  // Which way the step transition should slide in from - set right before
+  // setStep so the next render's entrance animation matches 다음/이전.
+  const [direction, setDirection] = useState<1 | -1>(1);
 
   // Step 1 - lane
   const [originPortId, setOriginPortId] = useState("");
@@ -175,12 +178,18 @@ export default function NewQuotePage() {
   }
 
   async function goToStep(next: number) {
+    setDirection(1);
     if (next === 3) {
       setStep(3);
       await runCalculation();
       return;
     }
     setStep(next);
+  }
+
+  function goBack(prev: number) {
+    setDirection(-1);
+    setStep(prev);
   }
 
   async function handleSave() {
@@ -219,6 +228,7 @@ export default function NewQuotePage() {
 
       <StepIndicator steps={steps} current={step} />
 
+      <div key={step} className={direction === 1 ? "animate-step-in-forward" : "animate-step-in-backward"}>
       {step === 0 && (
         <Card className="p-6 sm:p-8">
           <h2 className="text-[17px] font-semibold mb-1">출발지와 도착지를 선택하세요</h2>
@@ -351,7 +361,7 @@ export default function NewQuotePage() {
           </div>
 
           <div className="flex justify-between mt-8">
-            <Button variant="secondary" onClick={() => setStep(0)} icon={<ArrowLeft size={16} />}>
+            <Button variant="secondary" onClick={() => goBack(0)} icon={<ArrowLeft size={16} />}>
               이전
             </Button>
             <Button disabled={!step2Valid} onClick={() => goToStep(2)} icon={<ArrowRight size={16} />}>
@@ -428,7 +438,7 @@ export default function NewQuotePage() {
           </div>
 
           <div className="flex justify-between mt-8">
-            <Button variant="secondary" onClick={() => setStep(1)} icon={<ArrowLeft size={16} />}>
+            <Button variant="secondary" onClick={() => goBack(1)} icon={<ArrowLeft size={16} />}>
               이전
             </Button>
             <Button disabled={!step3Valid} onClick={() => goToStep(3)} icon={<ArrowRight size={16} />}>
@@ -469,7 +479,7 @@ export default function NewQuotePage() {
               />
 
               <div className="flex justify-between mt-8 max-w-[900px] mx-auto">
-                <Button variant="secondary" onClick={() => setStep(2)} icon={<ArrowLeft size={16} />}>
+                <Button variant="secondary" onClick={() => goBack(2)} icon={<ArrowLeft size={16} />}>
                   이전
                 </Button>
                 <Button onClick={handleSave} disabled={saving} icon={saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}>
@@ -480,6 +490,7 @@ export default function NewQuotePage() {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
