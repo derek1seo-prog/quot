@@ -345,12 +345,12 @@ function ChargeRow({
         {dense ? (
           <div className="flex items-center font-medium text-[var(--foreground)] text-[10.5px]">
             <span className="inline-block w-[78px] shrink-0">{label}</span>
-            <span className="text-[var(--muted)] text-[9px] whitespace-nowrap">({sublabel})</span>
+            <span className={`${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} text-[9px] whitespace-nowrap`}>({sublabel})</span>
           </div>
         ) : (
           <>
             <p className="font-medium text-[var(--foreground)]">{label}</p>
-            <p className="text-[11px] text-[var(--muted)]">{sublabel}</p>
+            <p className={`text-[11px] ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"}`}>{sublabel}</p>
           </>
         )}
       </td>
@@ -448,7 +448,7 @@ function MobileLineRow({
     >
       <div>
         <p className="font-medium text-[var(--foreground)]">{label}</p>
-        <p className="text-[11px] text-[var(--muted)]">{sublabel}</p>
+        <p className={`text-[11px] ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"}`}>{sublabel}</p>
       </div>
       <div className="text-right shrink-0">
         {item ? (

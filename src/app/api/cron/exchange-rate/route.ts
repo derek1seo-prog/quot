@@ -6,13 +6,17 @@ const EXCHANGE_RATE_API_URL = "https://open.er-api.com/v6/latest/USD";
 
 /**
  * Refreshes the USD -> KRW rate every morning via Vercel Cron (see
- * vercel.json). Auth-gated on CRON_SECRET - Vercel attaches this as the
- * Authorization header automatically when the env var is configured, so
- * this route can overwrite the rate baked into every future quote only
- * when called by the scheduled job, not by an arbitrary caller.
+ * vercel.json). Optionally auth-gated on CRON_SECRET - Vercel attaches this
+ * as the Authorization header automatically when the env var is configured,
+ * so this route only accepts the scheduled job's own requests. Setting
+ * CRON_SECRET is not required for the cron to work: without it the route is
+ * open (this endpoint just refreshes a public market rate, no user data),
+ * so the schedule in vercel.json runs out of the box with no Vercel env
+ * setup needed.
  */
 export async function GET(req: NextRequest) {
-  if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET;
+  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

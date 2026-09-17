@@ -46,6 +46,18 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   const [customers, setCustomers] = useState(initialCustomers);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // initialCustomers is a fresh array from the server component on every
+  // router.refresh() (e.g. after adding a customer) - without this, the
+  // state above stays frozen at its first-mount value and new customers
+  // never appear until a full page reload. Adjusting state during render
+  // (rather than in an effect) per React's guidance for syncing state to
+  // a changed prop.
+  const [prevInitialCustomers, setPrevInitialCustomers] = useState(initialCustomers);
+  if (initialCustomers !== prevInitialCustomers) {
+    setPrevInitialCustomers(initialCustomers);
+    setCustomers(initialCustomers);
+  }
+
   // Native scrollbars are easy to miss on tablets (thin, auto-hiding), so the
   // table can look like it's just cut off with no way to see the rest. Track
   // scroll position ourselves and fade the edges in/out as an explicit cue.
