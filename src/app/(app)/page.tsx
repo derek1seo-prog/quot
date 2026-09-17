@@ -41,8 +41,9 @@ export default async function DashboardPage() {
       icon: <Ship size={18} />,
     },
     {
-      label: "적용 환율 (USD)",
+      label: "환율 (USD)",
       value: exchangeRate ? `₩${exchangeRate.rate.toLocaleString()}` : "미설정",
+      sublabel: exchangeRate ? `${formatDate(exchangeRate.asOf)} 기준` : undefined,
       icon: <DollarSign size={18} />,
     },
   ];
@@ -76,7 +77,10 @@ export default async function DashboardPage() {
             <p className="text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
               {s.value}
             </p>
-            <p className="text-[13px] text-[var(--muted)] mt-0.5">{s.label}</p>
+            <p className="text-[13px] text-[var(--muted)] mt-0.5">
+              {s.label}
+              {s.sublabel ? ` · ${s.sublabel}` : ""}
+            </p>
           </Card>
         ))}
       </div>

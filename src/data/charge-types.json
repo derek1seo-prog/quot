@@ -60,7 +60,7 @@
     "nameKo": "서류발급비",
     "category": "LOCAL",
     "unit": "BL",
-    "vatRate": 0.1,
+    "vatRate": 0,
     "visibility": { "scope": "ALL" },
     "order": 50,
     "transportModes": ["FCL"]
@@ -115,7 +115,7 @@
     "nameKo": "핸들링차지",
     "category": "LOCAL",
     "unit": "BL",
-    "vatRate": 0.1,
+    "vatRate": 0,
     "visibility": { "scope": "ALL" },
     "order": 90,
     "transportModes": ["FCL"]
