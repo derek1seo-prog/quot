@@ -217,7 +217,7 @@ export function QuoteDocument({
                   최종가격(VAT 별도)
                 </td>
                 <td className={`px-3.5 text-right ${forceTable ? "py-2.5" : "py-3"}`}>
-                  <span className={`font-bold text-white ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}>
+                  <span className={`font-bold text-white whitespace-nowrap ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}>
                     KRW {result.column.grandTotalKrw.toLocaleString()}
                   </span>
                   {result.column.missingRate && (
@@ -399,7 +399,7 @@ function MobileChargeCard({
       <div className="flex items-center justify-between px-4 py-3 bg-[var(--sidebar-bg)]/60 border-t border-[var(--border-subtle)]">
         <span className="text-[13px] font-bold text-[var(--foreground)]">최종가격(VAT 별도)</span>
         <div className="text-right">
-          <span className="text-[15px] font-bold text-[var(--accent)]">
+          <span className="text-[15px] font-bold text-[var(--accent)] whitespace-nowrap">
             KRW {column.grandTotalKrw.toLocaleString()}
           </span>
           {column.missingRate && (
