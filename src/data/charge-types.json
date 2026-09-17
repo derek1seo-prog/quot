@@ -62,7 +62,7 @@
     "unit": "BL",
     "vatRate": 0,
     "visibility": { "scope": "ALL" },
-    "order": 50,
+    "order": 95,
     "transportModes": ["FCL"]
   },
   {
