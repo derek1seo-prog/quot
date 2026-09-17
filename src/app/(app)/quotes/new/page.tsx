@@ -319,23 +319,32 @@ export default function NewQuotePage() {
                       <AlertTriangle size={12} /> 이 출발항의 요율 미등록
                     </p>
                   )}
-                  {selected && (
-                    <div
-                      className="mt-4 flex items-center gap-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <span className="text-[12px] text-[var(--muted)]">수량</span>
-                      <input
-                        ref={quantityInputRef}
-                        type="number"
-                        min={1}
-                        value={containerQuantity}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(e) => setContainerQuantity(Math.max(1, Number(e.target.value) || 1))}
-                        className="w-16 h-8 rounded-[var(--radius-sm)] border border-[var(--border)] px-2 text-[13px] bg-white"
-                      />
+                  <div
+                    className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${
+                      selected ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div
+                        inert={!selected || undefined}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`pt-4 flex items-center gap-2 transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
+                          selected ? "opacity-100 translate-y-0 delay-100" : "opacity-0 -translate-y-1"
+                        }`}
+                      >
+                        <span className="text-[12px] text-[var(--muted)]">수량</span>
+                        <input
+                          ref={quantityInputRef}
+                          type="number"
+                          min={1}
+                          value={containerQuantity}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => setContainerQuantity(Math.max(1, Number(e.target.value) || 1))}
+                          className="w-16 h-8 rounded-[var(--radius-sm)] border border-[var(--border)] px-2 text-[13px] bg-white"
+                        />
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </button>
               );
             })}
