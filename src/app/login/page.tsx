@@ -25,15 +25,17 @@ function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "로그인에 실패했습니다.");
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        setError(data?.error ?? "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.");
         return;
       }
       const next = searchParams.get("next");
       const fallback = data.role === "admin" ? "/admin" : "/portal";
       router.push(next && next.startsWith(`/${data.role === "admin" ? "admin" : "portal"}`) ? next : fallback);
       router.refresh();
+    } catch {
+      setError("네트워크 오류로 로그인할 수 없습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
       setSubmitting(false);
     }
