@@ -209,7 +209,10 @@ export function QuoteDocument({
                 />
               ))}
 
-              <tr className="print:break-inside-avoid bg-[var(--accent)]">
+              <tr
+                className="print:break-inside-avoid bg-[var(--accent)]"
+                style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+              >
                 <td colSpan={5} className={`px-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
                   최종가격(VAT 별도)
                 </td>
@@ -324,9 +327,10 @@ function ChargeRow({
       )}
       <td className={`px-3.5 ${dense ? "py-1.5" : "py-2"}`}>
         {dense ? (
-          <p className="font-medium text-[var(--foreground)] text-[10.5px]">
-            {label} <span className="text-[var(--muted)] text-[9px]">({sublabel})</span>
-          </p>
+          <div className="flex items-baseline font-medium text-[var(--foreground)] text-[10.5px]">
+            <span className="inline-block w-[78px] shrink-0 whitespace-nowrap">{label}</span>
+            <span className="text-[var(--muted)] text-[9px] whitespace-nowrap">({sublabel})</span>
+          </div>
         ) : (
           <>
             <p className="font-medium text-[var(--foreground)]">{label}</p>
