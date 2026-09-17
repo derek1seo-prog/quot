@@ -1,7 +1,9 @@
 import {
   FilePlus2,
+  GitCompareArrows,
   LayoutDashboard,
   ListChecks,
+  Search,
   Settings,
   Ship,
   Users,
@@ -22,5 +24,9 @@ export function NavIcon({ icon, size = 17 }: { icon: NavItemDef["icon"]; size?: 
       return <Users size={size} />;
     case "settings":
       return <Settings size={size} />;
+    case "compare":
+      return <GitCompareArrows size={size} />;
+    case "lookup":
+      return <Search size={size} />;
   }
 }

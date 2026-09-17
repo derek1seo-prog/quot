@@ -1,10 +1,13 @@
 "use client";
 
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
+import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
+import { Modal } from "@/components/ui/Modal";
 import { RateCell } from "@/components/rates/RateCell";
-import type { Customer } from "@/lib/types";
-import { Trash2 } from "lucide-react";
+import type { PublicCustomer } from "@/lib/types";
+import { KeyRound, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type NumberField =
@@ -17,9 +20,10 @@ type NumberField =
 // makes these exact regardless of content, so the two ports' columns stay
 // identical width instead of the browser's auto layout redistributing
 // space unevenly between them.
-const nameColPct = 21;
-const contactColPct = 14;
-const rateColPct = 16; // x4 port/size columns = 64
+const nameColPct = 18;
+const contactColPct = 12;
+const rateColPct = 14; // x4 port/size columns = 56
+const portalColWidth = 150; // px - fixed, holds the account badge + issue/reset button
 const actionColWidth = 44; // px - fixed so the hover-delete column never grows past its button
 
 /** Rate fields grouped by port - one heading per port instead of repeating
@@ -42,9 +46,10 @@ const PORT_GROUPS: { label: string; fields: { field: NumberField; sub: string }[
   },
 ];
 
-export function CustomersTable({ initialCustomers }: { initialCustomers: Customer[] }) {
+export function CustomersTable({ initialCustomers }: { initialCustomers: PublicCustomer[] }) {
   const [customers, setCustomers] = useState(initialCustomers);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [accountModalFor, setAccountModalFor] = useState<PublicCustomer | null>(null);
 
   // initialCustomers is a fresh array from the server component on every
   // router.refresh() (e.g. after adding a customer) - without this, the
@@ -82,18 +87,21 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     };
   }, [customers.length]);
 
-  async function saveField(id: string, patch: Partial<Customer>) {
+  async function saveField(id: string, patch: Partial<PublicCustomer> & { password?: string }) {
     const res = await fetch("/api/customers", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, ...patch }),
     });
-    if (!res.ok) throw new Error("save failed");
-    const updated = (await res.json()) as Customer;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error ?? "save failed");
+    }
+    const updated = (await res.json()) as PublicCustomer;
     setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
   }
 
-  async function handleDelete(customer: Customer) {
+  async function handleDelete(customer: PublicCustomer) {
     if (!confirm(`${customer.name} 화주를 삭제할까요?`)) return;
     setDeletingId(customer.id);
     try {
@@ -102,6 +110,11 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     } finally {
       setDeletingId(null);
     }
+  }
+
+  async function handleIssueAccount(customerId: string, loginId: string, password: string) {
+    await saveField(customerId, { loginId, password });
+    setAccountModalFor(null);
   }
 
   if (customers.length === 0) {
@@ -116,13 +129,21 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
 
   return (
     <Card className="overflow-hidden">
+      {accountModalFor && (
+        <AccountModal
+          customer={accountModalFor}
+          onClose={() => setAccountModalFor(null)}
+          onSave={handleIssueAccount}
+        />
+      )}
       <div className="hidden sm:block relative">
         <div ref={scrollRef} className="overflow-x-auto">
-          <table className="w-full table-fixed text-left min-w-[760px]">
+          <table className="w-full table-fixed text-left min-w-[900px]">
             <colgroup>
               <col style={{ width: `${nameColPct}%` }} />
               <col style={{ width: `${contactColPct}%` }} />
               {PORT_GROUPS.flatMap((group) => group.fields.map((f) => <col key={f.field} style={{ width: `${rateColPct}%` }} />))}
+              <col style={{ width: `${portalColWidth}px` }} />
               <col style={{ width: `${actionColWidth}px` }} />
             </colgroup>
             <thead>
@@ -142,6 +163,9 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                     {group.label}
                   </th>
                 ))}
+                <th rowSpan={2} className="px-3 py-3 font-medium align-bottom border-l border-[var(--border-subtle)]">
+                  포털 계정
+                </th>
                 <th rowSpan={2} />
               </tr>
               <tr className="border-b border-[var(--border-subtle)] text-[11px] text-[var(--muted)]">
@@ -185,6 +209,16 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                       </td>
                     )),
                   )}
+                  <td className="px-3 py-3 align-middle border-l border-[var(--border-subtle)]">
+                    <button
+                      onClick={() => setAccountModalFor(c)}
+                      className="inline-flex items-center gap-1.5 text-[12px] hover:opacity-80 transition-opacity"
+                    >
+                      <Badge tone={c.hasLoginAccount ? "success" : "neutral"}>
+                        {c.hasLoginAccount ? `발급됨 · ${c.loginId}` : "미발급"}
+                      </Badge>
+                    </button>
+                  </td>
                   <td className="px-2 align-middle text-right">
                     <button
                       onClick={() => handleDelete(c)}
@@ -244,9 +278,83 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 </div>
               ))}
             </div>
+
+            <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
+              <button
+                onClick={() => setAccountModalFor(c)}
+                className="inline-flex items-center gap-1.5 text-[12px] hover:opacity-80 transition-opacity"
+              >
+                <span className="text-[11px] text-[var(--muted)]">포털 계정</span>
+                <Badge tone={c.hasLoginAccount ? "success" : "neutral"}>
+                  {c.hasLoginAccount ? `발급됨 · ${c.loginId}` : "미발급"}
+                </Badge>
+              </button>
+            </div>
           </div>
         ))}
       </div>
     </Card>
+  );
+}
+
+function AccountModal({
+  customer,
+  onClose,
+  onSave,
+}: {
+  customer: PublicCustomer;
+  onClose: () => void;
+  onSave: (customerId: string, loginId: string, password: string) => Promise<void>;
+}) {
+  const [loginId, setLoginId] = useState(customer.loginId ?? "");
+  const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSave() {
+    if (!loginId || !password) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave(customer.id, loginId, password);
+    } catch {
+      setError("저장에 실패했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title={`${customer.name} - 포털 계정`}>
+      <div className="space-y-4">
+        <p className="text-[13px] text-[var(--muted)]">
+          {customer.hasLoginAccount
+            ? "새 비밀번호를 입력하면 기존 계정 정보가 재설정됩니다."
+            : "로그인 ID와 비밀번호를 입력해 화주 포털 계정을 발급하세요."}
+        </p>
+        <FieldGroup>
+          <FieldLabel>로그인 ID</FieldLabel>
+          <Input value={loginId} onChange={(e) => setLoginId(e.target.value)} autoComplete="off" />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel>{customer.hasLoginAccount ? "새 비밀번호" : "비밀번호"}</FieldLabel>
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+          />
+        </FieldGroup>
+        {error && <p className="text-[13px] text-[var(--danger)]">{error}</p>}
+        <div className="flex gap-2 justify-end pt-2">
+          <Button variant="secondary" onClick={onClose}>
+            취소
+          </Button>
+          <Button onClick={handleSave} disabled={saving || !loginId || !password} icon={<KeyRound size={15} />}>
+            {saving ? "저장 중..." : customer.hasLoginAccount ? "재설정" : "발급"}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }

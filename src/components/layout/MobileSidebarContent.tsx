@@ -1,19 +1,25 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { getActiveHref, navSections } from "@/lib/nav";
+import { getActiveHref, type NavSectionDef } from "@/lib/nav";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavIcon } from "./nav-icons";
 
-export function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
+export function MobileSidebarContent({
+  onNavigate,
+  sections,
+}: {
+  onNavigate: () => void;
+  sections: NavSectionDef[];
+}) {
   const pathname = usePathname();
-  const activeHref = getActiveHref(pathname);
+  const activeHref = getActiveHref(pathname, sections);
   let itemIndex = 0;
 
   return (
     <nav className="flex-1 overflow-y-auto px-3 pb-6 space-y-6">
-      {navSections.map((section, i) => (
+      {sections.map((section, i) => (
         <div key={i}>
           {section.title && (
             <p

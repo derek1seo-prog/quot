@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateId } from "@/lib/id";
 import { getOceanFreightRates, upsertOceanFreightRate } from "@/lib/data-store";
+import { requireAdmin } from "@/lib/auth/require";
 import type { OceanFreightRate } from "@/lib/types";
 
 export async function GET() {
+  const session = await requireAdmin();
+  if (session instanceof NextResponse) return session;
   return NextResponse.json(await getOceanFreightRates());
 }
 
 export async function PUT(req: NextRequest) {
+  const session = await requireAdmin();
+  if (session instanceof NextResponse) return session;
+
   const body = (await req.json()) as Partial<OceanFreightRate> & {
     portId: string;
     destinationPortId: string;

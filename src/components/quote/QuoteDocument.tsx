@@ -12,6 +12,11 @@ interface QuoteDocumentProps {
    * switch to the compact, single-page letter layout (used by the print
    * route and the PDF export) instead of the spacious on-screen preview. */
   forceTable?: boolean;
+  /** "lookup" is used for the public/customer rate-lookup result: hides the
+   * 수신/발신 addressee block (there's no saved customer/quote yet) and
+   * swaps the letterhead title, but reuses the exact same itemized charge
+   * table as a saved quote document. */
+  variant?: "document" | "lookup";
 }
 
 function krw(n: number) {
@@ -35,7 +40,9 @@ export function QuoteDocument({
   originLabel,
   destinationLabel,
   forceTable = false,
+  variant = "document",
 }: QuoteDocumentProps) {
+  const isLookup = variant === "lookup";
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
   const localRows = result.chargeCatalog
     .filter((c) => c.category !== "OCEAN_FREIGHT")
@@ -80,11 +87,13 @@ export function QuoteDocument({
             </div>
             <div className="text-right shrink-0">
               <p className="text-[10.5px] uppercase tracking-wide text-[var(--muted)] font-semibold">
-                {input.transportMode} Freight Quotation
+                {isLookup ? "운임 조회 결과" : `${input.transportMode} Freight Quotation`}
               </p>
-              <p className="text-[12px] font-semibold mt-1">
-                {quoteNumber ?? <span className="text-[var(--warning)]">DRAFT</span>}
-              </p>
+              {!isLookup && (
+                <p className="text-[12px] font-semibold mt-1">
+                  {quoteNumber ?? <span className="text-[var(--warning)]">DRAFT</span>}
+                </p>
+              )}
             </div>
           </div>
         ) : (
@@ -109,30 +118,35 @@ export function QuoteDocument({
             </div>
             <div className="text-left sm:text-right shrink-0">
               <p className="text-[12px] uppercase tracking-wide text-[var(--muted)] font-medium">
-                Freight Quotation
+                {isLookup ? "운임 조회 결과" : "Freight Quotation"}
               </p>
-              <p className="text-[13px] font-semibold mt-1">
-                {quoteNumber ?? <span className="text-[var(--warning)]">DRAFT</span>}
-              </p>
+              {!isLookup && (
+                <p className="text-[13px] font-semibold mt-1">
+                  {quoteNumber ?? <span className="text-[var(--warning)]">DRAFT</span>}
+                </p>
+              )}
               <p className="text-[12px] text-[var(--muted)] mt-0.5">{formatDate(input.quoteDate)}</p>
             </div>
           </div>
         )}
 
-        {/* Addressee - same 수신/발신 format on-screen and in print/PDF */}
-        <div
-          className={`text-[var(--foreground)] space-y-0.5 ${
-            forceTable ? "pt-3 text-[11px]" : "pt-6 pb-2 text-[13px] leading-relaxed"
-          }`}
-        >
-          <p>
-            수신 : <span className="font-medium">{input.customerName}</span>
-            {input.contactName ? ` / ${input.contactName}` : ""}
-          </p>
-          <p>
-            발신 : <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
-          </p>
-        </div>
+        {/* Addressee - same 수신/발신 format on-screen and in print/PDF.
+            Omitted in lookup mode - there's no saved customer/quote yet. */}
+        {!isLookup && (
+          <div
+            className={`text-[var(--foreground)] space-y-0.5 ${
+              forceTable ? "pt-3 text-[11px]" : "pt-6 pb-2 text-[13px] leading-relaxed"
+            }`}
+          >
+            <p>
+              수신 : <span className="font-medium">{input.customerName}</span>
+              {input.contactName ? ` / ${input.contactName}` : ""}
+            </p>
+            <p>
+              발신 : <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
+            </p>
+          </div>
+        )}
 
         {forceTable ? (
           <div className="mt-3 grid grid-cols-3 gap-x-6 gap-y-2 py-3 border-t border-b border-[var(--border-subtle)]">
@@ -140,20 +154,20 @@ export function QuoteDocument({
             <InfoField dense label="POL" value={originLabel} />
             <InfoField dense label="POD" value={destinationLabel} />
             <InfoField dense label="CONTAINER" value={containerSummary} />
-            <InfoField dense label="VALID UNTIL" value={formatDate(input.validUntil)} />
+            {!isLookup && <InfoField dense label="VALID UNTIL" value={formatDate(input.validUntil)} />}
             <InfoField dense label="EX-RATE" value={`USD 1 = ₩${result.exchangeRate.toLocaleString()}`} />
             {input.hsCode && <InfoField dense label="HS CODE" value={input.hsCode} />}
           </div>
         ) : (
           /* Basic info (on-screen preview) */
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4 py-5 px-5 bg-[var(--sidebar-bg)] rounded-[var(--radius-md)]">
-            <InfoField label="CUSTOMER" value={input.customerName} />
+            {!isLookup && <InfoField label="CUSTOMER" value={input.customerName} />}
             <InfoField label="INCOTERMS" value={input.incoterms} />
             <InfoField label="POL" value={originLabel} />
             <InfoField label="POD" value={destinationLabel} />
             <InfoField label="CONTAINER" value={containerSummary} />
-            <InfoField label="VALID UNTIL" value={formatDate(input.validUntil)} />
-            <InfoField label="HS CODE" value={input.hsCode || "-"} />
+            {!isLookup && <InfoField label="VALID UNTIL" value={formatDate(input.validUntil)} />}
+            {input.hsCode && !isLookup && <InfoField label="HS CODE" value={input.hsCode || "-"} />}
             <InfoField label="EX-RATE" value={`USD 1 = ₩${result.exchangeRate.toLocaleString()}`} />
           </div>
         )}

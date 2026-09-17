@@ -24,7 +24,7 @@ export function QuoteListCard({
     <div className="px-6 py-4">
       <div className="flex items-center justify-between gap-3">
         <Link
-          href={`/quotes/${quote.id}`}
+          href={`/admin/quotes/${quote.id}`}
           className="text-[13.5px] font-medium text-[var(--accent)] hover:underline"
         >
           {quote.quoteNumber}

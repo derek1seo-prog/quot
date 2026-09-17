@@ -50,7 +50,10 @@ export function AddCustomerForm() {
   const [incheon40hq, setIncheon40hq] = useState("");
   const [busan20ft, setBusan20ft] = useState("");
   const [busan40hq, setBusan40hq] = useState("");
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function reset() {
     setName("");
@@ -60,6 +63,9 @@ export function AddCustomerForm() {
     setIncheon40hq("");
     setBusan20ft("");
     setBusan40hq("");
+    setLoginId("");
+    setPassword("");
+    setError(null);
   }
 
   function handleCancel() {
@@ -70,8 +76,9 @@ export function AddCustomerForm() {
   async function handleSubmit() {
     if (!name) return;
     setSubmitting(true);
+    setError(null);
     try {
-      await fetch("/api/customers", {
+      const res = await fetch("/api/customers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,8 +89,14 @@ export function AddCustomerForm() {
           incheonTruckingRate40hq: incheon40hq === "" ? undefined : Number(incheon40hq),
           busanTruckingRate20ft: busan20ft === "" ? undefined : Number(busan20ft),
           busanTruckingRate40hq: busan40hq === "" ? undefined : Number(busan40hq),
+          ...(loginId && password ? { loginId, password } : {}),
         }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "저장에 실패했습니다.");
+        return;
+      }
       reset();
       setOpen(false);
       router.refresh();
@@ -149,6 +162,27 @@ export function AddCustomerForm() {
                 <TruckingRateField label="부산항 40HQ" value={busan40hq} onChange={setBusan40hq} />
               </div>
             </div>
+
+            <div>
+              <p className="text-[13px] font-medium text-[var(--foreground)] mb-2">화주 포털 계정 (선택)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FieldGroup>
+                  <FieldLabel hint="선택">로그인 ID</FieldLabel>
+                  <Input value={loginId} onChange={(e) => setLoginId(e.target.value)} autoComplete="off" />
+                </FieldGroup>
+                <FieldGroup>
+                  <FieldLabel hint="선택">비밀번호</FieldLabel>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </FieldGroup>
+              </div>
+            </div>
+
+            {error && <p className="text-[13px] text-[var(--danger)]">{error}</p>}
 
             <div className="flex gap-2 justify-end">
               <Button variant="secondary" onClick={handleCancel}>

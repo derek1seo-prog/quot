@@ -20,7 +20,7 @@ export function QuoteListRow({
     <tr className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--sidebar-bg)]/50 transition-colors group">
       <td className="px-6 py-4">
         <Link
-          href={`/quotes/${quote.id}`}
+          href={`/admin/quotes/${quote.id}`}
           className="text-[13.5px] font-medium text-[var(--accent)] hover:underline"
         >
           {quote.quoteNumber}

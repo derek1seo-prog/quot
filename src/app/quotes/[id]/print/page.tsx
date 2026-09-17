@@ -1,8 +1,9 @@
 import { AutoPrint } from "@/components/quote/AutoPrint";
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
 import { getCompany, getPortById, getQuoteById } from "@/lib/data-store";
+import { getSession } from "@/lib/auth/require";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export async function generateMetadata({
   params,
@@ -26,8 +27,13 @@ export default async function QuotePrintPage({
 }) {
   const { id } = await params;
   const { autoprint } = await searchParams;
+
+  const session = await getSession();
+  if (!session) redirect(`/login?next=/quotes/${id}/print`);
+
   const quote = await getQuoteById(id);
   if (!quote) notFound();
+  if (session.role === "customer" && quote.input.customerId !== session.sub) notFound();
 
   const company = getCompany();
   const originPort = getPortById(quote.input.originPortId);

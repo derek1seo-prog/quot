@@ -2,13 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { addQuote, getQuotes } from "@/lib/data-store";
 import { generateId, generateQuoteNumber } from "@/lib/id";
 import { calculateQuote } from "@/lib/quote-engine";
+import { requireAdmin } from "@/lib/auth/require";
 import type { Quote, QuoteInput } from "@/lib/types";
 
 export async function GET() {
+  const session = await requireAdmin();
+  if (session instanceof NextResponse) return session;
   return NextResponse.json(await getQuotes());
 }
 
 export async function POST(req: NextRequest) {
+  const session = await requireAdmin();
+  if (session instanceof NextResponse) return session;
+
   const input = (await req.json()) as QuoteInput;
   try {
     const [result, existingQuotes] = await Promise.all([calculateQuote(input), getQuotes()]);

@@ -7,9 +7,13 @@ import { useState } from "react";
 export function QuoteActions({
   quoteId,
   quoteNumber,
+  backHref = "/admin/quotes",
+  backLabel = "견적 목록으로",
 }: {
   quoteId: string;
   quoteNumber: string;
+  backHref?: string;
+  backLabel?: string;
 }) {
   const [exporting, setExporting] = useState(false);
 
@@ -61,8 +65,8 @@ export function QuoteActions({
 
   return (
     <div className="no-print flex flex-wrap items-center justify-between gap-3 mb-6">
-      <LinkButton href="/quotes" variant="ghost" size="sm" icon={<ArrowLeft size={15} />}>
-        견적 목록으로
+      <LinkButton href={backHref} variant="ghost" size="sm" icon={<ArrowLeft size={15} />}>
+        {backLabel}
       </LinkButton>
       <div className="flex items-center gap-2">
         <Button variant="secondary" size="sm" onClick={handlePrint} icon={<Printer size={15} />}>

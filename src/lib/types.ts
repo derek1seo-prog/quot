@@ -129,7 +129,15 @@ export interface Customer {
   busanTruckingRate20ft?: number; // KRW
   busanTruckingRate40hq?: number; // KRW
   createdAt: string;
+  /** Portal login username - undefined means no account has been issued yet. */
+  loginId?: string;
+  /** "salt:hashHex" scrypt output. Never sent to any client - strip before returning JSON. */
+  passwordHash?: string;
 }
+
+/** Customer shape safe to send to any client - passwordHash stripped,
+ * replaced with a plain boolean so the UI can still show account status. */
+export type PublicCustomer = Omit<Customer, "passwordHash"> & { hasLoginAccount: boolean };
 
 /** One line the user picks in the "container" step, with a quantity. */
 export interface ContainerSelection {
@@ -138,6 +146,8 @@ export interface ContainerSelection {
 }
 
 export interface QuoteInput {
+  /** FK to Customer.id, set by the admin wizard's customer combobox. Optional for back-compat with any pre-existing data that predates this field. */
+  customerId?: string;
   customerName: string;
   contactName?: string;
   preparedBy: string;
@@ -205,4 +215,16 @@ export interface Quote {
   createdAt: string;
   input: QuoteInput;
   result: QuoteResult;
+}
+
+/** Minimal shape for the public/customer rate-lookup calculator - deliberately
+ * excludes customerName/customerId and every letterhead field, so a caller
+ * can never smuggle another party's identity into a calculation. The lookup
+ * API resolves identity (if any) solely from the caller's verified session. */
+export interface LookupInput {
+  transportMode: TransportMode;
+  originPortId: string;
+  destinationPortId: string;
+  incoterms: string;
+  container: ContainerSelection;
 }

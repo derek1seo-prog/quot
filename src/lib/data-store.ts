@@ -180,6 +180,16 @@ export async function getCustomerByName(name: string): Promise<Customer | undefi
   return customers.find((c) => c.name === name);
 }
 
+export async function getCustomerById(id: string): Promise<Customer | undefined> {
+  const customers = await getCustomers();
+  return customers.find((c) => c.id === id);
+}
+
+export async function getCustomerByLoginId(loginId: string): Promise<Customer | undefined> {
+  const customers = await getCustomers();
+  return customers.find((c) => c.loginId === loginId);
+}
+
 /** Quotes saved before the single-container refactor stored
  * `input.containers: ContainerSelection[]` and `result.columns: QuoteColumn[]`
  * instead of today's singular `container`/`column`. Normalize on read (taking
@@ -211,6 +221,11 @@ export async function getQuotes(): Promise<Quote[]> {
 export async function getQuoteById(id: string): Promise<Quote | undefined> {
   const quotes = await getQuotes();
   return quotes.find((q) => q.id === id);
+}
+
+export async function getQuotesByCustomerId(customerId: string): Promise<Quote[]> {
+  const quotes = await getQuotes();
+  return quotes.filter((q) => q.input.customerId === customerId);
 }
 
 // ---------- Writes (admin rate management + quote persistence) ----------

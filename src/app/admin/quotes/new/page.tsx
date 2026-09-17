@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldGroup, FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
+import { CustomerCombobox } from "@/components/quote/CustomerCombobox";
 import { PortCombobox, type PortOption } from "@/components/quote/PortCombobox";
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
 import { Step, StepIndicator } from "@/components/quote/StepIndicator";
@@ -73,7 +74,7 @@ export default function NewQuotePage() {
   const quantityInputRef = useRef<HTMLInputElement>(null);
 
   // Step 3 - basic info
-  const [customerName, setCustomerName] = useState("");
+  const [customerId, setCustomerId] = useState("");
   const [contactName, setContactName] = useState("");
   const [preparedBy, setPreparedBy] = useState("김태현 대리");
   const [quoteDate, setQuoteDate] = useState(todayIso());
@@ -127,7 +128,7 @@ export default function NewQuotePage() {
 
   const originPort = meta?.ports.find((p) => p.id === originPortId);
   const destinationPort = meta?.ports.find((p) => p.id === destinationPortId);
-  const matchedCustomer = meta?.customers.find((c) => c.name === customerName);
+  const matchedCustomer = meta?.customers.find((c) => c.id === customerId);
 
   function hasRateForContainer(containerTypeId: string) {
     if (!meta || !originPortId || !destinationPortId) return false;
@@ -141,7 +142,8 @@ export default function NewQuotePage() {
 
   function buildInput(): QuoteInput {
     return {
-      customerName,
+      customerId: customerId || undefined,
+      customerName: matchedCustomer?.name ?? "",
       contactName,
       preparedBy,
       quoteDate,
@@ -202,7 +204,7 @@ export default function NewQuotePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "저장에 실패했습니다.");
-      router.push(`/quotes/${data.id}`);
+      router.push(`/admin/quotes/${data.id}`);
     } catch (err) {
       setCalcError(err instanceof Error ? err.message : "저장에 실패했습니다.");
       setSaving(false);
@@ -211,7 +213,7 @@ export default function NewQuotePage() {
 
   const step1Valid = Boolean(originPortId && destinationPortId && incoterms);
   const step2Valid = Boolean(containerTypeId);
-  const step3Valid = Boolean(customerName && preparedBy && quoteDate && validUntil);
+  const step3Valid = Boolean(customerId && preparedBy && quoteDate && validUntil);
 
   if (!meta) {
     return (
@@ -381,22 +383,15 @@ export default function NewQuotePage() {
           <div className="grid sm:grid-cols-2 gap-6">
             <FieldGroup>
               <FieldLabel>화주</FieldLabel>
-              <Input
-                list="customer-list"
-                value={customerName}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setCustomerName(value);
-                  const matched = meta.customers.find((c) => c.name === value);
+              <CustomerCombobox
+                value={customerId}
+                onChange={(id) => {
+                  setCustomerId(id);
+                  const matched = meta.customers.find((c) => c.id === id);
                   if (matched?.contactName) setContactName(matched.contactName);
                 }}
-                placeholder="예: 지더블유파트너스"
+                customers={meta.customers}
               />
-              <datalist id="customer-list">
-                {meta.customers.map((c) => (
-                  <option key={c.id} value={c.name} />
-                ))}
-              </datalist>
               {matchedCustomer && (
                 <p className="text-[11px] text-[var(--accent)] mt-1.5">
                   ✓ 등록된 화주 정보가 연동되었습니다

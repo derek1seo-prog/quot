@@ -61,7 +61,7 @@ export default async function DashboardPage() {
             바로 전달 가능한 견적서가 만들어집니다.
           </p>
         </div>
-        <LinkButton href="/quotes/new" size="lg" icon={<FilePlus2 size={18} />}>
+        <LinkButton href="/admin/quotes/new" size="lg" icon={<FilePlus2 size={18} />}>
           새 견적 만들기
         </LinkButton>
       </div>
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
           최근 견적
         </h2>
         <Link
-          href="/quotes"
+          href="/admin/quotes"
           className="text-[13px] font-medium text-[var(--accent)] flex items-center gap-1 hover:underline"
         >
           전체 보기 <ArrowUpRight size={14} />
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
             <p className="text-[13px] text-[var(--muted)] mt-1 mb-6">
               첫 번째 견적을 만들어 보세요.
             </p>
-            <LinkButton href="/quotes/new" icon={<FilePlus2 size={16} />} className="mx-auto">
+            <LinkButton href="/admin/quotes/new" icon={<FilePlus2 size={16} />} className="mx-auto">
               새 견적 만들기
             </LinkButton>
           </CardContent>
@@ -131,7 +131,7 @@ export default async function DashboardPage() {
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
-                      href={`/quotes/${q.id}`}
+                      href={`/admin/quotes/${q.id}`}
                       className="text-[13.5px] font-medium text-[var(--accent)] hover:underline"
                     >
                       {q.quoteNumber}
@@ -159,7 +159,7 @@ export default async function DashboardPage() {
             {quotes.slice(0, 6).map((q) => (
               <Link
                 key={q.id}
-                href={`/quotes/${q.id}`}
+                href={`/admin/quotes/${q.id}`}
                 className="block px-6 py-4 active:bg-[var(--sidebar-bg)]/50"
               >
                 <div className="flex items-center justify-between gap-3">
