@@ -37,7 +37,13 @@ export function QuoteDocument({
   forceTable = false,
 }: QuoteDocumentProps) {
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
-  const localRows = result.chargeCatalog.filter((c) => c.category !== "OCEAN_FREIGHT");
+  const localRows = result.chargeCatalog
+    .filter((c) => c.category !== "OCEAN_FREIGHT")
+    .sort((a, b) => {
+      const aVat = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(a.chargeTypeId) ? 1 : 0;
+      const bVat = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(b.chargeTypeId) ? 1 : 0;
+      return aVat - bVat;
+    });
   const containerSummary = `${result.column.containerLabel} × ${result.column.quantity}`;
 
   const categoryColPct = 13;
@@ -348,11 +354,11 @@ function ChargeRow({
           </>
         )}
       </td>
-      <td className={`px-3.5 text-[var(--muted)] ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.currency ?? "-"}</td>
-      <td className={`px-3.5 text-right text-[var(--muted)] ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>
+      <td className={`px-3.5 ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.currency ?? "-"}</td>
+      <td className={`px-3.5 text-right ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>
         {item ? item.rate.toLocaleString("en-US") : "-"}
       </td>
-      <td className={`px-3.5 text-right text-[var(--muted)] ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.quantity ?? "-"}</td>
+      <td className={`px-3.5 text-right ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.quantity ?? "-"}</td>
       <td className={`px-3.5 text-right ${dense ? "py-1.5" : "py-2"}`}>
         {item ? (
           <span className={`text-[var(--foreground)] ${dense ? "text-[10.5px]" : ""}`}>{krw(item.amountKrw)}</span>
