@@ -52,14 +52,14 @@ function AnimatedAmount({ text, className }: { text: string; className?: string 
     const timer = setTimeout(() => {
       setDisplay(text);
       setFading(false);
-    }, 260);
+    }, 160);
     return () => clearTimeout(timer);
   }, [text]);
 
   return (
     <span
       style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
-      className={`inline-block transition-[opacity,scale,translate] duration-[260ms] motion-reduce:transition-none ${
+      className={`inline-block transition-[opacity,scale,translate] duration-[160ms] motion-reduce:transition-none ${
         fading ? "opacity-0 -translate-y-1.5 scale-[0.97]" : "opacity-100 translate-y-0 scale-100"
       } ${className ?? ""}`}
     >
@@ -419,7 +419,7 @@ function ChargeRow({
         {item && onRateChange && !dense ? (
           <RateCell
             value={item.rate}
-            debounceMs={700}
+            debounceMs={300}
             onSave={async (rate) => { await onRateChange(chargeTypeId, rate); }}
           />
         ) : item ? (
