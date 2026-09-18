@@ -336,10 +336,10 @@ export default function NewQuotePage() {
                       requestAnimationFrame(() => quantityInputRefs.current.get(ct.id)?.focus());
                     }
                   }}
-                  className={`text-left p-5 rounded-[var(--radius-md)] border-2 transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
+                  className={`text-left p-5 rounded-[var(--radius-md)] border-2 transition-all duration-200 ease-out motion-reduce:transition-none ${
                     selected
                       ? "border-[var(--accent)] bg-[var(--accent-soft)]"
-                      : "border-[var(--border)] hover:border-[var(--foreground)]/30"
+                      : "border-[var(--border)] hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40"
                   }`}
                 >
                   <div className="flex items-center justify-between">
