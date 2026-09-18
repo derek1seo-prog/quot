@@ -53,12 +53,17 @@ export function QuoteDocument({
     });
   const containerSummary = `${result.column.containerLabel} × ${result.column.quantity}`;
 
+  // forceTable (print/PDF) keeps 항목 wide since its dense row layout puts
+  // the label and English subtitle side by side on one line. The on-screen
+  // table stacks them on separate lines instead, so it needs far less room
+  // there and can give that space to 단가 (roomy enough for an editable
+  // RateCell's own padding) without widening the table or wrapping headers.
   const categoryColPct = 12;
-  const itemColPct = 42;
+  const itemColPct = forceTable ? 42 : 26;
   const curColPct = 10;
-  const rateColPct = 16;
-  const qtyColPct = 7;
-  const priceColPct = 13;
+  const rateColPct = forceTable ? 16 : 20;
+  const qtyColPct = forceTable ? 7 : 8;
+  const priceColPct = forceTable ? 13 : 24;
 
   return (
     <div
@@ -170,9 +175,7 @@ export function QuoteDocument({
             never needs to scroll sideways. */}
         <div className={`${forceTable ? "mt-4" : "mt-8"} overflow-x-auto ${forceTable ? "" : "hidden sm:block"}`}>
           <table
-            className={`w-full border-collapse table-fixed ${
-              forceTable ? "text-[10.5px]" : `text-[13px] ${onRateChange ? "min-w-[900px]" : "min-w-[740px]"}`
-            }`}
+            className={`w-full border-collapse table-fixed ${forceTable ? "text-[10.5px]" : "text-[13px] min-w-[740px]"}`}
           >
             <colgroup>
               <col style={{ width: `${categoryColPct}%` }} />
