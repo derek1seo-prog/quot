@@ -100,7 +100,7 @@ export function AddCustomerForm() {
           open ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
         }`}
       >
-        <div className="overflow-hidden">
+        <div className="overflow-hidden pt-1 -mt-1">
           <div
             inert={open || undefined}
             className={`transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
