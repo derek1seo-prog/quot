@@ -70,7 +70,9 @@ export default function NewQuotePage() {
   // Step 2 - container
   const [containerTypeId, setContainerTypeId] = useState("");
   const [containerQuantity, setContainerQuantity] = useState(1);
-  const quantityInputRef = useRef<HTMLInputElement>(null);
+  // Keyed by container type id - each card renders its own 수량 input, so a
+  // single ref would only ever point at whichever one mounted last.
+  const quantityInputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   // Step 3 - basic info
   const [customerName, setCustomerName] = useState("");
@@ -331,7 +333,7 @@ export default function NewQuotePage() {
                   onClick={() => {
                     setContainerTypeId(selected ? "" : ct.id);
                     if (!selected) {
-                      requestAnimationFrame(() => quantityInputRef.current?.focus());
+                      requestAnimationFrame(() => quantityInputRefs.current.get(ct.id)?.focus());
                     }
                   }}
                   className={`text-left p-5 rounded-[var(--radius-md)] border-2 transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
@@ -371,7 +373,10 @@ export default function NewQuotePage() {
                       >
                         <span className="text-[12px] text-[var(--muted)]">수량</span>
                         <input
-                          ref={quantityInputRef}
+                          ref={(el) => {
+                            if (el) quantityInputRefs.current.set(ct.id, el);
+                            else quantityInputRefs.current.delete(ct.id);
+                          }}
                           type="number"
                           min={1}
                           value={containerQuantity}
