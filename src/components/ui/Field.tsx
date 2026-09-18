@@ -11,8 +11,11 @@ export function FieldLabel({ children, hint }: { children: ReactNode; hint?: str
   );
 }
 
+// text-[16px] on mobile prevents iOS Safari from auto-zooming the page on
+// focus (it zooms any input under 16px and never zooms back out on blur);
+// sm:text-[14px] keeps the tighter desktop size once that's no longer a risk.
 const controlClasses =
-  "w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[14px] text-[var(--foreground)] outline-none transition-shadow focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] placeholder:text-[var(--muted)]";
+  "w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[16px] sm:text-[14px] text-[var(--foreground)] outline-none transition-shadow focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] placeholder:text-[var(--muted)]";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   function Input({ className, ...props }, ref) {
