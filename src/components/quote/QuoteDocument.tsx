@@ -46,12 +46,12 @@ export function QuoteDocument({
     });
   const containerSummary = `${result.column.containerLabel} × ${result.column.quantity}`;
 
-  const categoryColPct = 14;
-  const itemColPct = 28;
+  const categoryColPct = 12;
+  const itemColPct = 42;
   const curColPct = 10;
   const rateColPct = 12;
   const qtyColPct = 7;
-  const priceColPct = 29;
+  const priceColPct = 17;
 
   return (
     <div
@@ -223,10 +223,10 @@ export function QuoteDocument({
                 className="print:break-inside-avoid bg-[var(--accent)]"
                 style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
               >
-                <td colSpan={5} className={`px-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
+                <td colSpan={4} className={`px-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
                   최종가격(VAT 별도)
                 </td>
-                <td className={`px-3.5 text-right ${forceTable ? "py-2.5" : "py-3"}`}>
+                <td colSpan={2} className={`px-3.5 text-right ${forceTable ? "py-2.5" : "py-3"}`}>
                   <span className={`font-bold text-white whitespace-nowrap ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}>
                     KRW {result.column.grandTotalKrw.toLocaleString()}
                   </span>
