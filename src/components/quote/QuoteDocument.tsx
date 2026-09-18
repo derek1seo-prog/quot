@@ -33,10 +33,13 @@ function foreign(n: number, currency: string) {
 }
 
 /** Wraps a displayed amount so editing 단가 reads as a value actually
- * changing, not an instant swap: the old text briefly fades/slides out,
- * then the new text fades/slides in. Only animates on a real change -
- * the first render (including the print/PDF snapshot, which never
- * changes) never fades. */
+ * changing, not an instant swap: the old text eases out (fade, gentle
+ * rise, slight shrink), then the new text eases back in the same way.
+ * Uses the site's signature decelerating curve (see .animate-menu-item
+ * in globals.css) on both halves for a slow, deliberate settle rather
+ * than a snappy blink. Only animates on a real change - the first
+ * render (including the print/PDF snapshot, which never changes) never
+ * fades. */
 function AnimatedAmount({ text, className }: { text: string; className?: string }) {
   const [display, setDisplay] = useState(text);
   const [fading, setFading] = useState(false);
@@ -49,14 +52,15 @@ function AnimatedAmount({ text, className }: { text: string; className?: string 
     const timer = setTimeout(() => {
       setDisplay(text);
       setFading(false);
-    }, 140);
+    }, 260);
     return () => clearTimeout(timer);
   }, [text]);
 
   return (
     <span
-      className={`inline-block transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none ${
-        fading ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0"
+      style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
+      className={`inline-block transition-[opacity,scale,translate] duration-[260ms] motion-reduce:transition-none ${
+        fading ? "opacity-0 -translate-y-1.5 scale-[0.97]" : "opacity-100 translate-y-0 scale-100"
       } ${className ?? ""}`}
     >
       {display}
@@ -413,7 +417,11 @@ function ChargeRow({
         }`}
       >
         {item && onRateChange && !dense ? (
-          <RateCell value={item.rate} onSave={async (rate) => { await onRateChange(chargeTypeId, rate); }} />
+          <RateCell
+            value={item.rate}
+            debounceMs={700}
+            onSave={async (rate) => { await onRateChange(chargeTypeId, rate); }}
+          />
         ) : item ? (
           item.rate.toLocaleString("en-US")
         ) : (

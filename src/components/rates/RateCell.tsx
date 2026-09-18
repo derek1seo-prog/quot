@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { formatNumber } from "@/lib/format";
 import { Check, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -11,19 +11,30 @@ export function RateCell({
   value,
   onSave,
   placeholder = "미등록",
+  debounceMs,
 }: {
   value: number | null;
   onSave: (value: number) => Promise<void>;
   placeholder?: string;
+  /** When set, also commits `debounceMs` after the last keystroke - not
+   * just on blur/Enter - so a value can settle without clicking away.
+   * Omitted (the admin rates table's default) keeps the original
+   * blur-only commit. */
+  debounceMs?: number;
 }) {
   const [draft, setDraft] = useState<string>(value != null ? String(value) : "");
   const [focused, setFocused] = useState(false);
   const [state, setState] = useState<SaveState>("idle");
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function commit() {
-    const num = Number(draft);
-    if (draft === "" || Number.isNaN(num)) return;
-    if (value === num) return;
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
+
+  async function commitValue(num: number) {
+    if (Number.isNaN(num) || value === num) return;
     setState("saving");
     try {
       await onSave(num);
@@ -31,6 +42,18 @@ export function RateCell({
       setTimeout(() => setState("idle"), 1200);
     } catch {
       setState("error");
+    }
+  }
+
+  function commit() {
+    if (draft === "") return;
+    commitValue(Number(draft));
+  }
+
+  function clearDebounce() {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
     }
   }
 
@@ -52,9 +75,19 @@ export function RateCell({
           // that selection instead of keeping it.
           requestAnimationFrame(() => el.select());
         }}
-        onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, ""))}
+        onChange={(e) => {
+          const next = e.target.value.replace(/[^0-9]/g, "");
+          setDraft(next);
+          if (debounceMs != null) {
+            clearDebounce();
+            if (next !== "") {
+              debounceTimer.current = setTimeout(() => commitValue(Number(next)), debounceMs);
+            }
+          }
+        }}
         onBlur={() => {
           setFocused(false);
+          clearDebounce();
           commit();
         }}
         onKeyDown={(e) => {
