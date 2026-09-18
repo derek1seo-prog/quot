@@ -61,7 +61,7 @@ export function RateCell({
           if (e.key === "Enter") (e.target as HTMLInputElement).blur();
         }}
         className={cn(
-          "w-full h-9 px-2.5 pr-7 rounded-[var(--radius-sm)] border text-[13px] text-right bg-white outline-none transition-colors",
+          "w-full h-9 px-2.5 pr-7 rounded-[var(--radius-sm)] border text-[16px] sm:text-[13px] text-right bg-white outline-none transition-colors",
           "border-[var(--border)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]",
           draft === "" && "text-[var(--muted)]",
         )}
