@@ -1,6 +1,9 @@
+"use client";
+
 import { RateCell } from "@/components/rates/RateCell";
 import { formatDate } from "@/lib/format";
 import type { CompanyInfo, QuoteInput, QuoteResult } from "@/lib/types";
+import { useEffect, useRef, useState } from "react";
 
 interface QuoteDocumentProps {
   company: CompanyInfo;
@@ -27,6 +30,38 @@ function krw(n: number) {
 function foreign(n: number, currency: string) {
   const symbol = currency === "USD" ? "$" : currency === "CNY" ? "¥" : "";
   return `${symbol}${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+}
+
+/** Wraps a displayed amount so editing 단가 reads as a value actually
+ * changing, not an instant swap: the old text briefly fades/slides out,
+ * then the new text fades/slides in. Only animates on a real change -
+ * the first render (including the print/PDF snapshot, which never
+ * changes) never fades. */
+function AnimatedAmount({ text, className }: { text: string; className?: string }) {
+  const [display, setDisplay] = useState(text);
+  const [fading, setFading] = useState(false);
+  const prevText = useRef(text);
+
+  useEffect(() => {
+    if (text === prevText.current) return;
+    prevText.current = text;
+    setFading(true);
+    const timer = setTimeout(() => {
+      setDisplay(text);
+      setFading(false);
+    }, 140);
+    return () => clearTimeout(timer);
+  }, [text]);
+
+  return (
+    <span
+      className={`inline-block transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none ${
+        fading ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0"
+      } ${className ?? ""}`}
+    >
+      {display}
+    </span>
+  );
 }
 
 // Charges VAT will be applied to separately - shaded in the table so
@@ -241,9 +276,10 @@ export function QuoteDocument({
                   최종가격(VAT 별도)
                 </td>
                 <td colSpan={2} className={`px-3.5 text-right ${forceTable ? "py-2.5" : "py-3"}`}>
-                  <span className={`font-bold text-white whitespace-nowrap ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}>
-                    KRW {result.column.grandTotalKrw.toLocaleString()}
-                  </span>
+                  <AnimatedAmount
+                    text={`KRW ${result.column.grandTotalKrw.toLocaleString()}`}
+                    className={`font-bold text-white whitespace-nowrap ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}
+                  />
                   {result.column.missingRate && (
                     <p className="text-[11px] font-normal text-white/90 mt-0.5">
                       일부 요율 미등록
@@ -387,7 +423,10 @@ function ChargeRow({
       <td className={`px-3.5 text-right ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.quantity ?? "-"}</td>
       <td className={`px-3.5 text-right ${dense ? "py-1.5" : "py-2"}`}>
         {item ? (
-          <span className={`text-[var(--foreground)] whitespace-nowrap ${dense ? "text-[10.5px]" : ""}`}>{krw(item.amountKrw)}</span>
+          <AnimatedAmount
+            text={krw(item.amountKrw)}
+            className={`text-[var(--foreground)] whitespace-nowrap ${dense ? "text-[10.5px]" : ""}`}
+          />
         ) : (
           <span className={`text-[var(--warning)] ${dense ? "text-[10.5px]" : "text-[12px]"}`}>미등록</span>
         )}
