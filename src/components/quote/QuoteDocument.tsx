@@ -56,9 +56,9 @@ export function QuoteDocument({
   const categoryColPct = 12;
   const itemColPct = 42;
   const curColPct = 10;
-  const rateColPct = 12;
+  const rateColPct = 16;
   const qtyColPct = 7;
-  const priceColPct = 17;
+  const priceColPct = 13;
 
   return (
     <div
@@ -366,7 +366,11 @@ function ChargeRow({
         )}
       </td>
       <td className={`px-3.5 ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.currency ?? "-"}</td>
-      <td className={`px-3.5 text-right ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>
+      <td
+        className={`text-right ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${
+          item && onRateChange && !dense ? "px-1.5 py-1.5" : `px-3.5 ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`
+        }`}
+      >
         {item && onRateChange && !dense ? (
           <RateCell value={item.rate} onSave={async (rate) => { await onRateChange(chargeTypeId, rate); }} />
         ) : item ? (
