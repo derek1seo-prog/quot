@@ -30,6 +30,15 @@
   box-sizing: border-box;
 }
 
+/* Tailwind v4's preflight no longer sets a pointer cursor on buttons (an
+ * accessibility-motivated change), so every custom button in this app would
+ * otherwise show the plain arrow cursor on hover. Restore it site-wide
+ * instead of adding cursor-pointer to each one individually. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
 html {
   scroll-behavior: smooth;
 }

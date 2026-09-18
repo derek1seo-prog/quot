@@ -37,7 +37,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center font-medium transition-all duration-150 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap cursor-pointer",
+        "inline-flex items-center justify-center font-medium transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98] active:shadow-sm disabled:opacity-40 disabled:pointer-events-none disabled:hover:translate-y-0 disabled:hover:shadow-none whitespace-nowrap cursor-pointer motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         variantClasses[variant],
         sizeClasses[size],
         className,
@@ -71,7 +71,7 @@ export function LinkButton({
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center justify-center font-medium transition-all duration-150 active:scale-[0.98] whitespace-nowrap",
+        "inline-flex items-center justify-center font-medium transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98] active:shadow-sm whitespace-nowrap cursor-pointer motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         variantClasses[variant],
         sizeClasses[size],
         className,

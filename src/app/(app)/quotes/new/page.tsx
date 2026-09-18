@@ -334,7 +334,7 @@ export default function NewQuotePage() {
                       requestAnimationFrame(() => quantityInputRef.current?.focus());
                     }
                   }}
-                  className={`text-left p-5 rounded-[var(--radius-md)] border-2 transition-all ${
+                  className={`text-left p-5 rounded-[var(--radius-md)] border-2 transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
                     selected
                       ? "border-[var(--accent)] bg-[var(--accent-soft)]"
                       : "border-[var(--border)] hover:border-[var(--foreground)]/30"
