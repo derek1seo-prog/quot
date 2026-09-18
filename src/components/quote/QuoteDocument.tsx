@@ -170,7 +170,9 @@ export function QuoteDocument({
             never needs to scroll sideways. */}
         <div className={`${forceTable ? "mt-4" : "mt-8"} overflow-x-auto ${forceTable ? "" : "hidden sm:block"}`}>
           <table
-            className={`w-full border-collapse table-fixed ${forceTable ? "text-[10.5px]" : "text-[13px] min-w-[740px]"}`}
+            className={`w-full border-collapse table-fixed ${
+              forceTable ? "text-[10.5px]" : `text-[13px] ${onRateChange ? "min-w-[900px]" : "min-w-[740px]"}`
+            }`}
           >
             <colgroup>
               <col style={{ width: `${categoryColPct}%` }} />
