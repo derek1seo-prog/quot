@@ -86,6 +86,8 @@ export default function NewQuotePage() {
   const [calculating, setCalculating] = useState(false);
   const [calcError, setCalcError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Per-quote 단가 overrides edited in the preview step, keyed by chargeTypeId.
+  const [rateOverrides, setRateOverrides] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetch("/api/meta")
@@ -139,7 +141,7 @@ export default function NewQuotePage() {
     );
   }
 
-  function buildInput(): QuoteInput {
+  function buildInput(overrides: Record<string, number> = rateOverrides): QuoteInput {
     return {
       customerName,
       contactName,
@@ -154,18 +156,19 @@ export default function NewQuotePage() {
       incoterms,
       hsCode,
       container: { containerTypeId, quantity: containerQuantity },
+      rateOverrides: overrides,
       remarks,
     };
   }
 
-  async function runCalculation() {
+  async function runCalculation(overrides: Record<string, number> = rateOverrides) {
     setCalculating(true);
     setCalcError(null);
     try {
       const res = await fetch("/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildInput()),
+        body: JSON.stringify(buildInput(overrides)),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "계산에 실패했습니다.");
@@ -177,11 +180,26 @@ export default function NewQuotePage() {
     }
   }
 
+  // 단가를 직접 수정했을 때 - 새 값으로 다시 계산해서 견적가/최종가격에 반영한다.
+  async function handleRateOverride(chargeTypeId: string, rate: number) {
+    const next = { ...rateOverrides, [chargeTypeId]: rate };
+    const res = await fetch("/api/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildInput(next)),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "재계산에 실패했습니다.");
+    setRateOverrides(next);
+    setCalcResult(data as QuoteResult);
+  }
+
   async function goToStep(next: number) {
     setDirection(1);
     if (next === 3) {
       setStep(3);
-      await runCalculation();
+      setRateOverrides({});
+      await runCalculation({});
       return;
     }
     setStep(next);
@@ -476,7 +494,11 @@ export default function NewQuotePage() {
                 destinationLabel={
                   destinationPort ? `${destinationPort.nameKo} (${destinationPort.name})` : ""
                 }
+                onRateChange={handleRateOverride}
               />
+              <p className="text-[12px] text-[var(--muted)] mt-3 text-center">
+                단가를 클릭하면 이 견적만 다른 운임으로 수정할 수 있습니다. 견적가는 자동으로 다시 계산됩니다.
+              </p>
 
               <div className="flex justify-between mt-8 max-w-[900px] mx-auto">
                 <Button variant="secondary" onClick={() => goBack(2)} icon={<ArrowLeft size={16} />}>

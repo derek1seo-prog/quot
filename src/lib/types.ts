@@ -152,6 +152,10 @@ export interface QuoteInput {
   hsCode?: string;
   container: ContainerSelection;
   exchangeRateOverride?: number; // if omitted, use current stored exchange rate
+  /** Per-quote rate overrides, keyed by chargeTypeId (including "OCEAN_FREIGHT").
+   * Lets a quote negotiate a one-off rate without touching the shared rate
+   * sheet. Only applies to charges that already have a registered rate. */
+  rateOverrides?: Record<string, number>;
   remarks?: string;
 }
 

@@ -128,7 +128,8 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     if (!oceanFreight) {
       missingRate = true;
     } else if (oceanFreightChargeType) {
-      const base = oceanFreight.rate * qty;
+      const rate = input.rateOverrides?.[oceanFreightChargeType.id] ?? oceanFreight.rate;
+      const base = rate * qty;
       const vatAmount = 0;
       const amountForeign = base + vatAmount;
       const amountKrw =
@@ -161,8 +162,9 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
         missingRate = true;
         continue;
       }
+      const effectiveRate = input.rateOverrides?.[chargeType.id] ?? rate.rate;
       const multiplier = chargeType.unit === "BL" ? 1 : qty;
-      const base = rate.rate * multiplier;
+      const base = effectiveRate * multiplier;
       const vatAmount = round(base * chargeType.vatRate);
       const amountForeign = base + vatAmount;
       const amountKrw =
@@ -186,7 +188,7 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
 
     // Customer-specific inland trucking (see resolution above)
     if (truckingComplete) {
-      const rate = truckingRate!;
+      const rate = input.rateOverrides?.[INLAND_TRUCKING_CHARGE_TYPE_ID] ?? truckingRate!;
       const base = rate * qty;
       lineItems.push({
         chargeTypeId: INLAND_TRUCKING_CHARGE_TYPE_ID,

@@ -1,3 +1,4 @@
+import { RateCell } from "@/components/rates/RateCell";
 import { formatDate } from "@/lib/format";
 import type { CompanyInfo, QuoteInput, QuoteResult } from "@/lib/types";
 
@@ -12,6 +13,11 @@ interface QuoteDocumentProps {
    * switch to the compact, single-page letter layout (used by the print
    * route and the PDF export) instead of the spacious on-screen preview. */
   forceTable?: boolean;
+  /** When set, registered charges' 단가 becomes editable (used only by the
+   * quote wizard's preview step, before a quote is saved) - editing a rate
+   * recalculates 견적가/최종가격 through the same engine as the server. Never
+   * passed for a saved quote's read-only view or the print/PDF output. */
+  onRateChange?: (chargeTypeId: string, rate: number) => Promise<void> | void;
 }
 
 function krw(n: number) {
@@ -35,6 +41,7 @@ export function QuoteDocument({
   originLabel,
   destinationLabel,
   forceTable = false,
+  onRateChange,
 }: QuoteDocumentProps) {
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
   const localRows = result.chargeCatalog
@@ -204,6 +211,7 @@ export function QuoteDocument({
                   chargeTypeId={oceanFreightRow.chargeTypeId}
                   dense={forceTable}
                   categoryCell={{ label: "해상운임", rowSpan: 1 }}
+                  onRateChange={onRateChange}
                 />
               )}
 
@@ -215,6 +223,7 @@ export function QuoteDocument({
                   column={result.column}
                   chargeTypeId={row.chargeTypeId}
                   dense={forceTable}
+                  onRateChange={onRateChange}
                   categoryCell={i === 0 ? { label: "국내 부대비용", rowSpan: localRows.length } : undefined}
                 />
               ))}
@@ -309,6 +318,7 @@ function ChargeRow({
   chargeTypeId,
   dense = false,
   categoryCell,
+  onRateChange,
 }: {
   label: string;
   sublabel: string;
@@ -320,6 +330,7 @@ function ChargeRow({
    * same group omit it, since the earlier cell's rowSpan already covers
    * them. */
   categoryCell?: { label: string; rowSpan: number };
+  onRateChange?: (chargeTypeId: string, rate: number) => Promise<void> | void;
 }) {
   const item = column.lineItems.find((li) => li.chargeTypeId === chargeTypeId);
   const vatApplies = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(chargeTypeId);
@@ -356,7 +367,13 @@ function ChargeRow({
       </td>
       <td className={`px-3.5 ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.currency ?? "-"}</td>
       <td className={`px-3.5 text-right ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>
-        {item ? item.rate.toLocaleString("en-US") : "-"}
+        {item && onRateChange && !dense ? (
+          <RateCell value={item.rate} onSave={async (rate) => { await onRateChange(chargeTypeId, rate); }} />
+        ) : item ? (
+          item.rate.toLocaleString("en-US")
+        ) : (
+          "-"
+        )}
       </td>
       <td className={`px-3.5 text-right ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.quantity ?? "-"}</td>
       <td className={`px-3.5 text-right ${dense ? "py-1.5" : "py-2"}`}>
