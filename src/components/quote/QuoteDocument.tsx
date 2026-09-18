@@ -343,9 +343,9 @@ function ChargeRow({
       )}
       <td className={`px-3.5 ${dense ? "py-1.5" : "py-2"}`}>
         {dense ? (
-          <div className="flex items-center font-medium text-[var(--foreground)] text-[10.5px]">
+          <div className="flex flex-wrap items-baseline gap-x-1 font-medium text-[var(--foreground)] text-[10.5px]">
             <span className="inline-block w-[78px] shrink-0">{label}</span>
-            <span className={`${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} text-[9px] whitespace-nowrap`}>({sublabel})</span>
+            <span className={`${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} text-[9px]`}>({sublabel})</span>
           </div>
         ) : (
           <>
