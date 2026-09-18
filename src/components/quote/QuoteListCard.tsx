@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/Badge";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
 import { formatCurrency, formatDate, regionLabel } from "@/lib/format";
 import type { Quote } from "@/lib/types";
@@ -18,7 +19,8 @@ export function QuoteListCard({
   quote: Quote;
   portNameById: Record<string, string>;
 }) {
-  const { deleting, handleDelete } = useDeleteQuote(quote.id, quote.quoteNumber);
+  const { deleting, confirmOpen, quoteNumber, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteQuote(quote.id, quote.quoteNumber);
 
   return (
     <div className="px-6 py-4">
@@ -30,13 +32,21 @@ export function QuoteListCard({
           {quote.quoteNumber}
         </Link>
         <button
-          onClick={handleDelete}
+          onClick={requestDelete}
           disabled={deleting}
           className="w-8 h-8 -mr-2 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] active:bg-red-50 active:text-[var(--danger)]"
           aria-label="삭제"
         >
           <Trash2 size={15} />
         </button>
+        <ConfirmDialog
+          open={confirmOpen}
+          title="견적을 삭제할까요?"
+          description={`${quoteNumber} 견적서가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.`}
+          loading={deleting}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
       </div>
       <p className="text-[13.5px] text-[var(--foreground)] mt-1">{quote.input.customerName}</p>
       <div className="flex items-center gap-2 mt-1.5">

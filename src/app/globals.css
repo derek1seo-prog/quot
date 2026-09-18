@@ -12,6 +12,7 @@
   --accent-soft: #e8f2fd;
   --success: #1d7a3e;
   --danger: #d70015;
+  --danger-hover: #b8000f;
   --warning: #b06a00;
   --sidebar-bg: #f5f5f7;
   --radius-lg: 18px;
@@ -156,10 +157,42 @@ input[type="number"] {
   animation: step-in-backward 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Confirm dialog (delete 화주/견적, etc.) - backdrop fades in while the
+ * panel eases up from a slightly smaller, lower resting point. */
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-backdrop {
+  animation: modal-backdrop-in 0.2s ease-out both;
+}
+
+.animate-modal-panel {
+  animation: modal-panel-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
-  .animate-step-in-backward {
+  .animate-step-in-backward,
+  .animate-modal-backdrop,
+  .animate-modal-panel {
     animation: none;
   }
 }

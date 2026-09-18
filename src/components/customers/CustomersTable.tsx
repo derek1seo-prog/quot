@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { RateCell } from "@/components/rates/RateCell";
 import type { Customer } from "@/lib/types";
 import { Trash2 } from "lucide-react";
@@ -45,6 +46,7 @@ const PORT_GROUPS: { label: string; fields: { field: NumberField; sub: string }[
 export function CustomersTable({ initialCustomers }: { initialCustomers: Customer[] }) {
   const [customers, setCustomers] = useState(initialCustomers);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Customer | null>(null);
 
   // initialCustomers is a fresh array from the server component on every
   // router.refresh() (e.g. after adding a customer) - without this, the
@@ -93,14 +95,16 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
   }
 
-  async function handleDelete(customer: Customer) {
-    if (!confirm(`${customer.name} 화주를 삭제할까요?`)) return;
+  async function confirmDelete() {
+    const customer = pendingDelete;
+    if (!customer) return;
     setDeletingId(customer.id);
     try {
       await fetch(`/api/customers?id=${customer.id}`, { method: "DELETE" });
       setCustomers((prev) => prev.filter((c) => c.id !== customer.id));
     } finally {
       setDeletingId(null);
+      setPendingDelete(null);
     }
   }
 
@@ -187,7 +191,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                   )}
                   <td className="px-2 align-middle text-right">
                     <button
-                      onClick={() => handleDelete(c)}
+                      onClick={() => setPendingDelete(c)}
                       disabled={deletingId === c.id}
                       className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50"
                       aria-label="삭제"
@@ -217,7 +221,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
               </div>
               <button
-                onClick={() => handleDelete(c)}
+                onClick={() => setPendingDelete(c)}
                 disabled={deletingId === c.id}
                 className="w-8 h-8 -mr-2 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] active:bg-red-50 active:text-[var(--danger)]"
                 aria-label="삭제"
@@ -247,6 +251,19 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
           </div>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={pendingDelete != null}
+        title="화주를 삭제할까요?"
+        description={
+          pendingDelete
+            ? `${pendingDelete.name} 화주 정보와 등록된 내륙운송료가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.`
+            : undefined
+        }
+        loading={deletingId != null}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </Card>
   );
 }

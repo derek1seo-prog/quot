@@ -2,7 +2,7 @@ import { cn } from "@/lib/cn";
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "danger-solid";
 type Size = "sm" | "md" | "lg";
 
 const variantClasses: Record<Variant, string> = {
@@ -14,6 +14,11 @@ const variantClasses: Record<Variant, string> = {
     "bg-transparent text-[var(--foreground)] border border-transparent hover:border-[var(--border)] hover:bg-[var(--sidebar-bg)]",
   danger:
     "bg-transparent text-[var(--danger)] border border-transparent hover:border-red-200 hover:bg-red-50",
+  // Solid fill, for a destructive action that needs to read as the primary
+  // button in its context (e.g. a delete confirmation dialog) - the plain
+  // "danger" variant is deliberately subtle, sized for an inline icon button.
+  "danger-solid":
+    "bg-[var(--danger)] text-white hover:bg-[var(--danger-hover)] shadow-sm shadow-red-900/10",
 };
 
 const sizeClasses: Record<Size, string> = {
