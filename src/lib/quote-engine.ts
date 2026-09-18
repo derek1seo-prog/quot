@@ -141,7 +141,7 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
         category: oceanFreightChargeType.category,
         currency: oceanFreight.currency,
         unit: oceanFreightChargeType.unit,
-        rate: oceanFreight.rate,
+        rate,
         vatRate: 0,
         vatAmount,
         quantity: qty,
@@ -176,7 +176,7 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
         category: chargeType.category,
         currency: rate.currency,
         unit: chargeType.unit,
-        rate: rate.rate,
+        rate: effectiveRate,
         vatRate: chargeType.vatRate,
         vatAmount:
           rate.currency === "KRW" ? vatAmount : round(vatAmount * exchangeRate),

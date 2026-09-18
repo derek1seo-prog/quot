@@ -88,6 +88,10 @@ export default function NewQuotePage() {
   const [saving, setSaving] = useState(false);
   // Per-quote 단가 overrides edited in the preview step, keyed by chargeTypeId.
   const [rateOverrides, setRateOverrides] = useState<Record<string, number>>({});
+  // Counts in-flight rate-edit recalculations - blocks 저장 until they land,
+  // since handleSave reads rateOverrides synchronously and a save fired
+  // before an edit's request resolves would silently drop that edit.
+  const [pendingRateEdits, setPendingRateEdits] = useState(0);
 
   useEffect(() => {
     fetch("/api/meta")
@@ -182,16 +186,21 @@ export default function NewQuotePage() {
 
   // 단가를 직접 수정했을 때 - 새 값으로 다시 계산해서 견적가/최종가격에 반영한다.
   async function handleRateOverride(chargeTypeId: string, rate: number) {
-    const next = { ...rateOverrides, [chargeTypeId]: rate };
-    const res = await fetch("/api/calculate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildInput(next)),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "재계산에 실패했습니다.");
-    setRateOverrides(next);
-    setCalcResult(data as QuoteResult);
+    setPendingRateEdits((n) => n + 1);
+    try {
+      const next = { ...rateOverrides, [chargeTypeId]: rate };
+      const res = await fetch("/api/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildInput(next)),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "재계산에 실패했습니다.");
+      setRateOverrides(next);
+      setCalcResult(data as QuoteResult);
+    } finally {
+      setPendingRateEdits((n) => n - 1);
+    }
   }
 
   async function goToStep(next: number) {
@@ -500,13 +509,24 @@ export default function NewQuotePage() {
                 단가를 클릭하면 이 견적만 다른 운임으로 수정할 수 있습니다. 견적가는 자동으로 다시 계산됩니다.
               </p>
 
-              <div className="flex justify-between mt-8 max-w-[900px] mx-auto">
+              <div className="flex justify-between items-center mt-8 max-w-[900px] mx-auto">
                 <Button variant="secondary" onClick={() => goBack(2)} icon={<ArrowLeft size={16} />}>
                   이전
                 </Button>
-                <Button onClick={handleSave} disabled={saving} icon={saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}>
-                  {saving ? "저장 중..." : "견적 저장하고 보기"}
-                </Button>
+                <div className="flex items-center gap-3">
+                  {pendingRateEdits > 0 && (
+                    <span className="text-[12px] text-[var(--muted)] flex items-center gap-1.5">
+                      <Loader2 size={13} className="animate-spin" /> 단가 반영 중...
+                    </span>
+                  )}
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving || pendingRateEdits > 0}
+                    icon={saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  >
+                    {saving ? "저장 중..." : "견적 저장하고 보기"}
+                  </Button>
+                </div>
               </div>
             </>
           )}
