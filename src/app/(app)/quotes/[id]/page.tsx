@@ -37,8 +37,22 @@ export default async function QuoteDetailPage({
           layout, captured by the "PDF 다운로드" button instead of the
           spacious on-screen preview above - so the PDF matches what
           printing produces. Positioned off-canvas rather than
-          display:none so html2canvas can still measure/render it. */}
-      <div id="quote-print-capture" className="fixed -left-[10000px] top-0 w-[210mm]" aria-hidden>
+          display:none so html2canvas can still measure/render it.
+          tracking-normal resets the site-wide negative letter-spacing:
+          html2canvas-pro only paints text with a single fillText per line
+          when letter-spacing is exactly 0 - any nonzero value (including
+          this site's -0.01em) makes it fall back to measuring and
+          painting each glyph individually, which - for won signs, middle
+          dots, parentheses next to Pretendard's CJK glyphs - visibly
+          mispaints stray strikethrough-like artifacts through the text.
+          Scoped to just this hidden capture node; the live preview, the
+          real print page and the rest of the site keep their normal
+          letter-spacing untouched. */}
+      <div
+        id="quote-print-capture"
+        className="fixed -left-[10000px] top-0 w-[210mm] tracking-normal"
+        aria-hidden
+      >
         <QuoteDocument
           company={company}
           quoteNumber={quote.quoteNumber}
