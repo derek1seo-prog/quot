@@ -27,30 +27,92 @@ export function QuoteActions({
       const node = document.getElementById("quote-print-capture");
       if (!node) return;
 
+      // Without this, a capture that lands mid webfont-swap renders with
+      // the fallback font - a common source of the download looking
+      // subtly different (and blurrier) than a real browser print.
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+
+      const nodeWidthCss = node.getBoundingClientRect().width;
       const canvas = await html2canvas(node, {
-        scale: 2,
+        scale: 3,
         backgroundColor: "#ffffff",
         useCORS: true,
+        imageSmoothingQuality: "high",
       });
+      // Measured rather than assumed to equal the `scale` option above,
+      // since html2canvas-pro may itself factor in devicePixelRatio.
+      const canvasPxPerCssPx = canvas.width / nodeWidthCss;
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // 인쇄's real print engine never splits a table row across a page
+      // (print:break-inside-avoid) - the raster export must match that by
+      // hand, since it just crops a single tall image into page-sized
+      // slices. Collect each row's vertical span (in canvas px) so a page
+      // break can be pulled up to sit between rows instead of through one.
+      const rowSpans = Array.from(node.querySelectorAll("tr"))
+        .map((tr) => {
+          const r = tr.getBoundingClientRect();
+          const nodeTop = node.getBoundingClientRect().top;
+          return {
+            top: (r.top - nodeTop) * canvasPxPerCssPx,
+            bottom: (r.bottom - nodeTop) * canvasPxPerCssPx,
+          };
+        })
+        .sort((a, b) => a.top - b.top);
 
-      let heightLeft = imgHeight;
-      let position = 0;
+      function safePageBreak(naiveBreakPx: number): number {
+        if (naiveBreakPx >= canvas.height) return canvas.height;
+        const cutRow = rowSpans.find((row) => naiveBreakPx > row.top && naiveBreakPx < row.bottom);
+        return cutRow ? cutRow.top : naiveBreakPx;
+      }
 
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
+      const pageWidthMm = pdf.internal.pageSize.getWidth();
+      const pageHeightMm = pdf.internal.pageSize.getHeight();
+      // The image is always drawn at pageWidthMm wide, so this - not
+      // canvasPxPerCssPx above - is the canvas-px<->mm conversion: canvas
+      // pixels are a rendering-resolution detail, physical mm are what
+      // jsPDF's addImage(x, y, widthMm, heightMm) actually places on paper.
+      const canvasPxPerMm = canvas.width / pageWidthMm;
+      const pageHeightPx = pageHeightMm * canvasPxPerMm;
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      let cursorPx = 0;
+      let firstPage = true;
+      while (cursorPx < canvas.height) {
+        const naiveBreakPx = Math.min(cursorPx + pageHeightPx, canvas.height);
+        // A single row taller than a full page can't be avoided - fall
+        // back to the naive break rather than loop forever.
+        const breakPx = Math.max(safePageBreak(naiveBreakPx), cursorPx + 1);
+        const sliceHeightPx = Math.round(Math.min(breakPx, canvas.height) - cursorPx);
+
+        const slice = document.createElement("canvas");
+        slice.width = canvas.width;
+        slice.height = sliceHeightPx;
+        slice.getContext("2d")!.drawImage(
+          canvas,
+          0,
+          cursorPx,
+          canvas.width,
+          sliceHeightPx,
+          0,
+          0,
+          canvas.width,
+          sliceHeightPx,
+        );
+
+        if (!firstPage) pdf.addPage();
+        pdf.addImage(
+          slice.toDataURL("image/png"),
+          "PNG",
+          0,
+          0,
+          pageWidthMm,
+          sliceHeightPx / canvasPxPerMm,
+        );
+
+        cursorPx += sliceHeightPx;
+        firstPage = false;
       }
 
       pdf.save(`${quoteNumber}.pdf`);
