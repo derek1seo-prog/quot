@@ -33,12 +33,10 @@ export default async function QuoteDetailPage({
           }
         />
       </div>
-      {/* Off-screen, laid-out-but-invisible copy of the spacious on-screen
-          preview style (not forceTable's dense print layout), captured by
-          the "PDF 다운로드" button - the user asked for the 해상운임/국내
-          부대비용 category grouping to be as easy to read in the download
-          as it is on screen, even at the cost of no longer matching 인쇄's
-          exact density/layout. Positioned off-canvas rather than
+      {/* Off-screen, laid-out-but-invisible copy of the formal print
+          layout, captured by the "PDF 다운로드" button instead of the
+          spacious on-screen preview above - so the PDF matches what
+          printing produces. Positioned off-canvas rather than
           display:none so html2canvas can still measure/render it.
           tracking-normal resets the site-wide negative letter-spacing:
           html2canvas-pro only paints text with a single fillText per line
@@ -52,14 +50,7 @@ export default async function QuoteDetailPage({
           letter-spacing untouched. */}
       <div
         id="quote-print-capture"
-        // 900px matches QuoteDocument's own max-w-[900px] card width (the
-        // width it naturally renders at on screen) - not 210mm A4 width,
-        // since the spacious table has a 740px min-width that a 210mm-wide
-        // (~794px) container can't comfortably fit alongside its own
-        // padding, clipping the rightmost column. jsPDF scales whatever
-        // width this captures down to the PDF's A4 page width anyway, so
-        // the source width just needs to fit the content, not match A4.
-        className="fixed -left-[10000px] top-0 w-[900px] tracking-normal"
+        className="fixed -left-[10000px] top-0 w-[210mm] tracking-normal"
         aria-hidden
       >
         <QuoteDocument
@@ -73,6 +64,7 @@ export default async function QuoteDetailPage({
               ? `${destinationPort.nameKo} (${destinationPort.name})`
               : quote.input.destinationPortId
           }
+          forceTable
         />
       </div>
     </div>
