@@ -97,6 +97,21 @@ body {
   display: none;
 }
 
+/* html2canvas-pro (used only by the "PDF 다운로드" button's off-screen
+   capture, #quote-print-capture) doesn't correctly resolve border-collapse
+   at row boundaries: a border spanning multiple <tr>s - like the 구분/항목
+   divider next to a rowSpan'd category cell - gets painted as disconnected
+   per-row segments with visible gaps between them, instead of one
+   continuous line. A real browser (인쇄, and the on-screen preview) never
+   has this problem, so it's scoped to just this hidden node: switching to
+   border-collapse: separate with zero spacing removes the collapsed-border
+   resolution step entirely, which sidesteps the bug while looking
+   pixel-identical (1px borders, no cell padding conflicts). */
+#quote-print-capture table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 /* Hide the increment/decrement spinner on every number input site-wide. */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
