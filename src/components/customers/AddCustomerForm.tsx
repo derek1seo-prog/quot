@@ -50,6 +50,8 @@ export function AddCustomerForm() {
   const [incheon40hq, setIncheon40hq] = useState("");
   const [busan20ft, setBusan20ft] = useState("");
   const [busan40hq, setBusan40hq] = useState("");
+  const [pyeongtaek20ft, setPyeongtaek20ft] = useState("");
+  const [pyeongtaek40hq, setPyeongtaek40hq] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   function reset() {
@@ -60,6 +62,8 @@ export function AddCustomerForm() {
     setIncheon40hq("");
     setBusan20ft("");
     setBusan40hq("");
+    setPyeongtaek20ft("");
+    setPyeongtaek40hq("");
   }
 
   function handleCancel() {
@@ -82,6 +86,8 @@ export function AddCustomerForm() {
           incheonTruckingRate40hq: incheon40hq === "" ? undefined : Number(incheon40hq),
           busanTruckingRate20ft: busan20ft === "" ? undefined : Number(busan20ft),
           busanTruckingRate40hq: busan40hq === "" ? undefined : Number(busan40hq),
+          pyeongtaekTruckingRate20ft: pyeongtaek20ft === "" ? undefined : Number(pyeongtaek20ft),
+          pyeongtaekTruckingRate40hq: pyeongtaek40hq === "" ? undefined : Number(pyeongtaek40hq),
         }),
       });
       reset();
@@ -147,6 +153,8 @@ export function AddCustomerForm() {
                 <TruckingRateField label="인천항 40HQ" value={incheon40hq} onChange={setIncheon40hq} />
                 <TruckingRateField label="부산항 20FT" value={busan20ft} onChange={setBusan20ft} />
                 <TruckingRateField label="부산항 40HQ" value={busan40hq} onChange={setBusan40hq} />
+                <TruckingRateField label="평택항 20FT" value={pyeongtaek20ft} onChange={setPyeongtaek20ft} />
+                <TruckingRateField label="평택항 40HQ" value={pyeongtaek40hq} onChange={setPyeongtaek40hq} />
               </div>
             </div>
 

@@ -12,20 +12,22 @@ type NumberField =
   | "incheonTruckingRate20ft"
   | "incheonTruckingRate40hq"
   | "busanTruckingRate20ft"
-  | "busanTruckingRate40hq";
+  | "busanTruckingRate40hq"
+  | "pyeongtaekTruckingRate20ft"
+  | "pyeongtaekTruckingRate40hq";
 
 // Column widths as percentages of the table (sums to 100) - table-fixed
-// makes these exact regardless of content, so the two ports' columns stay
+// makes these exact regardless of content, so the three ports' columns stay
 // identical width instead of the browser's auto layout redistributing
 // space unevenly between them.
 const nameColPct = 21;
 const contactColPct = 14;
-const rateColPct = 16; // x4 port/size columns = 64
+const rateColPct = 10.67; // x6 port/size columns = 64
 const actionColWidth = 44; // px - fixed so the hover-delete column never grows past its button
 
 /** Rate fields grouped by port - one heading per port instead of repeating
- * "인천항"/"부산항" in every column label, so the table reads at a glance
- * without needing every field spelled out in full. */
+ * "인천항"/"부산항"/"평택항" in every column label, so the table reads at a
+ * glance without needing every field spelled out in full. */
 const PORT_GROUPS: { label: string; fields: { field: NumberField; sub: string }[] }[] = [
   {
     label: "인천",
@@ -39,6 +41,13 @@ const PORT_GROUPS: { label: string; fields: { field: NumberField; sub: string }[
     fields: [
       { field: "busanTruckingRate20ft", sub: "20FT" },
       { field: "busanTruckingRate40hq", sub: "40HQ" },
+    ],
+  },
+  {
+    label: "평택",
+    fields: [
+      { field: "pyeongtaekTruckingRate20ft", sub: "20FT" },
+      { field: "pyeongtaekTruckingRate40hq", sub: "40HQ" },
     ],
   },
 ];
@@ -122,7 +131,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     <Card className="overflow-hidden">
       <div className="hidden sm:block relative">
         <div ref={scrollRef} className="overflow-x-auto">
-          <table className="w-full table-fixed text-left min-w-[760px]">
+          <table className="w-full table-fixed text-left min-w-[1000px]">
             <colgroup>
               <col style={{ width: `${nameColPct}%` }} />
               <col style={{ width: `${contactColPct}%` }} />

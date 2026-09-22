@@ -31,14 +31,22 @@ const INLAND_TRUCKING_CHARGE_TYPE_ID = "INLAND_TRUCKING";
 /** Customer-specific inland trucking rate for a destination port + container type, if on file. */
 function getTruckingRate(
   customer: Customer,
-  prefix: "incheon" | "busan",
+  prefix: "incheon" | "busan" | "pyeongtaek",
   containerTypeId: string,
 ): number | undefined {
   if (containerTypeId === "20ft") {
-    return prefix === "incheon" ? customer.incheonTruckingRate20ft : customer.busanTruckingRate20ft;
+    return prefix === "incheon"
+      ? customer.incheonTruckingRate20ft
+      : prefix === "busan"
+        ? customer.busanTruckingRate20ft
+        : customer.pyeongtaekTruckingRate20ft;
   }
   if (containerTypeId === "40hq") {
-    return prefix === "incheon" ? customer.incheonTruckingRate40hq : customer.busanTruckingRate40hq;
+    return prefix === "incheon"
+      ? customer.incheonTruckingRate40hq
+      : prefix === "busan"
+        ? customer.busanTruckingRate40hq
+        : customer.pyeongtaekTruckingRate40hq;
   }
   return undefined;
 }
@@ -87,12 +95,14 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
   // EVERY selected container type at the quote's destination port - an
   // incomplete set hides the row entirely rather than showing partial
   // "미등록" cells like the region-driven charges below do.
-  const truckingPrefix: "incheon" | "busan" | null =
+  const truckingPrefix: "incheon" | "busan" | "pyeongtaek" | null =
     input.destinationPortId === "incheon"
       ? "incheon"
       : input.destinationPortId === "busan"
         ? "busan"
-        : null;
+        : input.destinationPortId === "pyeongtaek"
+          ? "pyeongtaek"
+          : null;
   const truckingRate =
     customer && truckingPrefix
       ? getTruckingRate(customer, truckingPrefix, input.container.containerTypeId)

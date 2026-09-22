@@ -128,6 +128,8 @@ export interface Customer {
   incheonTruckingRate40hq?: number; // KRW
   busanTruckingRate20ft?: number; // KRW
   busanTruckingRate40hq?: number; // KRW
+  pyeongtaekTruckingRate20ft?: number; // KRW
+  pyeongtaekTruckingRate40hq?: number; // KRW
   createdAt: string;
 }
 

@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
     incheonTruckingRate40hq: body.incheonTruckingRate40hq,
     busanTruckingRate20ft: body.busanTruckingRate20ft,
     busanTruckingRate40hq: body.busanTruckingRate40hq,
+    pyeongtaekTruckingRate20ft: body.pyeongtaekTruckingRate20ft,
+    pyeongtaekTruckingRate40hq: body.pyeongtaekTruckingRate40hq,
     createdAt: new Date().toISOString(),
   };
   await addCustomer(customer);
@@ -47,6 +49,8 @@ export async function PUT(req: NextRequest) {
     incheonTruckingRate40hq: body.incheonTruckingRate40hq ?? existing.incheonTruckingRate40hq,
     busanTruckingRate20ft: body.busanTruckingRate20ft ?? existing.busanTruckingRate20ft,
     busanTruckingRate40hq: body.busanTruckingRate40hq ?? existing.busanTruckingRate40hq,
+    pyeongtaekTruckingRate20ft: body.pyeongtaekTruckingRate20ft ?? existing.pyeongtaekTruckingRate20ft,
+    pyeongtaekTruckingRate40hq: body.pyeongtaekTruckingRate40hq ?? existing.pyeongtaekTruckingRate40hq,
   };
   await updateCustomer(updated);
   return NextResponse.json(updated);

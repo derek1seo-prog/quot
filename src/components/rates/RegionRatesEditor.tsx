@@ -16,21 +16,22 @@ interface Props {
   initialChargeRates: ChargeRate[];
 }
 
-// The Korea-side leg (Incheon vs Busan) changes ocean freight just as much
-// as origin port and container type do, so every origin port needs a rate
-// per destination x container type - grouped headers, same pattern as the
-// customer trucking-rate table.
-const DESTINATION_PORTS: { portId: "incheon" | "busan"; label: string }[] = [
+// The Korea-side leg (Incheon vs Busan vs Pyeongtaek) changes ocean freight
+// just as much as origin port and container type do, so every origin port
+// needs a rate per destination x container type - grouped headers, same
+// pattern as the customer trucking-rate table.
+const DESTINATION_PORTS: { portId: "incheon" | "busan" | "pyeongtaek"; label: string }[] = [
   { portId: "incheon", label: "인천" },
   { portId: "busan", label: "부산" },
+  { portId: "pyeongtaek", label: "평택" },
 ];
 
 // Column widths as percentages of the table (sums to 100) - table-fixed
-// makes these exact regardless of content, so all four rate columns stay
+// makes these exact regardless of content, so all six rate columns stay
 // identical width instead of the browser's auto layout redistributing
 // space unevenly between them (see CustomersTable for the same fix).
-const oceanPortColPct = 24;
-const oceanRateColPct = 19; // x4 destination/size columns = 76
+const oceanPortColPct = 25;
+const oceanRateColPct = 12.5; // x6 destination/size columns = 75
 
 export function RegionRatesEditor({
   regionId,
@@ -118,7 +119,7 @@ export function RegionRatesEditor({
         </CardHeader>
         <CardContent>
           <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full table-fixed min-w-[680px] border-collapse text-[13px]">
+            <table className="w-full table-fixed min-w-[900px] border-collapse text-[13px]">
               <colgroup>
                 <col style={{ width: `${oceanPortColPct}%` }} />
                 {DESTINATION_PORTS.flatMap((dest) =>
@@ -274,9 +275,9 @@ export function RegionRatesEditor({
 }
 
 /** Mobile (< sm) equivalent of the ocean freight table: one card per
- * origin port, grouped by destination (Incheon/Busan) then container
- * type, using the exact same RateCell + save callback the table uses -
- * just laid out vertically instead of as columns. */
+ * origin port, grouped by destination (Incheon/Busan/Pyeongtaek) then
+ * container type, using the exact same RateCell + save callback the
+ * table uses - just laid out vertically instead of as columns. */
 function MobilePortRateCard({
   port,
   containerTypes,
