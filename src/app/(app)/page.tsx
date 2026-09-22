@@ -19,9 +19,10 @@ export default async function DashboardPage() {
 
   const totalValue = quotes.reduce((sum, q) => sum + q.result.column.grandTotalKrw, 0);
 
-  // Two data stats bookend two outbound quick links to tools forwarders
-  // check constantly - same card shell throughout, just swapping a metric
-  // for a link where the icon+label pattern already carries the meaning.
+  // Grouped rather than interleaved: the two data stats first, then the
+  // two outbound quick links - stats/links reads as two clear halves
+  // instead of alternating, and on the 2-column mobile grid it also means
+  // each row is homogeneous (stat+stat, then link+link) instead of mixed.
   const dashboardCards: (
     | { kind: "stat"; label: string; value: string; sublabel?: string; icon: ReactNode }
     | { kind: "link"; label: string; sublabel: string; href: string; icon: ReactNode }
@@ -31,6 +32,13 @@ export default async function DashboardPage() {
       label: "전체 견적 수",
       value: `${quotes.length}건`,
       icon: <FilePlus2 size={18} />,
+    },
+    {
+      kind: "stat",
+      label: "환율 (USD)",
+      value: exchangeRate ? `₩${exchangeRate.rate.toLocaleString()}` : "미설정",
+      sublabel: exchangeRate ? `${formatDate(exchangeRate.asOf)} 기준` : undefined,
+      icon: <DollarSign size={18} />,
     },
     {
       kind: "link",
@@ -45,13 +53,6 @@ export default async function DashboardPage() {
       sublabel: "화물자동차 안전운임 공지",
       href: "https://www.forwarder.kr/bbs/board.php?bo_table=club&wr_id=1",
       icon: <ShieldCheck size={18} />,
-    },
-    {
-      kind: "stat",
-      label: "환율 (USD)",
-      value: exchangeRate ? `₩${exchangeRate.rate.toLocaleString()}` : "미설정",
-      sublabel: exchangeRate ? `${formatDate(exchangeRate.asOf)} 기준` : undefined,
-      icon: <DollarSign size={18} />,
     },
   ];
 
@@ -74,7 +75,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
-        {dashboardCards.map((c) =>
+        {dashboardCards.map((c, i) =>
           c.kind === "stat" ? (
             <Card key={c.label} className="p-5">
               <div className="flex items-center justify-between mb-6">
@@ -91,7 +92,18 @@ export default async function DashboardPage() {
               </p>
             </Card>
           ) : (
-            <a key={c.label} href={c.href} target="_blank" rel="noopener noreferrer">
+            <a
+              key={c.label}
+              href={c.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              // A seam between the stat and link groups so the grouping
+              // reads as intentional, not just array order - only makes
+              // sense on the desktop single-row (4-col) layout, where this
+              // is the first link right after the last stat; on the
+              // 2-column mobile grid it starts its own row already.
+              className={i === 2 ? "lg:border-l lg:border-[var(--border-subtle)] lg:pl-4 xl:pl-5" : undefined}
+            >
               <Card className="p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40 motion-reduce:transition-none">
                 <div className="flex items-center justify-between mb-6">
                   <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
