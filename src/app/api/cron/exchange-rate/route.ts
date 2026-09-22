@@ -36,7 +36,11 @@ export async function GET(req: NextRequest) {
   }
 
   const rate = Math.round(krwRate);
-  const today = new Date().toISOString().slice(0, 10);
+  // The cron fires at 23:00 UTC = 08:00 KST the *next* day, so the UTC
+  // calendar date (what toISOString() would give) is always one day
+  // behind the Korean morning this actually runs on. Stamp the KST date
+  // instead, so 기준일/마지막 업데이트 read as "today" to a Korean user.
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
   const updated = {
     id: "ex-usd",
     currency: "USD" as const,
