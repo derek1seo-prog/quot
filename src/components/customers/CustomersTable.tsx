@@ -20,9 +20,9 @@ type NumberField =
 // makes these exact regardless of content, so the three ports' columns stay
 // identical width instead of the browser's auto layout redistributing
 // space unevenly between them.
-const nameColPct = 21;
-const contactColPct = 14;
-const rateColPct = 10.67; // x6 port/size columns = 64
+const nameColPct = 18;
+const contactColPct = 12;
+const rateColPct = 11.5; // x6 port/size columns = 69
 const actionColWidth = 44; // px - fixed so the hover-delete column never grows past its button
 
 /** Rate fields grouped by port - one heading per port instead of repeating

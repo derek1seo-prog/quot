@@ -94,7 +94,11 @@ export function RateCell({
           if (e.key === "Enter") (e.target as HTMLInputElement).blur();
         }}
         className={cn(
-          "w-full h-9 px-2.5 pr-7 rounded-[var(--radius-sm)] border text-[16px] sm:text-[13px] text-right bg-white outline-none transition-colors",
+          "w-full h-9 px-2.5 rounded-[var(--radius-sm)] border text-[16px] sm:text-[13px] text-right bg-white outline-none transition-colors",
+          // Extra right padding only while the save-state icon is actually
+          // showing - reserving it at rest ate into the already-narrow
+          // rate columns, clipping longer KRW amounts (e.g. "1,175,000").
+          state !== "idle" && "pr-7",
           "border-[var(--border)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]",
           draft === "" && "text-[var(--muted)]",
         )}
