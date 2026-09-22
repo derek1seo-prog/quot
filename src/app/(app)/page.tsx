@@ -83,13 +83,13 @@ export default async function DashboardPage() {
                   {c.icon}
                 </div>
               </div>
-              <p className="text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
+              <p className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
                 {c.value}
               </p>
-              <p className="text-[13px] text-[var(--muted)] mt-0.5">
-                {c.label}
-                {c.sublabel ? ` · ${c.sublabel}` : ""}
-              </p>
+              <p className="text-[13px] text-[var(--muted)] mt-0.5">{c.label}</p>
+              {c.sublabel && (
+                <p className="text-[12px] text-[var(--muted)]/70 mt-0.5">{c.sublabel}</p>
+              )}
             </Card>
           ) : (
             <a
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
                   </div>
                   <ExternalLink size={14} className="text-[var(--muted)]" />
                 </div>
-                <p className="text-[16px] font-semibold tracking-tight text-[var(--foreground)]">
+                <p className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
                   {c.label}
                 </p>
                 <p className="text-[13px] text-[var(--muted)] mt-0.5">{c.sublabel}</p>
