@@ -119,7 +119,7 @@ export function RegionRatesEditor({
         </CardHeader>
         <CardContent>
           <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full table-fixed min-w-[900px] border-collapse text-[13px]">
+            <table className="w-full table-fixed min-w-[620px] border-collapse text-[13px]">
               <colgroup>
                 <col style={{ width: `${oceanPortColPct}%` }} />
                 {DESTINATION_PORTS.flatMap((dest) =>

@@ -131,7 +131,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     <Card className="overflow-hidden">
       <div className="hidden sm:block relative">
         <div ref={scrollRef} className="overflow-x-auto">
-          <table className="w-full table-fixed text-left min-w-[1000px]">
+          <table className="w-full table-fixed text-left min-w-[820px]">
             <colgroup>
               <col style={{ width: `${nameColPct}%` }} />
               <col style={{ width: `${contactColPct}%` }} />
