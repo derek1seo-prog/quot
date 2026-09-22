@@ -83,13 +83,20 @@ export function QuoteDocument({
   onRateChange,
 }: QuoteDocumentProps) {
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
-  const localRows = result.chargeCatalog
-    .filter((c) => c.category !== "OCEAN_FREIGHT")
+  // EXW_LOCAL (LSS, EXW LOCAL CHARGE) gets its own "현지 부대비용" category
+  // block below 국내 부대비용, rather than being folded into it - it only
+  // ever appears at all when the quote's Incoterms is EXW (chargeCatalog
+  // already excludes it otherwise, see quote-engine.ts), so this split is a
+  // no-op for every other quote.
+  const domesticRows = result.chargeCatalog
+    .filter((c) => c.category !== "OCEAN_FREIGHT" && c.category !== "EXW_LOCAL")
     .sort((a, b) => {
       const aVat = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(a.chargeTypeId) ? 1 : 0;
       const bVat = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(b.chargeTypeId) ? 1 : 0;
       return aVat - bVat;
     });
+  const exwLocalRows = result.chargeCatalog.filter((c) => c.category === "EXW_LOCAL");
+  const localRows = [...domesticRows, ...exwLocalRows];
   const containerSummary = `${result.column.containerLabel} × ${result.column.quantity}`;
 
   // forceTable (print/PDF) keeps 항목 wide since its dense row layout puts
@@ -259,7 +266,7 @@ export function QuoteDocument({
                 />
               )}
 
-              {localRows.map((row, i) => (
+              {domesticRows.map((row, i) => (
                 <ChargeRow
                   key={row.chargeTypeId}
                   label={row.nameKo}
@@ -268,7 +275,20 @@ export function QuoteDocument({
                   chargeTypeId={row.chargeTypeId}
                   dense={forceTable}
                   onRateChange={onRateChange}
-                  categoryCell={i === 0 ? { label: "국내 부대비용", rowSpan: localRows.length } : undefined}
+                  categoryCell={i === 0 ? { label: "국내 부대비용", rowSpan: domesticRows.length } : undefined}
+                />
+              ))}
+
+              {exwLocalRows.map((row, i) => (
+                <ChargeRow
+                  key={row.chargeTypeId}
+                  label={row.nameKo}
+                  sublabel={row.name}
+                  column={result.column}
+                  chargeTypeId={row.chargeTypeId}
+                  dense={forceTable}
+                  onRateChange={onRateChange}
+                  categoryCell={i === 0 ? { label: "현지 부대비용", rowSpan: exwLocalRows.length } : undefined}
                 />
               ))}
 

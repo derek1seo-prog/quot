@@ -119,5 +119,27 @@
     "visibility": { "scope": "ALL" },
     "order": 90,
     "transportModes": ["FCL"]
+  },
+  {
+    "id": "LSS",
+    "name": "Low Sulphur Surcharge",
+    "nameKo": "저유황할증료",
+    "category": "EXW_LOCAL",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "ALL" },
+    "order": 100,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "EXW_LOCAL_CHARGE",
+    "name": "EXW Local Charge",
+    "nameKo": "EXW 현지비용",
+    "category": "EXW_LOCAL",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "ALL" },
+    "order": 110,
+    "transportModes": ["FCL"]
   }
 ]

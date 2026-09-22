@@ -11,7 +11,7 @@ export type Currency = "USD" | "KRW" | "CNY";
 /** Unit a rate is quoted per. CONTAINER = per selected container, BL = flat once per shipment. */
 export type RateUnit = "CONTAINER" | "BL";
 
-export type ChargeCategory = "OCEAN_FREIGHT" | "SURCHARGE" | "LOCAL";
+export type ChargeCategory = "OCEAN_FREIGHT" | "SURCHARGE" | "LOCAL" | "EXW_LOCAL";
 
 /**
  * Which regions a charge type shows up in.

@@ -116,6 +116,10 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
 
   const applicableChargeTypes = chargeTypes
     .filter((ct) => ct.category !== "OCEAN_FREIGHT")
+    // EXW_LOCAL charges (LSS, EXW LOCAL CHARGE) only apply when the quote's
+    // own Incoterms is EXW - every other charge type here is filtered by
+    // region/transport mode alone, this one by the quote itself.
+    .filter((ct) => ct.category !== "EXW_LOCAL" || input.incoterms === "EXW")
     .filter((ct) => chargeAppliesToRegion(ct, region.id));
   const oceanFreightChargeType = chargeTypes.find((ct) => ct.id === "OCEAN_FREIGHT");
 
