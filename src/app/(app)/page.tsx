@@ -2,8 +2,9 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { ArrowUpRight, DollarSign, FilePlus2, Ship, TrendingUp } from "lucide-react";
+import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -11,36 +12,42 @@ export default async function DashboardPage() {
   const [quotes, exchangeRate] = await Promise.all([getQuotes(), getCurrentExchangeRate("USD")]);
   const allPorts = getPorts();
   const portNameById = new Map(allPorts.map((p) => [p.id, p.nameKo]));
-  const ports = allPorts.filter((p) => p.role !== "DESTINATION");
 
   function routeLabel(originPortId: string, destinationPortId: string) {
     return `${portNameById.get(originPortId) ?? originPortId} → ${portNameById.get(destinationPortId) ?? destinationPortId}`;
   }
 
-  const now = new Date();
-  const thisMonth = quotes.filter((q) => {
-    const d = new Date(q.createdAt);
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-  });
   const totalValue = quotes.reduce((sum, q) => sum + q.result.column.grandTotalKrw, 0);
 
-  const stats = [
+  // Two data stats bookend two outbound quick links to tools forwarders
+  // check constantly - same card shell throughout, just swapping a metric
+  // for a link where the icon+label pattern already carries the meaning.
+  const dashboardCards: (
+    | { kind: "stat"; label: string; value: string; sublabel?: string; icon: ReactNode }
+    | { kind: "link"; label: string; sublabel: string; href: string; icon: ReactNode }
+  )[] = [
     {
+      kind: "stat",
       label: "전체 견적 수",
       value: `${quotes.length}건`,
       icon: <FilePlus2 size={18} />,
     },
     {
-      label: "이번 달 견적",
-      value: `${thisMonth.length}건`,
-      icon: <TrendingUp size={18} />,
-    },
-    {
-      label: "등록 출발항",
-      value: `${ports.length}개`,
+      kind: "link",
+      label: "선박 스케줄 조회",
+      sublabel: "터미널별 입출항 일정",
+      href: "https://www.tradlinx.com/ko/container-terminal-schedule",
       icon: <Ship size={18} />,
     },
     {
+      kind: "link",
+      label: "안전운임제 조회",
+      sublabel: "화물자동차 안전운임 공지",
+      href: "https://www.forwarder.kr/bbs/board.php?bo_table=club&wr_id=1",
+      icon: <ShieldCheck size={18} />,
+    },
+    {
+      kind: "stat",
       label: "환율 (USD)",
       value: exchangeRate ? `₩${exchangeRate.rate.toLocaleString()}` : "미설정",
       sublabel: exchangeRate ? `${formatDate(exchangeRate.asOf)} 기준` : undefined,
@@ -67,22 +74,39 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
-        {stats.map((s) => (
-          <Card key={s.label} className="p-5">
-            <div className="flex items-center justify-between mb-6">
-              <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
-                {s.icon}
+        {dashboardCards.map((c) =>
+          c.kind === "stat" ? (
+            <Card key={c.label} className="p-5">
+              <div className="flex items-center justify-between mb-6">
+                <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
+                  {c.icon}
+                </div>
               </div>
-            </div>
-            <p className="text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
-              {s.value}
-            </p>
-            <p className="text-[13px] text-[var(--muted)] mt-0.5">
-              {s.label}
-              {s.sublabel ? ` · ${s.sublabel}` : ""}
-            </p>
-          </Card>
-        ))}
+              <p className="text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
+                {c.value}
+              </p>
+              <p className="text-[13px] text-[var(--muted)] mt-0.5">
+                {c.label}
+                {c.sublabel ? ` · ${c.sublabel}` : ""}
+              </p>
+            </Card>
+          ) : (
+            <a key={c.label} href={c.href} target="_blank" rel="noopener noreferrer">
+              <Card className="p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40 motion-reduce:transition-none">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
+                    {c.icon}
+                  </div>
+                  <ExternalLink size={14} className="text-[var(--muted)]" />
+                </div>
+                <p className="text-[16px] font-semibold tracking-tight text-[var(--foreground)]">
+                  {c.label}
+                </p>
+                <p className="text-[13px] text-[var(--muted)] mt-0.5">{c.sublabel}</p>
+              </Card>
+            </a>
+          ),
+        )}
       </div>
 
       <div className="flex items-center justify-between mb-4">
