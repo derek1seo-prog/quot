@@ -158,8 +158,21 @@ export async function getOceanFreightRates(): Promise<OceanFreightRate[]> {
   return normalizeOceanFreightRates(rates);
 }
 
+/** LSS is a brand-new USD-only charge type; some environments' mutable
+ * store still have a stray KRW-labeled row for it, saved through the
+ * rates admin UI before it had ever seen a registered LSS rate (its
+ * currency-inference fallback defaults to KRW when nothing is on file
+ * yet - see RegionRatesEditor.tsx). Correct it transparently on every
+ * read, the same way normalizeOceanFreightRates() heals legacy shape. */
+function normalizeChargeRates(rates: ChargeRate[]): ChargeRate[] {
+  return rates.map((r) =>
+    r.chargeTypeId === "LSS" && r.currency !== "USD" ? { ...r, currency: "USD" } : r,
+  );
+}
+
 export async function getChargeRates(): Promise<ChargeRate[]> {
-  return readMutable<ChargeRate[]>("charge-rates.json");
+  const rates = await readMutable<ChargeRate[]>("charge-rates.json");
+  return normalizeChargeRates(rates);
 }
 
 export async function getExchangeRates(): Promise<ExchangeRate[]> {

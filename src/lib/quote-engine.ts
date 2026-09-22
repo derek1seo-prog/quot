@@ -27,6 +27,7 @@ import type {
 } from "./types";
 
 const INLAND_TRUCKING_CHARGE_TYPE_ID = "INLAND_TRUCKING";
+const EXW_LOCAL_CHARGE_TYPE_ID = "EXW_LOCAL_CHARGE";
 
 /** Customer-specific inland trucking rate for a destination port + container type, if on file. */
 function getTruckingRate(
@@ -64,6 +65,9 @@ export function getApplicableLocalChargeTypes(
   return getChargeTypes()
     .filter((ct) => ct.transportModes.includes(transportMode))
     .filter((ct) => ct.category !== "OCEAN_FREIGHT")
+    // EXW LOCAL CHARGE has no registered rate sheet entry - it varies every
+    // shipment, so it's never listed here for an admin to pre-register.
+    .filter((ct) => ct.id !== EXW_LOCAL_CHARGE_TYPE_ID)
     .filter((ct) => chargeAppliesToRegion(ct, regionId));
 }
 
@@ -120,8 +124,13 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     // own Incoterms is EXW - every other charge type here is filtered by
     // region/transport mode alone, this one by the quote itself.
     .filter((ct) => ct.category !== "EXW_LOCAL" || input.incoterms === "EXW")
+    // EXW LOCAL CHARGE has no registered rate sheet entry (see
+    // getApplicableLocalChargeTypes above) - it's resolved separately
+    // below, the same way inland trucking bypasses this generic loop.
+    .filter((ct) => ct.id !== EXW_LOCAL_CHARGE_TYPE_ID)
     .filter((ct) => chargeAppliesToRegion(ct, region.id));
   const oceanFreightChargeType = chargeTypes.find((ct) => ct.id === "OCEAN_FREIGHT");
+  const exwLocalChargeType = chargeTypes.find((ct) => ct.id === EXW_LOCAL_CHARGE_TYPE_ID);
 
   const selection: ContainerSelection = input.container;
   const column: QuoteColumn = (() => {
@@ -200,6 +209,28 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
       });
     }
 
+    // EXW LOCAL CHARGE has no registered rate sheet entry - it varies
+    // every shipment, so it always starts at a $0 default and is edited
+    // per-quote via rateOverrides, exactly like any other line's 단가 in
+    // the wizard preview (see onRateChange in QuoteDocument.tsx).
+    if (input.incoterms === "EXW" && exwLocalChargeType) {
+      const rate = input.rateOverrides?.[exwLocalChargeType.id] ?? 0;
+      lineItems.push({
+        chargeTypeId: exwLocalChargeType.id,
+        name: exwLocalChargeType.name,
+        nameKo: exwLocalChargeType.nameKo,
+        category: exwLocalChargeType.category,
+        currency: "USD",
+        unit: exwLocalChargeType.unit, // "BL" - flat once per shipment
+        rate,
+        vatRate: 0,
+        vatAmount: 0,
+        quantity: 1,
+        amountForeign: rate,
+        amountKrw: round(rate * exchangeRate),
+      });
+    }
+
     // Customer-specific inland trucking (see resolution above)
     if (truckingComplete) {
       const rate = input.rateOverrides?.[INLAND_TRUCKING_CHARGE_TYPE_ID] ?? truckingRate!;
@@ -258,6 +289,17 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
       category: ct.category,
       unit: ct.unit,
     })),
+    ...(input.incoterms === "EXW" && exwLocalChargeType
+      ? [
+          {
+            chargeTypeId: exwLocalChargeType.id,
+            name: exwLocalChargeType.name,
+            nameKo: exwLocalChargeType.nameKo,
+            category: exwLocalChargeType.category,
+            unit: exwLocalChargeType.unit,
+          },
+        ]
+      : []),
     ...(truckingComplete
       ? [
           {

@@ -136,7 +136,7 @@
     "name": "EXW Local Charge",
     "nameKo": "EXW 현지비용",
     "category": "EXW_LOCAL",
-    "unit": "CONTAINER",
+    "unit": "BL",
     "vatRate": 0,
     "visibility": { "scope": "ALL" },
     "order": 110,
