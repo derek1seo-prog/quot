@@ -51,7 +51,7 @@ export default async function DashboardPage() {
       kind: "link",
       label: "안전운임제 조회",
       sublabel: "화물자동차 안전운임 공지",
-      href: "https://www.forwarder.kr/bbs/board.php?bo_table=club&wr_id=1",
+      href: "https://www.forwarder.kr/tariff/",
       icon: <ShieldCheck size={18} />,
     },
   ];
