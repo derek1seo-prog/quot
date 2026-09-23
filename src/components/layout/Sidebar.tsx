@@ -2,10 +2,10 @@
 
 import { cn } from "@/lib/cn";
 import { getActiveHref, navSections } from "@/lib/nav";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
+import { BrandMark } from "./BrandMark";
 import { NavIcon } from "./nav-icons";
 
 export function Sidebar() {
@@ -23,7 +23,7 @@ export function Sidebar() {
   return (
     <aside className="no-print hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-[var(--sidebar-bg)] border-r border-[var(--border-subtle)]">
       <Link href="/" className="px-6 h-16 flex items-center gap-2.5 shrink-0">
-        <Image src="/logo.png" alt="I.S. Sea & Air" width={79} height={79} className="w-8 h-8 object-contain" />
+        <BrandMark imageClassName="w-8 h-8" />
         <div className="leading-tight">
           <p className="text-[11px] text-[var(--muted)]">Forwarding Quote System</p>
         </div>

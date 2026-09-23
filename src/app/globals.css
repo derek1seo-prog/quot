@@ -240,6 +240,22 @@ input[type="number"] {
   transform-origin: top;
 }
 
+/* Brand mark hover easter egg (BrandMark.tsx) - a springy overshoot curve
+ * on purpose, unlike the rest of the app's considered decelerate curve -
+ * this one spot is meant to read as playful rather than subtle. */
+@keyframes brand-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-brand-spin {
+  animation: brand-spin 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
@@ -247,7 +263,8 @@ input[type="number"] {
   .animate-modal-backdrop,
   .animate-modal-panel,
   .animate-dropdown-panel,
-  .animate-dashboard-fade-up {
+  .animate-dashboard-fade-up,
+  .animate-brand-spin {
     animation: none;
   }
 }
