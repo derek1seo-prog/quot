@@ -11,18 +11,22 @@ import { useState } from "react";
  * matches RateCell/ExchangeRateEditor, since a native number input can't
  * display commas (browsers strip non-digit characters from its value). */
 function TruckingRateField({
-  label,
+  port,
+  size,
   value,
   onChange,
 }: {
-  label: string;
+  port: string;
+  size: string;
   value: string;
   onChange: (value: string) => void;
 }) {
   const [focused, setFocused] = useState(false);
   return (
     <FieldGroup>
-      <FieldLabel hint="선택">{label}</FieldLabel>
+      <FieldLabel hint="선택">
+        {port} <span className="font-normal text-[var(--muted)]">→ 입고지</span> {size}
+      </FieldLabel>
       <Input
         type="text"
         inputMode="numeric"
@@ -149,12 +153,12 @@ export function AddCustomerForm() {
             <div>
               <p className="text-[13px] font-medium text-[var(--foreground)] mb-2">내륙운송료 (KRW)</p>
               <div className="grid grid-cols-2 gap-3">
-                <TruckingRateField label="인천항 20FT" value={incheon20ft} onChange={setIncheon20ft} />
-                <TruckingRateField label="인천항 40HQ" value={incheon40hq} onChange={setIncheon40hq} />
-                <TruckingRateField label="부산항 20FT" value={busan20ft} onChange={setBusan20ft} />
-                <TruckingRateField label="부산항 40HQ" value={busan40hq} onChange={setBusan40hq} />
-                <TruckingRateField label="평택항 20FT" value={pyeongtaek20ft} onChange={setPyeongtaek20ft} />
-                <TruckingRateField label="평택항 40HQ" value={pyeongtaek40hq} onChange={setPyeongtaek40hq} />
+                <TruckingRateField port="인천항" size="20FT" value={incheon20ft} onChange={setIncheon20ft} />
+                <TruckingRateField port="인천항" size="40HQ" value={incheon40hq} onChange={setIncheon40hq} />
+                <TruckingRateField port="부산항" size="20FT" value={busan20ft} onChange={setBusan20ft} />
+                <TruckingRateField port="부산항" size="40HQ" value={busan40hq} onChange={setBusan40hq} />
+                <TruckingRateField port="평택항" size="20FT" value={pyeongtaek20ft} onChange={setPyeongtaek20ft} />
+                <TruckingRateField port="평택항" size="40HQ" value={pyeongtaek40hq} onChange={setPyeongtaek40hq} />
               </div>
             </div>
 

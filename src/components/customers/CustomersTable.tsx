@@ -27,24 +27,27 @@ const actionColWidth = 44; // px - fixed so the hover-delete column never grows 
 
 /** Rate fields grouped by port - one heading per port instead of repeating
  * "인천항"/"부산항"/"평택항" in every column label, so the table reads at a
- * glance without needing every field spelled out in full. */
+ * glance without needing every field spelled out in full. Each group's
+ * label spells out what the rate actually is (해당 항구에서 화주의 입고지까지
+ * 내륙운송료) rather than just the bare port name, so the table means
+ * something on its own without prior context. */
 const PORT_GROUPS: { label: string; fields: { field: NumberField; sub: string }[] }[] = [
   {
-    label: "인천",
+    label: "인천항",
     fields: [
       { field: "incheonTruckingRate20ft", sub: "20FT" },
       { field: "incheonTruckingRate40hq", sub: "40HQ" },
     ],
   },
   {
-    label: "부산",
+    label: "부산항",
     fields: [
       { field: "busanTruckingRate20ft", sub: "20FT" },
       { field: "busanTruckingRate40hq", sub: "40HQ" },
     ],
   },
   {
-    label: "평택",
+    label: "평택항",
     fields: [
       { field: "pyeongtaekTruckingRate20ft", sub: "20FT" },
       { field: "pyeongtaekTruckingRate40hq", sub: "40HQ" },
@@ -152,7 +155,10 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                     colSpan={2}
                     className="px-2 py-2 font-medium text-center whitespace-nowrap border-l border-[var(--border-subtle)]"
                   >
-                    {group.label}
+                    <span className="block normal-case">{group.label}</span>
+                    <span className="block normal-case font-normal text-[10px] text-[var(--muted)]">
+                      → 입고지
+                    </span>
                   </th>
                 ))}
                 <th rowSpan={2} />
@@ -244,7 +250,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
               {PORT_GROUPS.map((group) => (
                 <div key={group.label}>
                   <p className="text-[11px] text-[var(--muted)] uppercase tracking-wide mb-1.5">
-                    {group.label} 내륙운송료
+                    {group.label} → 입고지
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {group.fields.map((f) => (
