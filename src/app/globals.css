@@ -256,6 +256,31 @@ input[type="number"] {
   animation: brand-spin 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) 1;
 }
 
+/* Wrong-PIN feedback on the /unlock card (UnlockForm.tsx). */
+@keyframes shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
@@ -264,7 +289,8 @@ input[type="number"] {
   .animate-modal-panel,
   .animate-dropdown-panel,
   .animate-dashboard-fade-up,
-  .animate-brand-spin {
+  .animate-brand-spin,
+  .animate-shake {
     animation: none;
   }
 }
