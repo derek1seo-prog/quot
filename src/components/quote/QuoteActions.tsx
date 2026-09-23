@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/Badge";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { ArrowLeft, Download, Loader2, Printer } from "lucide-react";
 import { useState } from "react";
@@ -126,11 +127,20 @@ export function QuoteActions({
       <LinkButton href="/quotes" variant="ghost" size="sm" icon={<ArrowLeft size={15} />}>
         견적 목록으로
       </LinkButton>
+      {/* TEMPORARY: 인쇄 is styled as the recommended action and PDF
+          다운로드 is deliberately muted - 인쇄 currently matches the
+          desired output more closely than the PDF export. Swap the
+          variants back (인쇄 -> secondary, PDF 다운로드 -> primary) and
+          drop the badge once the PDF export is back on par. */}
       <div className="flex items-center gap-2">
-        <Button variant="secondary" size="sm" onClick={handlePrint} icon={<Printer size={15} />}>
-          인쇄
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Badge tone="accent">권장</Badge>
+          <Button size="sm" onClick={handlePrint} icon={<Printer size={15} />}>
+            인쇄
+          </Button>
+        </div>
         <Button
+          variant="ghost"
           size="sm"
           onClick={handleDownloadPdf}
           disabled={exporting}
