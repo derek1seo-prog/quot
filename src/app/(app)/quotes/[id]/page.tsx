@@ -18,8 +18,10 @@ export default async function QuoteDetailPage({
 
   return (
     <div className="max-w-[1000px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
-      <QuoteActions quoteId={quote.id} quoteNumber={quote.quoteNumber} />
-      <div id="quote-document-root">
+      <div className="animate-dashboard-fade-up">
+        <QuoteActions quoteId={quote.id} quoteNumber={quote.quoteNumber} />
+      </div>
+      <div id="quote-document-root" className="animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
         <QuoteDocument
           company={company}
           quoteNumber={quote.quoteNumber}

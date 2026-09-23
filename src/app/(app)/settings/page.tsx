@@ -10,12 +10,12 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-[900px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16 space-y-8">
-      <div>
+      <div className="animate-dashboard-fade-up">
         <p className="text-[13px] font-medium text-[var(--accent)] mb-2">설정</p>
         <h1 className="text-[28px] font-semibold tracking-tight">설정</h1>
       </div>
 
-      <Card>
+      <Card className="animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
         <CardHeader>
           <CardTitle>환율</CardTitle>
           <CardDescription>
@@ -32,7 +32,7 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="animate-dashboard-fade-up" style={{ animationDelay: "140ms" }}>
         <CardHeader>
           <CardTitle>회사 정보</CardTitle>
           <CardDescription>견적서 상단에 표시되는 발신 회사 정보입니다.</CardDescription>
