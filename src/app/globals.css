@@ -281,6 +281,40 @@ input[type="number"] {
   animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) 1;
 }
 
+/* Correct-PIN success moment (UnlockForm.tsx) - checkmark pops in with
+ * the same overshoot curve as the brand-mark spin (this is the other
+ * intentionally playful spot in the app), the two text lines ease up
+ * a beat after. */
+@keyframes success-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes success-text-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-success-pop {
+  animation: success-pop 0.5s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+.animate-success-text-in {
+  animation: success-text-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
@@ -290,7 +324,9 @@ input[type="number"] {
   .animate-dropdown-panel,
   .animate-dashboard-fade-up,
   .animate-brand-spin,
-  .animate-shake {
+  .animate-shake,
+  .animate-success-pop,
+  .animate-success-text-in {
     animation: none;
   }
 }
