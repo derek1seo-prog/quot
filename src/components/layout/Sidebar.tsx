@@ -59,7 +59,7 @@ export function Sidebar() {
                     )}
                   >
                     <span className={active ? "text-[var(--accent)]" : ""}>
-                      <NavIcon icon={item.icon} />
+                      <NavIcon icon={item.icon} countryId={item.countryId} />
                     </span>
                     {item.label}
                   </Link>

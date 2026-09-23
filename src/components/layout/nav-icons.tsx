@@ -6,9 +6,18 @@ import {
   Ship,
   Users,
 } from "lucide-react";
+import { countryFlag } from "@/lib/format";
 import type { NavItemDef } from "@/lib/nav";
 
-export function NavIcon({ icon, size = 17 }: { icon: NavItemDef["icon"]; size?: number }) {
+export function NavIcon({
+  icon,
+  countryId,
+  size = 17,
+}: {
+  icon: NavItemDef["icon"];
+  countryId?: string;
+  size?: number;
+}) {
   switch (icon) {
     case "dashboard":
       return <LayoutDashboard size={size} />;
@@ -17,7 +26,16 @@ export function NavIcon({ icon, size = 17 }: { icon: NavItemDef["icon"]; size?: 
     case "quote-list":
       return <ListChecks size={size} />;
     case "region":
-      return <Ship size={size} />;
+      // A country's flag reads at a glance which region a rate page covers,
+      // and scales to more countries automatically - no icon to pick or
+      // maintain as Vietnam/Thailand's neighbors are added later.
+      return countryId ? (
+        <span style={{ fontSize: size }} role="img" aria-label={countryId}>
+          {countryFlag(countryId)}
+        </span>
+      ) : (
+        <Ship size={size} />
+      );
     case "customers":
       return <Users size={size} />;
     case "settings":

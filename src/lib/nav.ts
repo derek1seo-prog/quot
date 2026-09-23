@@ -2,6 +2,11 @@ export interface NavItemDef {
   href: string;
   label: string;
   icon: "dashboard" | "new-quote" | "quote-list" | "region" | "customers" | "settings";
+  /** ISO-ish country code (Country.id, e.g. "CN") for icon: "region" items -
+   * rendered as that country's flag instead of a generic icon, since 요율
+   * 관리 already groups regions by country and more countries keep getting
+   * added there. */
+  countryId?: string;
 }
 
 export interface NavSectionDef {
@@ -23,10 +28,10 @@ export const navSections: NavSectionDef[] = [
   {
     title: "요율 관리",
     items: [
-      { href: "/rates/north-china", label: "북중국", icon: "region" },
-      { href: "/rates/south-china", label: "남중국", icon: "region" },
-      { href: "/rates/vietnam", label: "베트남", icon: "region" },
-      { href: "/rates/thailand", label: "태국", icon: "region" },
+      { href: "/rates/north-china", label: "북중국", icon: "region", countryId: "CN" },
+      { href: "/rates/south-china", label: "남중국", icon: "region", countryId: "CN" },
+      { href: "/rates/vietnam", label: "베트남", icon: "region", countryId: "VN" },
+      { href: "/rates/thailand", label: "태국", icon: "region", countryId: "TH" },
     ],
   },
   {
