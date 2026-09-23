@@ -221,12 +221,32 @@ input[type="number"] {
   animation: dashboard-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Combobox/select dropdown panels (PortCombobox, CustomerCombobox,
+ * IncotermsSelect) - a quick scale+fade so opening reads as a deliberate
+ * reveal instead of an instant flash, without slowing down a click. */
+@keyframes dropdown-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-dropdown-panel {
+  animation: dropdown-panel-in 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
   .animate-step-in-backward,
   .animate-modal-backdrop,
   .animate-modal-panel,
+  .animate-dropdown-panel,
   .animate-dashboard-fade-up {
     animation: none;
   }

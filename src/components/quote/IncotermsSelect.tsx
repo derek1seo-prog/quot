@@ -58,7 +58,7 @@ export function IncotermsSelect({
         />
       </button>
       {open && (
-        <div className="absolute z-20 mt-1 w-full rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white shadow-lg overflow-hidden">
+        <div className="absolute z-20 mt-1 w-full rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white shadow-lg overflow-hidden animate-dropdown-panel">
           <p className="px-3 pt-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
             요율 반영됨
           </p>

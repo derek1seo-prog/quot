@@ -16,16 +16,21 @@ export function QuoteListCard({
   quote,
   portNameById,
   regionCountryById,
+  animationDelayMs,
 }: {
   quote: Quote;
   portNameById: Record<string, string>;
   regionCountryById: Record<string, string>;
+  animationDelayMs?: number;
 }) {
   const { deleting, confirmOpen, quoteNumber, requestDelete, cancelDelete, confirmDelete } =
     useDeleteQuote(quote.id, quote.quoteNumber);
 
   return (
-    <div className="px-6 py-4">
+    <div
+      className="px-6 py-4 animate-dashboard-fade-up"
+      style={animationDelayMs != null ? { animationDelay: `${animationDelayMs}ms` } : undefined}
+    >
       <div className="flex items-center justify-between gap-3">
         <Link
           href={`/quotes/${quote.id}`}

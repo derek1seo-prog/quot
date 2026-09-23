@@ -11,16 +11,21 @@ export function QuoteListRow({
   quote,
   portNameById,
   regionCountryById,
+  animationDelayMs,
 }: {
   quote: Quote;
   portNameById: Record<string, string>;
   regionCountryById: Record<string, string>;
+  animationDelayMs?: number;
 }) {
   const { deleting, confirmOpen, quoteNumber, requestDelete, cancelDelete, confirmDelete } =
     useDeleteQuote(quote.id, quote.quoteNumber);
 
   return (
-    <tr className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--sidebar-bg)]/50 transition-colors group">
+    <tr
+      className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--sidebar-bg)]/50 transition-colors group animate-dashboard-fade-up"
+      style={animationDelayMs != null ? { animationDelay: `${animationDelayMs}ms` } : undefined}
+    >
       <td className="px-6 py-4 whitespace-nowrap">
         <Link
           href={`/quotes/${quote.id}`}
