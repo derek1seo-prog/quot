@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldGroup, FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
+import { CustomerCombobox } from "@/components/quote/CustomerCombobox";
 import { PortCombobox, type PortOption } from "@/components/quote/PortCombobox";
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
 import { Step, StepIndicator } from "@/components/quote/StepIndicator";
@@ -413,22 +414,16 @@ export default function NewQuotePage() {
           <div className="grid sm:grid-cols-2 gap-6">
             <FieldGroup>
               <FieldLabel>화주</FieldLabel>
-              <Input
-                list="customer-list"
+              <CustomerCombobox
                 value={customerName}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setCustomerName(value);
-                  const matched = meta.customers.find((c) => c.name === value);
+                onChange={(name) => {
+                  setCustomerName(name);
+                  const matched = meta.customers.find((c) => c.name === name);
                   if (matched?.contactName) setContactName(matched.contactName);
                 }}
+                customers={meta.customers}
                 placeholder="예: 지더블유파트너스"
               />
-              <datalist id="customer-list">
-                {meta.customers.map((c) => (
-                  <option key={c.id} value={c.name} />
-                ))}
-              </datalist>
               {matchedCustomer && (
                 <p className="text-[11px] text-[var(--accent)] mt-1.5">
                   ✓ 등록된 화주 정보가 연동되었습니다
