@@ -127,27 +127,27 @@ export function QuoteActions({
       <LinkButton href="/quotes" variant="ghost" size="sm" icon={<ArrowLeft size={15} />}>
         견적 목록으로
       </LinkButton>
-      {/* TEMPORARY: 인쇄 is styled as the recommended action and PDF
-          다운로드 is deliberately muted - 인쇄 currently matches the
-          desired output more closely than the PDF export. Swap the
-          variants back (인쇄 -> secondary, PDF 다운로드 -> primary) and
-          drop the badge once the PDF export is back on par. */}
+      {/* TEMPORARY: PDF 다운로드 is styled as muted with an "업데이트 중"
+          badge since 인쇄 currently matches the desired output more
+          closely than the PDF export. Drop the badge and restore
+          variant="primary" on PDF 다운로드 once the PDF export is back
+          on par with 인쇄. */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5">
-          <Badge tone="accent">권장</Badge>
-          <Button size="sm" onClick={handlePrint} icon={<Printer size={15} />}>
-            인쇄
-          </Button>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleDownloadPdf}
-          disabled={exporting}
-          icon={exporting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-        >
-          {exporting ? "PDF 생성 중..." : "PDF 다운로드"}
+        <Button variant="secondary" size="sm" onClick={handlePrint} icon={<Printer size={15} />}>
+          인쇄
         </Button>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownloadPdf}
+            disabled={exporting}
+            icon={exporting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+          >
+            {exporting ? "PDF 생성 중..." : "PDF 다운로드"}
+          </Button>
+          <Badge tone="warning">업데이트 중</Badge>
+        </div>
       </div>
     </div>
   );
