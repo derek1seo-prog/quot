@@ -49,7 +49,7 @@ export function IncotermsSelect({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[16px] sm:text-[14px] text-[var(--foreground)] outline-none transition-shadow focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] flex items-center justify-between"
+        className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[14px] text-[var(--foreground)] outline-none transition-shadow focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] flex items-center justify-between"
       >
         <span>{value}</span>
         <ChevronDown

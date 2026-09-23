@@ -378,7 +378,7 @@ export default function NewQuotePage() {
                           value={containerQuantity}
                           onFocus={(e) => e.target.select()}
                           onChange={(e) => setContainerQuantity(Math.max(1, Number(e.target.value) || 1))}
-                          className="w-16 h-8 rounded-[var(--radius-sm)] border border-[var(--border)] px-2 text-[16px] sm:text-[13px] bg-white"
+                          className="w-16 h-8 rounded-[var(--radius-sm)] border border-[var(--border)] px-2 text-[13px] bg-white"
                         />
                       </div>
                     </div>
