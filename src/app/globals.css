@@ -256,37 +256,6 @@ input[type="number"] {
   animation: brand-spin 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) 1;
 }
 
-/* Mobile top bar easter egg (AppShell.tsx) - a seagull glides left to
- * right roughly once every 13s. Pure CSS loop rather than a JS interval:
- * the bird sits parked off-screen (opacity 0) for most of each cycle and
- * only becomes visible for the ~2s crossing in the middle of it, so "once
- * every 10-15s" falls out of the animation-duration alone. Base opacity
- * is 0 outside the animation too, so disabling the animation under
- * reduced motion just leaves it permanently, harmlessly invisible. */
-@keyframes seagull-fly {
-  0%,
-  100% {
-    transform: translateX(-10vw);
-    opacity: 0;
-  }
-  3% {
-    opacity: 0.7;
-  }
-  17% {
-    transform: translateX(110vw);
-    opacity: 0.7;
-  }
-  20% {
-    transform: translateX(110vw);
-    opacity: 0;
-  }
-}
-
-.animate-seagull {
-  opacity: 0;
-  animation: seagull-fly 13s linear infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
@@ -295,8 +264,7 @@ input[type="number"] {
   .animate-modal-panel,
   .animate-dropdown-panel,
   .animate-dashboard-fade-up,
-  .animate-brand-spin,
-  .animate-seagull {
+  .animate-brand-spin {
     animation: none;
   }
 }

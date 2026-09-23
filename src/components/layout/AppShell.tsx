@@ -51,22 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
 
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 inset-x-0 z-40 h-14 flex items-center justify-between px-4 bg-white/80 backdrop-blur border-b border-[var(--border-subtle)] no-print overflow-hidden">
-        {/* Tiny easter egg - a seagull glides across roughly once every
-            13s (see .animate-seagull in globals.css). overflow-hidden on
-            this bar clips it while parked off-screen, so it can never
-            cause horizontal page scroll. */}
-        <svg
-          viewBox="0 0 24 12"
-          className="animate-seagull pointer-events-none absolute left-0 top-1/2 h-3 w-6 -translate-y-1/2 text-[var(--muted)]"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          aria-hidden
-        >
-          <path d="M1 8 Q6 1 12 6 Q18 1 23 8" />
-        </svg>
+      <div className="lg:hidden fixed top-0 inset-x-0 z-40 h-14 flex items-center justify-between px-4 bg-white/80 backdrop-blur border-b border-[var(--border-subtle)] no-print">
         <Link href="/" className="flex items-center gap-2">
           <BrandMark imageClassName="w-7 h-7" />
         </Link>
