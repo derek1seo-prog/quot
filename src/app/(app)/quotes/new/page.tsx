@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldGroup, FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
 import { CustomerCombobox } from "@/components/quote/CustomerCombobox";
+import { IncotermsSelect } from "@/components/quote/IncotermsSelect";
 import { PortCombobox, type PortOption } from "@/components/quote/PortCombobox";
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
 import { Step, StepIndicator } from "@/components/quote/StepIndicator";
@@ -287,13 +288,7 @@ export default function NewQuotePage() {
 
             <FieldGroup>
               <FieldLabel>선적 조건 (Incoterms)</FieldLabel>
-              <Select value={incoterms} onChange={(e) => setIncoterms(e.target.value)}>
-                {["FOB", "CIF", "EXW", "FCA", "CFR", "DAP", "DDP"].map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </Select>
+              <IncotermsSelect value={incoterms} onChange={setIncoterms} />
             </FieldGroup>
 
             <FieldGroup>

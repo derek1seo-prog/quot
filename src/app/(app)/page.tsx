@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
@@ -155,6 +156,7 @@ export default async function DashboardPage() {
                 <th className="px-6 py-3 font-medium whitespace-nowrap">견적번호</th>
                 <th className="px-6 py-3 font-medium whitespace-nowrap">고객명</th>
                 <th className="px-6 py-3 font-medium whitespace-nowrap">구간</th>
+                <th className="px-6 py-3 font-medium whitespace-nowrap">인코텀즈</th>
                 <th className="px-6 py-3 font-medium whitespace-nowrap">견적일</th>
                 <th className="px-6 py-3 font-medium text-right whitespace-nowrap">합계</th>
               </tr>
@@ -178,6 +180,9 @@ export default async function DashboardPage() {
                   </td>
                   <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
                     {routeLabel(q.input.originPortId, q.input.destinationPortId)}
+                  </td>
+                  <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
+                    {q.input.incoterms}
                   </td>
                   <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
                     {formatDate(q.input.quoteDate)}
@@ -206,7 +211,10 @@ export default async function DashboardPage() {
                     {routeLabel(q.input.originPortId, q.input.destinationPortId)}
                   </span>
                 </div>
-                <p className="text-[13.5px] text-[var(--foreground)] mt-1">{q.input.customerName}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-[13.5px] text-[var(--foreground)]">{q.input.customerName}</p>
+                  <Badge tone="neutral">{q.input.incoterms}</Badge>
+                </div>
                 <div className="flex items-center justify-between mt-1.5">
                   <span className="text-[12px] text-[var(--muted)]">
                     {formatDate(q.input.quoteDate)}
