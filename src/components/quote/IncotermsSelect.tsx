@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/Badge";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -52,10 +51,7 @@ export function IncotermsSelect({
         onClick={() => setOpen((o) => !o)}
         className="w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[16px] sm:text-[14px] text-[var(--foreground)] outline-none transition-shadow focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] flex items-center justify-between"
       >
-        <span className="flex items-center gap-2">
-          {value}
-          {SUPPORTED.includes(value) && <Badge tone="accent">지원</Badge>}
-        </span>
+        <span>{value}</span>
         <ChevronDown
           size={16}
           className={`text-[var(--muted)] transition-transform ${open ? "rotate-180" : ""}`}
@@ -72,12 +68,11 @@ export function IncotermsSelect({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => select(t)}
-              className={`w-full flex items-center justify-between text-left px-3 py-2 text-[13.5px] font-medium text-[var(--foreground)] ${
+              className={`w-full text-left px-3 py-2 text-[13.5px] font-medium text-[var(--foreground)] ${
                 t === value ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--sidebar-bg)]"
               }`}
             >
               {t}
-              <Badge tone="accent">지원</Badge>
             </button>
           ))}
           <p className="px-3 pt-2.5 pb-1.5 mt-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)] border-t border-[var(--border-subtle)]">

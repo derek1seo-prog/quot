@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { formatCurrency, formatDate, regionLabel } from "@/lib/format";
+import { countryFlag, formatCurrency, formatDate } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -15,9 +15,11 @@ import Link from "next/link";
 export function QuoteListCard({
   quote,
   portNameById,
+  regionCountryById,
 }: {
   quote: Quote;
   portNameById: Record<string, string>;
+  regionCountryById: Record<string, string>;
 }) {
   const { deleting, confirmOpen, quoteNumber, requestDelete, cancelDelete, confirmDelete } =
     useDeleteQuote(quote.id, quote.quoteNumber);
@@ -48,9 +50,14 @@ export function QuoteListCard({
           onCancel={cancelDelete}
         />
       </div>
-      <p className="text-[13.5px] text-[var(--foreground)] mt-1">{quote.input.customerName}</p>
+      <div className="flex items-center gap-2 mt-1">
+        <p className="text-[13.5px] text-[var(--foreground)]">{quote.input.customerName}</p>
+        <Badge tone="neutral">{quote.input.incoterms}</Badge>
+      </div>
       <div className="flex items-center gap-2 mt-1.5">
-        <Badge tone="accent">{regionLabel(quote.result.regionNameKo)}</Badge>
+        <span className="text-[16px]" role="img" title={quote.result.regionNameKo}>
+          {countryFlag(regionCountryById[quote.result.regionId] ?? "")}
+        </span>
         <span className="text-[12px] text-[var(--muted)]">
           {portNameById[quote.input.originPortId] ?? quote.input.originPortId} →{" "}
           {portNameById[quote.input.destinationPortId] ?? quote.input.destinationPortId}

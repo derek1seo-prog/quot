@@ -1,9 +1,8 @@
 "use client";
 
-import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { formatCurrency, formatDate, regionLabel } from "@/lib/format";
+import { countryFlag, formatCurrency, formatDate } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -11,16 +10,18 @@ import Link from "next/link";
 export function QuoteListRow({
   quote,
   portNameById,
+  regionCountryById,
 }: {
   quote: Quote;
   portNameById: Record<string, string>;
+  regionCountryById: Record<string, string>;
 }) {
   const { deleting, confirmOpen, quoteNumber, requestDelete, cancelDelete, confirmDelete } =
     useDeleteQuote(quote.id, quote.quoteNumber);
 
   return (
     <tr className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--sidebar-bg)]/50 transition-colors group">
-      <td className="px-6 py-4">
+      <td className="px-6 py-4 whitespace-nowrap">
         <Link
           href={`/quotes/${quote.id}`}
           className="text-[13.5px] font-medium text-[var(--accent)] hover:underline"
@@ -28,16 +29,19 @@ export function QuoteListRow({
           {quote.quoteNumber}
         </Link>
       </td>
-      <td className="px-6 py-4 text-[13.5px] text-[var(--foreground)]">{quote.input.customerName}</td>
-      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)]">
+      <td className="px-6 py-4 text-[13.5px] text-[var(--foreground)] whitespace-nowrap">{quote.input.customerName}</td>
+      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
         {portNameById[quote.input.originPortId] ?? quote.input.originPortId} →{" "}
         {portNameById[quote.input.destinationPortId] ?? quote.input.destinationPortId}
       </td>
-      <td className="px-6 py-4">
-        <Badge tone="accent">{regionLabel(quote.result.regionNameKo)}</Badge>
+      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">{quote.input.incoterms}</td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="text-[20px]" role="img" title={quote.result.regionNameKo}>
+          {countryFlag(regionCountryById[quote.result.regionId] ?? "")}
+        </span>
       </td>
-      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)]">{formatDate(quote.input.quoteDate)}</td>
-      <td className="px-6 py-4 text-[13.5px] font-medium text-right text-[var(--foreground)]">
+      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">{formatDate(quote.input.quoteDate)}</td>
+      <td className="px-6 py-4 text-[13.5px] font-medium text-right text-[var(--foreground)] whitespace-nowrap">
         {formatCurrency(quote.result.column.grandTotalKrw, "KRW")}
       </td>
       <td className="px-4 py-4 text-right">

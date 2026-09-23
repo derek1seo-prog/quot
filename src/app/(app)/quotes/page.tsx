@@ -2,7 +2,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { QuoteListCard } from "@/components/quote/QuoteListCard";
 import { QuoteListRow } from "@/components/quote/QuoteListRow";
-import { getPorts, getQuotes } from "@/lib/data-store";
+import { getPorts, getQuotes, getRegions } from "@/lib/data-store";
 import { FilePlus2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function QuotesListPage() {
   const quotes = await getQuotes();
   const portNameById = Object.fromEntries(getPorts().map((p) => [p.id, p.nameKo]));
+  const regionCountryById = Object.fromEntries(getRegions().map((r) => [r.id, r.countryId]));
 
   return (
     <div className="max-w-[1200px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
@@ -35,12 +36,13 @@ export default async function QuotesListPage() {
         ) : (
           <>
           <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full text-left min-w-[760px]">
+          <table className="w-full text-left min-w-[840px]">
             <thead>
               <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--muted)] uppercase tracking-wide">
                 <th className="px-6 py-3 font-medium whitespace-nowrap">견적번호</th>
                 <th className="px-6 py-3 font-medium whitespace-nowrap">고객명</th>
                 <th className="px-6 py-3 font-medium whitespace-nowrap">구간</th>
+                <th className="px-6 py-3 font-medium whitespace-nowrap">인코텀즈</th>
                 <th className="px-6 py-3 font-medium whitespace-nowrap">권역</th>
                 <th className="px-6 py-3 font-medium whitespace-nowrap">견적일</th>
                 <th className="px-6 py-3 font-medium text-right whitespace-nowrap">합계</th>
@@ -49,7 +51,12 @@ export default async function QuotesListPage() {
             </thead>
             <tbody>
               {quotes.map((q) => (
-                <QuoteListRow key={q.id} quote={q} portNameById={portNameById} />
+                <QuoteListRow
+                  key={q.id}
+                  quote={q}
+                  portNameById={portNameById}
+                  regionCountryById={regionCountryById}
+                />
               ))}
             </tbody>
           </table>
@@ -57,7 +64,12 @@ export default async function QuotesListPage() {
 
           <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
             {quotes.map((q) => (
-              <QuoteListCard key={q.id} quote={q} portNameById={portNameById} />
+              <QuoteListCard
+                key={q.id}
+                quote={q}
+                portNameById={portNameById}
+                regionCountryById={regionCountryById}
+              />
             ))}
           </div>
           </>

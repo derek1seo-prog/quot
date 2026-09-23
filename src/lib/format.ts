@@ -11,13 +11,16 @@ export function formatNumber(amount: number): string {
 }
 
 /**
- * Normalizes a stored quote's regionNameKo for display. Older quotes may
- * have the region's pre-rename name baked in permanently (a snapshot taken
- * at calculation time), so this keeps them display-consistent with the
- * current short name without needing a data migration.
+ * Converts a 2-letter ISO-ish country code (Country.id, e.g. "CN") into its
+ * flag emoji via the regional indicator symbol trick, so a new country's
+ * flag shows up automatically the moment its region data is added - no
+ * icon file or per-country lookup table to maintain as more regions come
+ * online.
  */
-export function regionLabel(nameKo: string): string {
-  return nameKo.replace(/\s*\/\s*동중국/, "");
+export function countryFlag(countryId: string): string {
+  return countryId
+    .toUpperCase()
+    .replace(/[A-Z]/g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
 }
 
 export function formatDate(iso: string): string {
