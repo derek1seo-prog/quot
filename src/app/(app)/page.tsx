@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
+import { CountUpStat } from "@/components/dashboard/CountUpStat";
 import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck } from "lucide-react";
@@ -25,19 +26,28 @@ export default async function DashboardPage() {
   // instead of alternating, and on the 2-column mobile grid it also means
   // each row is homogeneous (stat+stat, then link+link) instead of mixed.
   const dashboardCards: (
-    | { kind: "stat"; label: string; value: string; sublabel?: string; icon: ReactNode }
+    | {
+        kind: "stat";
+        label: string;
+        value: string;
+        countUp?: { value: number; prefix?: string; suffix?: string };
+        sublabel?: string;
+        icon: ReactNode;
+      }
     | { kind: "link"; label: string; sublabel: string; href: string; icon: ReactNode }
   )[] = [
     {
       kind: "stat",
       label: "전체 견적 수",
       value: `${quotes.length}건`,
+      countUp: { value: quotes.length, suffix: "건" },
       icon: <FilePlus2 size={18} />,
     },
     {
       kind: "stat",
       label: "환율 (USD)",
       value: exchangeRate ? `₩${exchangeRate.rate.toLocaleString()}` : "미설정",
+      countUp: exchangeRate ? { value: exchangeRate.rate, prefix: "₩" } : undefined,
       sublabel: exchangeRate ? `${formatDate(exchangeRate.asOf)} 기준` : undefined,
       icon: <DollarSign size={18} />,
     },
@@ -60,7 +70,7 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-[1200px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10 lg:mb-14">
-        <div>
+        <div className="animate-dashboard-fade-up">
           <p className="text-[13px] font-medium text-[var(--accent)] mb-2">Dashboard</p>
           <h1 className="text-[32px] lg:text-[36px] font-semibold tracking-tight text-[var(--foreground)]">
             수출입 포워딩 견적
@@ -70,7 +80,13 @@ export default async function DashboardPage() {
             바로 전달 가능한 견적서가 만들어집니다.
           </p>
         </div>
-        <LinkButton href="/quotes/new" size="lg" icon={<FilePlus2 size={18} />}>
+        <LinkButton
+          href="/quotes/new"
+          size="lg"
+          icon={<FilePlus2 size={18} />}
+          className="animate-dashboard-fade-up"
+          style={{ animationDelay: "80ms" }}
+        >
           새 견적 만들기
         </LinkButton>
       </div>
@@ -78,14 +94,22 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
         {dashboardCards.map((c, i) =>
           c.kind === "stat" ? (
-            <Card key={c.label} className="p-5">
+            <Card
+              key={c.label}
+              className="p-5 animate-dashboard-fade-up"
+              style={{ animationDelay: `${140 + i * 50}ms` }}
+            >
               <div className="flex items-center justify-between mb-6">
                 <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
                   {c.icon}
                 </div>
               </div>
               <p className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
-                {c.value}
+                {c.countUp ? (
+                  <CountUpStat value={c.countUp.value} prefix={c.countUp.prefix} suffix={c.countUp.suffix} />
+                ) : (
+                  c.value
+                )}
               </p>
               <p className="text-[13px] text-[var(--muted)] mt-0.5">{c.label}</p>
               {c.sublabel && (
@@ -103,9 +127,10 @@ export default async function DashboardPage() {
               // sense on the desktop single-row (4-col) layout, where this
               // is the first link right after the last stat; on the
               // 2-column mobile grid it starts its own row already.
-              className={i === 2 ? "lg:border-l lg:border-[var(--border-subtle)] lg:pl-4 xl:pl-5" : undefined}
+              className={`animate-dashboard-fade-up ${i === 2 ? "lg:border-l lg:border-[var(--border-subtle)] lg:pl-4 xl:pl-5" : ""}`}
+              style={{ animationDelay: `${140 + i * 50}ms` }}
             >
-              <Card className="p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40 motion-reduce:transition-none">
+              <Card className="p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                 <div className="flex items-center justify-between mb-6">
                   <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
                     {c.icon}
@@ -122,7 +147,10 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-between mb-4">
+      <div
+        className="flex items-center justify-between mb-4 animate-dashboard-fade-up"
+        style={{ animationDelay: "340ms" }}
+      >
         <h2 className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
           최근 견적
         </h2>
@@ -134,7 +162,7 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden animate-dashboard-fade-up" style={{ animationDelay: "380ms" }}>
         {quotes.length === 0 ? (
           <CardContent className="py-16 text-center">
             <p className="text-[15px] font-medium text-[var(--foreground)]">
@@ -162,10 +190,11 @@ export default async function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {quotes.slice(0, 6).map((q) => (
+              {quotes.slice(0, 6).map((q, i) => (
                 <tr
                   key={q.id}
-                  className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--sidebar-bg)]/50 transition-colors"
+                  className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--sidebar-bg)]/50 transition-colors animate-dashboard-fade-up"
+                  style={{ animationDelay: `${420 + i * 35}ms` }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
@@ -197,11 +226,12 @@ export default async function DashboardPage() {
           </div>
 
           <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
-            {quotes.slice(0, 6).map((q) => (
+            {quotes.slice(0, 6).map((q, i) => (
               <Link
                 key={q.id}
                 href={`/quotes/${q.id}`}
-                className="block px-6 py-4 active:bg-[var(--sidebar-bg)]/50"
+                className="block px-6 py-4 active:bg-[var(--sidebar-bg)]/50 animate-dashboard-fade-up"
+                style={{ animationDelay: `${420 + i * 35}ms` }}
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13.5px] font-medium text-[var(--accent)]">

@@ -202,12 +202,32 @@ input[type="number"] {
   animation: modal-panel-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Dashboard entrance - hero text, the stat/link cards and the 최근 견적
+ * section each ease up and fade in on load (staggered via an inline
+ * animation-delay per element), so the page reads as considered rather
+ * than just appearing all at once. */
+@keyframes dashboard-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dashboard-fade-up {
+  animation: dashboard-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
   .animate-step-in-backward,
   .animate-modal-backdrop,
-  .animate-modal-panel {
+  .animate-modal-panel,
+  .animate-dashboard-fade-up {
     animation: none;
   }
 }

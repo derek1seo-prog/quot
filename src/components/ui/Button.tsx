@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "danger-solid";
 type Size = "sm" | "md" | "lg";
@@ -63,6 +63,7 @@ interface LinkButtonProps {
   size?: Size;
   icon?: ReactNode;
   className?: string;
+  style?: CSSProperties;
   children: ReactNode;
 }
 
@@ -72,11 +73,13 @@ export function LinkButton({
   size = "md",
   icon,
   className,
+  style,
   children,
 }: LinkButtonProps) {
   return (
     <Link
       href={href}
+      style={style}
       className={cn(
         "inline-flex items-center justify-center font-medium transition-all duration-200 ease-out active:scale-[0.98] whitespace-nowrap cursor-pointer motion-reduce:transition-none",
         variantClasses[variant],
