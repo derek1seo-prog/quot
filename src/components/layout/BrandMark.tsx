@@ -7,13 +7,7 @@ import { useState } from "react";
  * pops up a short, playful maritime-themed message, freshly picked each
  * time. Purely decorative - a bit of personality on the one element
  * that's on every single page. */
-const HOVER_MESSAGES = [
-  "오늘도 순항 중 ⚓",
-  "화이팅 항해사님 🚢",
-  "무사고 운항 기원!",
-  "바람도 우리 편 🌊",
-  "출항 준비 완료",
-];
+const HOVER_MESSAGES = ["Smooth sailing ⚓", "Full steam ahead 🚢", "On time, every time"];
 
 export function BrandMark({ imageClassName = "w-8 h-8" }: { imageClassName?: string }) {
   const [hovering, setHovering] = useState(false);

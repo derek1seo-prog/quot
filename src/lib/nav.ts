@@ -37,7 +37,7 @@ export const navSections: NavSectionDef[] = [
   {
     title: "관리",
     items: [
-      { href: "/customers", label: "고객 관리", icon: "customers" },
+      { href: "/customers", label: "화주 관리", icon: "customers" },
       { href: "/settings", label: "설정", icon: "settings" },
     ],
   },
