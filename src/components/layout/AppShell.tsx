@@ -8,6 +8,7 @@ import { BrandMark } from "./BrandMark";
 import { Sidebar } from "./Sidebar";
 import { MobileSidebarContent } from "./MobileSidebarContent";
 import { MenuToggleIcon } from "./MenuToggleIcon";
+import { RoleSwitchButton } from "./RoleSwitchButton";
 
 export function AppShell({ children, role }: { children: React.ReactNode; role: Role }) {
   const [open, setOpen] = useState(false);
@@ -56,19 +57,22 @@ export function AppShell({ children, role }: { children: React.ReactNode; role: 
         <Link href="/" className="flex items-center gap-2">
           <BrandMark imageClassName="w-7 h-7" />
         </Link>
-        <button
-          onClick={() => {
-            setOpen((v) => {
-              if (!v) setOpenCount((c) => c + 1);
-              return !v;
-            });
-          }}
-          className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--foreground)] active:bg-[var(--sidebar-bg)] transition-colors"
-          aria-label={open ? "메뉴 닫기" : "메뉴 열기"}
-          aria-expanded={open}
-        >
-          <MenuToggleIcon open={open} />
-        </button>
+        <div className="flex items-center gap-1">
+          <RoleSwitchButton role={role} />
+          <button
+            onClick={() => {
+              setOpen((v) => {
+                if (!v) setOpenCount((c) => c + 1);
+                return !v;
+              });
+            }}
+            className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--foreground)] active:bg-[var(--sidebar-bg)] transition-colors"
+            aria-label={open ? "메뉴 닫기" : "메뉴 열기"}
+            aria-expanded={open}
+          >
+            <MenuToggleIcon open={open} />
+          </button>
+        </div>
       </div>
 
       {/* Mobile nav drawer - stays mounted so the backdrop fade and panel

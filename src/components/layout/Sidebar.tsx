@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
 import { BrandMark } from "./BrandMark";
 import { NavIcon } from "./nav-icons";
+import { RoleSwitchButton } from "./RoleSwitchButton";
 
 export function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
@@ -23,12 +24,15 @@ export function Sidebar({ role }: { role: Role }) {
 
   return (
     <aside className="no-print hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-[var(--sidebar-bg)] border-r border-[var(--border-subtle)]">
-      <Link href="/" className="px-6 h-16 flex items-center gap-2.5 shrink-0">
-        <BrandMark imageClassName="w-8 h-8" />
-        <div className="leading-tight">
-          <p className="text-[11px] text-[var(--muted)]">Forwarding Quote System</p>
-        </div>
-      </Link>
+      <div className="px-6 h-16 flex items-center justify-between shrink-0">
+        <Link href="/" className="flex items-center gap-2.5 min-w-0">
+          <BrandMark imageClassName="w-8 h-8" />
+          <div className="leading-tight min-w-0">
+            <p className="text-[11px] text-[var(--muted)] truncate">Forwarding Quote System</p>
+          </div>
+        </Link>
+        <RoleSwitchButton role={role} />
+      </div>
 
       <nav className="relative flex-1 overflow-y-auto px-3 pb-6 space-y-6">
         {indicatorTop !== null && (
