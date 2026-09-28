@@ -8,9 +8,9 @@ export const SITE_PASSWORD = process.env.SITE_PASSWORD?.trim() || "1726";
 
 export const LOCK_COOKIE_NAME = "site_unlocked";
 
-// 30 days - long-lived on purpose so a returning visitor on the same
-// device doesn't have to re-enter the PIN every session.
-export const LOCK_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+// 1 day - short-lived on purpose so even a device that stays unlocked
+// has to re-enter the PIN daily, rather than staying open for weeks.
+export const LOCK_COOKIE_MAX_AGE = 60 * 60 * 24 * 1;
 
 // The cookie stores a hash of the password rather than the password
 // itself, so it isn't sitting in plaintext in the browser's cookie jar.
