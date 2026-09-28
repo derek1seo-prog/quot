@@ -193,6 +193,16 @@ export async function getCustomerByName(name: string): Promise<Customer | undefi
   return customers.find((c) => c.name === name);
 }
 
+export async function getCustomerById(id: string): Promise<Customer | undefined> {
+  const customers = await getCustomers();
+  return customers.find((c) => c.id === id);
+}
+
+export async function getCustomerByAccessToken(token: string): Promise<Customer | undefined> {
+  const customers = await getCustomers();
+  return customers.find((c) => c.accessToken === token);
+}
+
 /** Quotes saved before the single-container refactor stored
  * `input.containers: ContainerSelection[]` and `result.columns: QuoteColumn[]`
  * instead of today's singular `container`/`column`. Normalize on read (taking

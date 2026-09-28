@@ -131,6 +131,11 @@ export interface Customer {
   pyeongtaekTruckingRate20ft?: number; // KRW
   pyeongtaekTruckingRate40hq?: number; // KRW
   createdAt: string;
+  /** Bearer token for this customer's self-service link (/c/[accessToken]) -
+   * a cryptographically random string, not a guessable/sequential id.
+   * Optional only so customers created before this feature can be
+   * backfilled on next edit rather than requiring a data migration. */
+  accessToken?: string;
 }
 
 /** One line the user picks in the "container" step, with a quantity. */
@@ -143,6 +148,11 @@ export interface QuoteInput {
   customerName: string;
   contactName?: string;
   preparedBy: string;
+  /** Set only for quotes created through a customer's self-service session
+   * (see /my, src/lib/session.ts) - lets that customer's "내 견적" list (and
+   * the ownership check on /quotes/[id]) find exactly their own quotes.
+   * Absent on every admin-created quote, past and present. */
+  customerId?: string;
   quoteDate: string; // ISO date
   validUntil: string; // ISO date
   transportMode: TransportMode;

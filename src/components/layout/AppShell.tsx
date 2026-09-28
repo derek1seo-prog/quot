@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Role } from "@/lib/nav";
 import { BrandMark } from "./BrandMark";
 import { Sidebar } from "./Sidebar";
 import { MobileSidebarContent } from "./MobileSidebarContent";
 import { MenuToggleIcon } from "./MenuToggleIcon";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, role }: { children: React.ReactNode; role: Role }) {
   const [open, setOpen] = useState(false);
   // Bumped every time the drawer opens so its content remounts and replays
   // the stagger-in animation instead of just being toggled visible again.
@@ -48,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar />
+      <Sidebar role={role} />
 
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 inset-x-0 z-40 h-14 flex items-center justify-between px-4 bg-white/80 backdrop-blur border-b border-[var(--border-subtle)] no-print">
@@ -97,7 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <MenuToggleIcon open size={16} />
             </button>
           </div>
-          <MobileSidebarContent key={openCount} onNavigate={() => setOpen(false)} />
+          <MobileSidebarContent key={openCount} role={role} onNavigate={() => setOpen(false)} />
         </div>
       </div>
 

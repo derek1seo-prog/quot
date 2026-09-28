@@ -1,6 +1,8 @@
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
 import { QuoteActions } from "@/components/quote/QuoteActions";
 import { getCompany, getPortById, getQuoteById } from "@/lib/data-store";
+import { decodeSessionCookie } from "@/lib/session";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 export default async function QuoteDetailPage({
@@ -11,6 +13,15 @@ export default async function QuoteDetailPage({
   const { id } = await params;
   const quote = await getQuoteById(id);
   if (!quote) notFound();
+
+  // proxy.ts already lets any "customer" session reach /quotes/:id (the
+  // path pattern is shared with admin) - this is the per-record ownership
+  // check underneath it, so a customer can never view another customer's
+  // saved quote just by guessing/incrementing an id.
+  const session = decodeSessionCookie(await cookies());
+  if (session?.role === "customer" && quote.input.customerId !== session.customerId) {
+    notFound();
+  }
 
   const company = getCompany();
   const originPort = getPortById(quote.input.originPortId);

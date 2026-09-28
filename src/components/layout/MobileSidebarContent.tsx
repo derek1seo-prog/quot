@@ -1,14 +1,21 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { getActiveHref, navSections } from "@/lib/nav";
+import { getActiveHref, getNavSections, type Role } from "@/lib/nav";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavIcon } from "./nav-icons";
 
-export function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
+export function MobileSidebarContent({
+  role,
+  onNavigate,
+}: {
+  role: Role;
+  onNavigate: () => void;
+}) {
   const pathname = usePathname();
-  const activeHref = getActiveHref(pathname);
+  const navSections = getNavSections(role);
+  const activeHref = getActiveHref(pathname, navSections);
   let itemIndex = 0;
 
   return (

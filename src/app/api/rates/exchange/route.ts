@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentExchangeRate, upsertExchangeRate } from "@/lib/data-store";
+import { requireAdmin } from "@/lib/session";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const forbidden = requireAdmin(req);
+  if (forbidden) return forbidden;
   return NextResponse.json(await getCurrentExchangeRate("USD"));
 }
 
 export async function PUT(req: NextRequest) {
+  const forbidden = requireAdmin(req);
+  if (forbidden) return forbidden;
+
   const body = (await req.json()) as { rate: number; asOf?: string };
   const updated = {
     id: "ex-usd",

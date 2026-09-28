@@ -1,16 +1,17 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { getActiveHref, navSections } from "@/lib/nav";
+import { getActiveHref, getNavSections, type Role } from "@/lib/nav";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
 import { BrandMark } from "./BrandMark";
 import { NavIcon } from "./nav-icons";
 
-export function Sidebar() {
+export function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
-  const activeHref = getActiveHref(pathname);
+  const navSections = getNavSections(role);
+  const activeHref = getActiveHref(pathname, navSections);
   const activeRef = useRef<HTMLAnchorElement>(null);
   const [indicatorTop, setIndicatorTop] = useState<number | null>(null);
 

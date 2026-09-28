@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateId } from "@/lib/id";
 import { getOceanFreightRates, upsertOceanFreightRate } from "@/lib/data-store";
+import { requireAdmin } from "@/lib/session";
 import type { OceanFreightRate } from "@/lib/types";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const forbidden = requireAdmin(req);
+  if (forbidden) return forbidden;
   return NextResponse.json(await getOceanFreightRates());
 }
 
 export async function PUT(req: NextRequest) {
+  const forbidden = requireAdmin(req);
+  if (forbidden) return forbidden;
+
   const body = (await req.json()) as Partial<OceanFreightRate> & {
     portId: string;
     destinationPortId: string;

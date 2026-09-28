@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { RateCell } from "@/components/rates/RateCell";
 import type { Customer } from "@/lib/types";
-import { Trash2 } from "lucide-react";
+import { Check, Link2, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type NumberField =
@@ -23,7 +23,7 @@ type NumberField =
 const nameColPct = 18;
 const contactColPct = 12;
 const rateColPct = 11.5; // x6 port/size columns = 69
-const actionColWidth = 44; // px - fixed so the hover-delete column never grows past its button
+const actionColWidth = 76; // px - fixed so the hover-actions column never grows past its two buttons
 
 /** Rate fields grouped by port - one heading per port instead of repeating
  * "인천항"/"부산항"/"평택항" in every column label, so the table reads at a
@@ -59,6 +59,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   const [customers, setCustomers] = useState(initialCustomers);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Customer | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // initialCustomers is a fresh array from the server component on every
   // router.refresh() (e.g. after adding a customer) - without this, the
@@ -105,6 +106,14 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     if (!res.ok) throw new Error("save failed");
     const updated = (await res.json()) as Customer;
     setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  }
+
+  async function copyAccessLink(customer: Customer) {
+    if (!customer.accessToken) return;
+    const url = `${window.location.origin}/c/${customer.accessToken}`;
+    await navigator.clipboard.writeText(url);
+    setCopiedId(customer.id);
+    setTimeout(() => setCopiedId((id) => (id === customer.id ? null : id)), 1500);
   }
 
   async function confirmDelete() {
@@ -204,7 +213,16 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                       </td>
                     )),
                   )}
-                  <td className="px-2 align-middle text-right">
+                  <td className="px-2 align-middle text-right whitespace-nowrap">
+                    <button
+                      onClick={() => copyAccessLink(c)}
+                      disabled={!c.accessToken}
+                      title={c.accessToken ? undefined : "화주 정보를 한 번 저장하면 링크가 생성됩니다"}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] disabled:opacity-30 disabled:hover:bg-transparent"
+                      aria-label="화주 전용 링크 복사"
+                    >
+                      {copiedId === c.id ? <Check size={15} className="text-[var(--success)]" /> : <Link2 size={15} />}
+                    </button>
                     <button
                       onClick={() => setPendingDelete(c)}
                       disabled={deletingId === c.id}
@@ -235,14 +253,24 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 <p className="text-[13.5px] font-medium text-[var(--foreground)]">{c.name}</p>
                 {c.incotermsDefault && <Badge tone="neutral">{c.incotermsDefault}</Badge>}
               </div>
-              <button
-                onClick={() => setPendingDelete(c)}
-                disabled={deletingId === c.id}
-                className="w-8 h-8 -mr-2 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] active:bg-red-50 active:text-[var(--danger)]"
-                aria-label="삭제"
-              >
-                <Trash2 size={15} />
-              </button>
+              <div className="flex items-center -mr-2">
+                <button
+                  onClick={() => copyAccessLink(c)}
+                  disabled={!c.accessToken}
+                  className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] active:bg-[var(--accent-soft)] active:text-[var(--accent)] disabled:opacity-30"
+                  aria-label="화주 전용 링크 복사"
+                >
+                  {copiedId === c.id ? <Check size={15} className="text-[var(--success)]" /> : <Link2 size={15} />}
+                </button>
+                <button
+                  onClick={() => setPendingDelete(c)}
+                  disabled={deletingId === c.id}
+                  className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] active:bg-red-50 active:text-[var(--danger)]"
+                  aria-label="삭제"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
             </div>
             <p className="text-[12px] text-[var(--muted)] mt-1">{c.contactName ?? "-"}</p>
 
