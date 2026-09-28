@@ -19,6 +19,11 @@ export default function DashboardLoading() {
         ))}
       </div>
 
+      <Card className="p-5 mb-10 lg:mb-14">
+        <Skeleton className="h-3 w-28 mb-4" />
+        <Skeleton className="h-16 w-full" />
+      </Card>
+
       <div className="flex items-center justify-between mb-4">
         <Skeleton className="h-6 w-24" />
         <Skeleton className="h-4 w-16" />
