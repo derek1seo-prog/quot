@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/Badge";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { ArrowLeft, Download, Loader2, Printer } from "lucide-react";
 import { useState } from "react";
@@ -128,15 +127,15 @@ export function QuoteActions({
         견적 목록으로
       </LinkButton>
       {/* TEMPORARY: PDF 다운로드 is styled as muted with an "업데이트 중"
-          badge since 인쇄 currently matches the desired output more
-          closely than the PDF export. Drop the badge and restore
+          hover tooltip since 인쇄 currently matches the desired output
+          more closely than the PDF export. Drop the tooltip and restore
           variant="primary" on PDF 다운로드 once the PDF export is back
           on par with 인쇄. */}
       <div className="flex items-center gap-2">
         <Button variant="secondary" size="sm" onClick={handlePrint} icon={<Printer size={15} />}>
           인쇄
         </Button>
-        <div className="flex items-center gap-1.5">
+        <span className="relative inline-flex group">
           <Button
             variant="ghost"
             size="sm"
@@ -146,8 +145,12 @@ export function QuoteActions({
           >
             {exporting ? "PDF 생성 중..." : "PDF 다운로드"}
           </Button>
-          <Badge tone="warning">업데이트 중</Badge>
-        </div>
+          {!exporting && (
+            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -translate-y-1 mb-2 z-50 whitespace-nowrap rounded-full bg-[var(--foreground)] px-2.5 py-1 text-[11px] font-medium text-white shadow-lg opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-y-0 motion-reduce:transition-none">
+              업데이트 중
+            </span>
+          )}
+        </span>
       </div>
     </div>
   );
