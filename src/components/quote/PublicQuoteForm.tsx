@@ -72,6 +72,22 @@ export function PublicQuoteForm({
   const [guestContactName, setGuestContactName] = useState(DEFAULT_GUEST_CONTACT_NAME);
   const [guestSalesRepId, setGuestSalesRepId] = useState(DEFAULT_SALES_REP_ID);
   const [editingAddressee, setEditingAddressee] = useState(false);
+  // The reveal block below needs overflow-hidden while collapsed/animating
+  // (so the 0fr->1fr height transition doesn't show spilling content), but
+  // that same overflow-hidden clips the 발신 담당자 combobox's dropdown
+  // panel (position: absolute, pops out below its input) once the block is
+  // fully open. Switch to overflow-visible only once the open animation
+  // has actually finished, matching duration-300 below.
+  const [addresseeRevealed, setAddresseeRevealed] = useState(false);
+
+  useEffect(() => {
+    if (!editingAddressee) {
+      requestAnimationFrame(() => setAddresseeRevealed(false));
+      return;
+    }
+    const timer = setTimeout(() => setAddresseeRevealed(true), 300);
+    return () => clearTimeout(timer);
+  }, [editingAddressee]);
 
   const guestRep = salesReps.find((r) => r.id === guestSalesRepId);
 
@@ -226,7 +242,7 @@ export function PublicQuoteForm({
                 editingAddressee ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
               }`}
             >
-              <div className="overflow-hidden">
+              <div className={addresseeRevealed ? "overflow-visible" : "overflow-hidden"}>
                 <div
                   inert={!editingAddressee || undefined}
                   className={`pt-1 pb-6 mb-5 border-b border-[var(--border-subtle)] transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
