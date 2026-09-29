@@ -5,52 +5,17 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Field";
 import type { SalesRep } from "@/lib/types";
 import { Check, Pencil, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
-/** Crossfades between a row's view content and its edit content instead of
- * swapping instantly - an instant swap (even with an entrance-only fade on
- * the incoming side) still reads as a blink, since the outgoing content
- * vanishes in the same frame. Mirrors QuoteDocument.tsx's AnimatedAmount:
- * fade the current content out first, only swap what's actually rendered
- * once that fade has visually finished, then fade the new content in from
- * that same settled 0-opacity state. */
-function EditableCell({
-  editing,
-  view,
-  edit,
-  delayMs = 0,
-}: {
-  editing: boolean;
-  view: React.ReactNode;
-  edit: React.ReactNode;
-  delayMs?: number;
-}) {
-  const [displayEditing, setDisplayEditing] = useState(editing);
-  const [fading, setFading] = useState(false);
-  const prevEditing = useRef(editing);
-
-  useEffect(() => {
-    if (editing === prevEditing.current) return;
-    prevEditing.current = editing;
-    setFading(true);
-    const timer = setTimeout(() => {
-      setDisplayEditing(editing);
-      setFading(false);
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [editing]);
-
-  return (
-    <span
-      style={{ transitionDelay: fading ? "0ms" : `${delayMs}ms` }}
-      className={`block transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none ${
-        fading ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0"
-      }`}
-    >
-      {displayEditing ? edit : view}
-    </span>
-  );
-}
+// Column widths as percentages of the table (name/email/phone sum to 100),
+// plus a fixed-px actions column - table-fixed makes these exact regardless
+// of content, so switching a cell between plain text and an <Input> never
+// resizes the column (which is what actually read as "jerky" - not the
+// transition, the layout shift underneath it).
+const nameColPct = 25;
+const emailColPct = 45;
+const phoneColPct = 30;
+const actionColWidth = 80; // px - fits the two same-sized icon buttons in either state
 
 export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRep[] }) {
   const [salesReps, setSalesReps] = useState(initialSalesReps);
@@ -125,7 +90,13 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
 
   return (
     <Card className="overflow-hidden">
-      <table className="w-full text-left">
+      <table className="w-full table-fixed text-left">
+        <colgroup>
+          <col style={{ width: `${nameColPct}%` }} />
+          <col style={{ width: `${emailColPct}%` }} />
+          <col style={{ width: `${phoneColPct}%` }} />
+          <col style={{ width: `${actionColWidth}px` }} />
+        </colgroup>
         <thead>
           <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide border-b border-[var(--border-subtle)]">
             <th className="px-4 py-3 font-medium">이름</th>
@@ -139,91 +110,78 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
             const editing = editingId === r.id;
             return (
               <tr key={r.id} className="border-b border-[var(--border-subtle)] last:border-0 group">
-                <td className="px-4 py-2.5 align-middle text-[13.5px] font-medium">
-                  <EditableCell
-                    editing={editing}
-                    view={r.name}
-                    edit={
-                      <Input
-                        value={draft.name}
-                        onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-                        className="h-8"
-                      />
-                    }
-                  />
+                <td className="px-4 py-2.5 align-middle text-[13.5px] font-medium truncate">
+                  {editing ? (
+                    <Input
+                      value={draft.name}
+                      onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                      className="h-8"
+                    />
+                  ) : (
+                    r.name
+                  )}
                 </td>
-                <td className="px-3 py-2.5 align-middle text-[13.5px] text-[var(--foreground)]">
-                  <EditableCell
-                    editing={editing}
-                    delayMs={30}
-                    view={r.email ?? "-"}
-                    edit={
-                      <Input
-                        value={draft.email}
-                        onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-                        className="h-8"
-                      />
-                    }
-                  />
+                <td className="px-3 py-2.5 align-middle text-[13.5px] text-[var(--foreground)] truncate">
+                  {editing ? (
+                    <Input
+                      value={draft.email}
+                      onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+                      className="h-8"
+                    />
+                  ) : (
+                    r.email ?? "-"
+                  )}
                 </td>
-                <td className="px-3 py-2.5 align-middle text-[13.5px] text-[var(--foreground)]">
-                  <EditableCell
-                    editing={editing}
-                    delayMs={60}
-                    view={r.phone ?? "-"}
-                    edit={
-                      <Input
-                        value={draft.phone}
-                        onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
-                        className="h-8"
-                      />
-                    }
-                  />
+                <td className="px-3 py-2.5 align-middle text-[13.5px] text-[var(--foreground)] truncate">
+                  {editing ? (
+                    <Input
+                      value={draft.phone}
+                      onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
+                      className="h-8"
+                    />
+                  ) : (
+                    r.phone ?? "-"
+                  )}
                 </td>
                 <td className="px-2 align-middle text-right whitespace-nowrap">
-                  <EditableCell
-                    editing={editing}
-                    delayMs={90}
-                    view={
-                      <>
-                        <button
-                          onClick={() => startEdit(r)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]"
-                          aria-label="수정"
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          onClick={() => setPendingDelete(r)}
-                          disabled={deletingId === r.id}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50"
-                          aria-label="삭제"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </>
-                    }
-                    edit={
-                      <span className="inline-flex">
-                        <button
-                          onClick={() => saveEdit(r.id)}
-                          disabled={saving || !draft.name}
-                          className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--success)] hover:bg-[var(--accent-soft)]"
-                          aria-label="저장"
-                        >
-                          <Check size={15} />
-                        </button>
-                        <button
-                          onClick={cancelEdit}
-                          disabled={saving}
-                          className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-bg)]"
-                          aria-label="취소"
-                        >
-                          <X size={15} />
-                        </button>
-                      </span>
-                    }
-                  />
+                  {editing ? (
+                    <>
+                      <button
+                        onClick={() => saveEdit(r.id)}
+                        disabled={saving || !draft.name}
+                        className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--success)] hover:bg-[var(--accent-soft)]"
+                        aria-label="저장"
+                      >
+                        <Check size={15} />
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        disabled={saving}
+                        className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-bg)]"
+                        aria-label="취소"
+                      >
+                        <X size={15} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => startEdit(r)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+                        aria-label="수정"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        onClick={() => setPendingDelete(r)}
+                        disabled={deletingId === r.id}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50"
+                        aria-label="삭제"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             );
