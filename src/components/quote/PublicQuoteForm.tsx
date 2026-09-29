@@ -165,6 +165,20 @@ export function PublicQuoteForm({
     <>
     <div className="space-y-6 no-print">
       <Card className="p-6 sm:p-8">
+        {mode === "guest" && !editingAddressee && (
+          <div className="flex justify-end -mt-2 -mr-2 mb-1">
+            <button
+              type="button"
+              onClick={() => setEditingAddressee(true)}
+              className="p-1.5 rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-bg)] transition-colors"
+              title="견적서 수신/발신 정보 수정"
+              aria-label="견적서 수신/발신 정보 수정"
+            >
+              <Pencil size={14} />
+            </button>
+          </div>
+        )}
+
         {mode === "customer" && lockedCustomer && (
           <div className="grid sm:grid-cols-2 gap-4 mb-6 pb-6 border-b border-[var(--border-subtle)]">
             <FieldGroup>
@@ -178,54 +192,44 @@ export function PublicQuoteForm({
           </div>
         )}
 
-        {mode === "guest" && (
+        {mode === "guest" && editingAddressee && (
           <div className="mb-6 pb-6 border-b border-[var(--border-subtle)]">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[13px] font-medium text-[var(--foreground)]">견적서 수신/발신 정보</p>
               <button
                 type="button"
-                onClick={() => setEditingAddressee((v) => !v)}
+                onClick={() => setEditingAddressee(false)}
                 className="flex items-center gap-1 text-[12px] font-medium text-[var(--accent)] hover:underline"
               >
-                <Pencil size={13} /> {editingAddressee ? "완료" : "수정"}
+                <Pencil size={13} /> 완료
               </button>
             </div>
-            {editingAddressee ? (
-              <div className="grid sm:grid-cols-3 gap-4">
-                <FieldGroup>
-                  <FieldLabel>화주명</FieldLabel>
-                  <Input
-                    value={guestCustomerName}
-                    onChange={(e) => setGuestCustomerName(e.target.value)}
-                    placeholder="화주명"
-                  />
-                </FieldGroup>
-                <FieldGroup>
-                  <FieldLabel>담당자</FieldLabel>
-                  <Input
-                    value={guestContactName}
-                    onChange={(e) => setGuestContactName(e.target.value)}
-                    placeholder={DEFAULT_GUEST_CONTACT_NAME}
-                  />
-                </FieldGroup>
-                <FieldGroup>
-                  <FieldLabel>발신 담당자</FieldLabel>
-                  <Input
-                    value={guestPreparedBy}
-                    onChange={(e) => setGuestPreparedBy(e.target.value)}
-                    placeholder="담당자명"
-                  />
-                </FieldGroup>
-              </div>
-            ) : (
-              <p className="text-[13px] text-[var(--muted)]">
-                수신:{" "}
-                {guestCustomerName
-                  ? `${guestCustomerName}${guestContactName ? ` / ${guestContactName}` : ""}`
-                  : guestContactName || "-"}{" "}
-                · 발신: {guestPreparedBy || "-"}
-              </p>
-            )}
+            <div className="grid sm:grid-cols-3 gap-4">
+              <FieldGroup>
+                <FieldLabel>화주명</FieldLabel>
+                <Input
+                  value={guestCustomerName}
+                  onChange={(e) => setGuestCustomerName(e.target.value)}
+                  placeholder="화주명"
+                />
+              </FieldGroup>
+              <FieldGroup>
+                <FieldLabel>담당자</FieldLabel>
+                <Input
+                  value={guestContactName}
+                  onChange={(e) => setGuestContactName(e.target.value)}
+                  placeholder={DEFAULT_GUEST_CONTACT_NAME}
+                />
+              </FieldGroup>
+              <FieldGroup>
+                <FieldLabel>발신 담당자</FieldLabel>
+                <Input
+                  value={guestPreparedBy}
+                  onChange={(e) => setGuestPreparedBy(e.target.value)}
+                  placeholder="담당자명"
+                />
+              </FieldGroup>
+            </div>
           </div>
         )}
 
