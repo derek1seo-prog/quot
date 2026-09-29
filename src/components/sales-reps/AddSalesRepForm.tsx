@@ -58,7 +58,7 @@ export function AddSalesRepForm() {
             }`}
           >
             <Button onClick={() => setOpen(true)} icon={<Plus size={16} />}>
-              영업사원 추가
+              사원 추가
             </Button>
           </div>
         </div>

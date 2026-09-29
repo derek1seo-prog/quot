@@ -72,7 +72,7 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
     return (
       <Card className="overflow-hidden">
         <CardContent className="py-16 text-center text-[var(--muted)] text-[14px]">
-          등록된 영업사원이 없습니다.
+          등록된 사원이 없습니다.
         </CardContent>
       </Card>
     );
@@ -99,10 +99,10 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
                     <Input
                       value={draft.name}
                       onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-                      className="h-8"
+                      className="h-8 animate-cell-edit-in"
                     />
                   ) : (
-                    r.name
+                    <span className="block animate-cell-edit-in">{r.name}</span>
                   )}
                 </td>
                 <td className="px-3 py-2.5 align-middle text-[13.5px] text-[var(--foreground)]">
@@ -110,10 +110,13 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
                     <Input
                       value={draft.email}
                       onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-                      className="h-8"
+                      className="h-8 animate-cell-edit-in"
+                      style={{ animationDelay: "30ms" }}
                     />
                   ) : (
-                    r.email ?? "-"
+                    <span className="block animate-cell-edit-in" style={{ animationDelay: "30ms" }}>
+                      {r.email ?? "-"}
+                    </span>
                   )}
                 </td>
                 <td className="px-3 py-2.5 align-middle text-[13.5px] text-[var(--foreground)]">
@@ -121,15 +124,18 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
                     <Input
                       value={draft.phone}
                       onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
-                      className="h-8"
+                      className="h-8 animate-cell-edit-in"
+                      style={{ animationDelay: "60ms" }}
                     />
                   ) : (
-                    r.phone ?? "-"
+                    <span className="block animate-cell-edit-in" style={{ animationDelay: "60ms" }}>
+                      {r.phone ?? "-"}
+                    </span>
                   )}
                 </td>
                 <td className="px-2 align-middle text-right whitespace-nowrap">
                   {editing ? (
-                    <>
+                    <span className="inline-flex animate-cell-edit-in" style={{ animationDelay: "90ms" }}>
                       <button
                         onClick={() => saveEdit(r.id)}
                         disabled={saving || !draft.name}
@@ -146,7 +152,7 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
                       >
                         <X size={15} />
                       </button>
-                    </>
+                    </span>
                   ) : (
                     <>
                       <button
@@ -175,7 +181,7 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
 
       <ConfirmDialog
         open={pendingDelete != null}
-        title="영업사원을 삭제할까요?"
+        title="사원을 삭제할까요?"
         description={
           pendingDelete ? `${pendingDelete.name} 정보가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.` : undefined
         }
