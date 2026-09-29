@@ -315,25 +315,6 @@ input[type="number"] {
   animation: success-text-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Table-cell edit reveal (SalesRepsTable) - switching a row's plain text
- * to an editable input (and back on save/cancel) is an instant swap
- * without this; a quick fade+rise on whichever side just mounted softens
- * it into a considered transition instead of a jarring flash. */
-@keyframes cell-edit-in {
-  from {
-    opacity: 0;
-    transform: translateY(-3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-cell-edit-in {
-  animation: cell-edit-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
@@ -345,8 +326,7 @@ input[type="number"] {
   .animate-brand-spin,
   .animate-shake,
   .animate-success-pop,
-  .animate-success-text-in,
-  .animate-cell-edit-in {
+  .animate-success-text-in {
     animation: none;
   }
 }
