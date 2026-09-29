@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { FieldGroup, FieldLabel, Input, Select } from "@/components/ui/Field";
+import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
 import { IncotermsSelect } from "./IncotermsSelect";
 import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
@@ -176,27 +176,40 @@ export function PublicQuoteForm({
             <PortCombobox value={destinationPortId} onChange={setDestinationPortId} options={podOptions} />
           </FieldGroup>
           <FieldGroup>
-            <FieldLabel>선적 조건 (Incoterms)</FieldLabel>
-            <IncotermsSelect value={incoterms} onChange={setIncoterms} />
+            <FieldLabel hint={mode === "guest" ? "FOB 고정" : undefined}>선적 조건 (Incoterms)</FieldLabel>
+            {mode === "guest" ? (
+              <Input value="FOB" disabled />
+            ) : (
+              <IncotermsSelect value={incoterms} onChange={setIncoterms} />
+            )}
           </FieldGroup>
           <FieldGroup>
             <FieldLabel>컨테이너 타입</FieldLabel>
             <div className="flex gap-2">
-              <Select
-                value={containerTypeId}
-                onChange={(e) => setContainerTypeId(e.target.value)}
-                className="flex-1"
-              >
-                {containerTypes.map((ct) => (
-                  <option key={ct.id} value={ct.id}>
-                    {ct.label}
-                  </option>
-                ))}
-              </Select>
+              <div className="flex-1 flex gap-2">
+                {containerTypes.map((ct) => {
+                  const selected = ct.id === containerTypeId;
+                  return (
+                    <button
+                      key={ct.id}
+                      type="button"
+                      onClick={() => setContainerTypeId(ct.id)}
+                      className={`flex-1 h-10 rounded-[var(--radius-sm)] border-2 text-[13.5px] font-semibold transition-colors ${
+                        selected
+                          ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                          : "border-[var(--border)] text-[var(--foreground)] hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40"
+                      }`}
+                    >
+                      {ct.label}
+                    </button>
+                  );
+                })}
+              </div>
               <Input
                 type="number"
                 min={1}
                 value={containerQuantity}
+                onFocus={(e) => e.target.select()}
                 onChange={(e) => setContainerQuantity(Math.max(1, Number(e.target.value) || 1))}
                 className="w-20 text-center"
               />
