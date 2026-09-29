@@ -125,6 +125,12 @@ export function PublicQuoteForm({
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Per-quote 단가 overrides an admin session can edit in the live preview
+  // below, mirroring the admin wizard's own preview-step mechanism
+  // (quotes/new/page.tsx) - keyed by chargeTypeId. Only ever populated
+  // when isAdmin (RateCell is never rendered editable otherwise).
+  const [rateOverrides, setRateOverrides] = useState<Record<string, number>>({});
+  const [pendingRateEdits, setPendingRateEdits] = useState(0);
 
   const polOptions: PortOption[] = useMemo(
     () =>
@@ -142,7 +148,7 @@ export function PublicQuoteForm({
   const originPort = originPorts.find((p) => p.id === originPortId);
   const destinationPort = destinationPorts.find((p) => p.id === destinationPortId);
 
-  function buildInput(): QuoteInput {
+  function buildInput(overrides: Record<string, number> = rateOverrides): QuoteInput {
     return {
       customerName: mode === "quick" ? quickCustomerName : (lockedCustomer?.name ?? ""),
       contactName: mode === "quick" ? quickContactName : lockedCustomer?.contactName,
@@ -159,6 +165,7 @@ export function PublicQuoteForm({
       destinationPortId,
       incoterms,
       container: { containerTypeId, quantity: containerQuantity },
+      rateOverrides: overrides,
     };
   }
 
@@ -217,6 +224,29 @@ export function PublicQuoteForm({
     } catch (err) {
       setError(err instanceof Error ? err.message : "견적서 발급에 실패했습니다.");
       setSaving(false);
+    }
+  }
+
+  // Mirrors the admin wizard's own handleRateOverride (quotes/new/page.tsx)
+  // exactly - editing a 단가 recalculates through the same /api/calculate
+  // engine call as every other field, then commits the override so it
+  // persists across later recalculations (route/incoterms/container
+  // changes) via buildInput()'s own default param.
+  async function handleRateOverride(chargeTypeId: string, rate: number) {
+    setPendingRateEdits((n) => n + 1);
+    try {
+      const next = { ...rateOverrides, [chargeTypeId]: rate };
+      const res = await fetch("/api/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildInput(next)),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "재계산에 실패했습니다.");
+      setRateOverrides(next);
+      setResult(data as QuoteResult);
+    } finally {
+      setPendingRateEdits((n) => n - 1);
     }
   }
 
@@ -436,12 +466,17 @@ export function PublicQuoteForm({
       {!calculating && !error && result && (
         <>
           {mode === "quick" && (
-            <div className="flex justify-end max-w-[900px] mx-auto">
+            <div className="flex items-center justify-end gap-3 max-w-[900px] mx-auto">
+              {isAdmin && pendingRateEdits > 0 && (
+                <span className="text-[12px] text-[var(--muted)] flex items-center gap-1.5">
+                  <Loader2 size={13} className="animate-spin" /> 단가 반영 중...
+                </span>
+              )}
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={handleQuickPrint}
-                disabled={saving}
+                disabled={saving || pendingRateEdits > 0}
                 icon={saving ? <Loader2 size={15} className="animate-spin" /> : <Printer size={15} />}
               >
                 {saving ? "저장 중..." : "인쇄"}
@@ -455,7 +490,13 @@ export function PublicQuoteForm({
             result={result}
             originLabel={originPort ? `${originPort.nameKo} (${originPort.name})` : ""}
             destinationLabel={destinationPort ? `${destinationPort.nameKo} (${destinationPort.name})` : ""}
+            onRateChange={isAdmin ? handleRateOverride : undefined}
           />
+          {isAdmin && mode === "quick" && (
+            <p className="text-[12px] text-[var(--muted)] mt-3 text-center max-w-[900px] mx-auto">
+              단가를 클릭하면 이 견적만 다른 운임으로 수정할 수 있습니다. 견적가는 자동으로 다시 계산됩니다.
+            </p>
+          )}
           {mode === "customer" && (
             <div className="flex justify-end max-w-[900px] mx-auto">
               <Button
