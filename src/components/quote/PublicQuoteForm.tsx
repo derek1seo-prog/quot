@@ -58,7 +58,8 @@ export function PublicQuoteForm({
   const [incoterms, setIncoterms] = useState("FOB");
   const [containerTypeId, setContainerTypeId] = useState(containerTypes[0]?.id ?? "");
   const [containerQuantity, setContainerQuantity] = useState(1);
-  const [guestAddressee, setGuestAddressee] = useState(DEFAULT_GUEST_ADDRESSEE);
+  const [guestCustomerName, setGuestCustomerName] = useState(DEFAULT_GUEST_ADDRESSEE);
+  const [guestContactName, setGuestContactName] = useState("");
   const [guestPreparedBy, setGuestPreparedBy] = useState("");
   const [editingAddressee, setEditingAddressee] = useState(false);
 
@@ -85,8 +86,8 @@ export function PublicQuoteForm({
 
   function buildInput(): QuoteInput {
     return {
-      customerName: mode === "guest" ? guestAddressee : (lockedCustomer?.name ?? ""),
-      contactName: lockedCustomer?.contactName,
+      customerName: mode === "guest" ? guestCustomerName : (lockedCustomer?.name ?? ""),
+      contactName: mode === "guest" ? guestContactName : lockedCustomer?.contactName,
       preparedBy: mode === "guest" ? guestPreparedBy : (preparedBy ?? ""),
       quoteDate: TODAY,
       validUntil: endOfMonthIso(TODAY),
@@ -188,13 +189,21 @@ export function PublicQuoteForm({
               </button>
             </div>
             {editingAddressee ? (
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-3 gap-4">
                 <FieldGroup>
-                  <FieldLabel>수신</FieldLabel>
+                  <FieldLabel>화주명</FieldLabel>
                   <Input
-                    value={guestAddressee}
-                    onChange={(e) => setGuestAddressee(e.target.value)}
+                    value={guestCustomerName}
+                    onChange={(e) => setGuestCustomerName(e.target.value)}
                     placeholder={DEFAULT_GUEST_ADDRESSEE}
+                  />
+                </FieldGroup>
+                <FieldGroup>
+                  <FieldLabel>담당자</FieldLabel>
+                  <Input
+                    value={guestContactName}
+                    onChange={(e) => setGuestContactName(e.target.value)}
+                    placeholder="담당자명"
                   />
                 </FieldGroup>
                 <FieldGroup>
@@ -208,7 +217,7 @@ export function PublicQuoteForm({
               </div>
             ) : (
               <p className="text-[13px] text-[var(--muted)]">
-                수신: {guestAddressee || "-"} · 발신 담당자: {guestPreparedBy || "-"}
+                수신: {guestCustomerName ? `${guestCustomerName}${guestContactName ? ` / ${guestContactName}` : ""}` : "-"} · 발신: {guestPreparedBy || "-"}
               </p>
             )}
           </div>
