@@ -165,20 +165,6 @@ export function PublicQuoteForm({
     <>
     <div className="space-y-6 no-print">
       <Card className="p-6 sm:p-8">
-        {mode === "guest" && !editingAddressee && (
-          <div className="flex justify-end -mt-2 -mr-2 mb-1">
-            <button
-              type="button"
-              onClick={() => setEditingAddressee(true)}
-              className="p-1.5 rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-bg)] transition-colors"
-              title="견적서 수신/발신 정보 수정"
-              aria-label="견적서 수신/발신 정보 수정"
-            >
-              <Pencil size={14} />
-            </button>
-          </div>
-        )}
-
         {mode === "customer" && lockedCustomer && (
           <div className="grid sm:grid-cols-2 gap-4 mb-6 pb-6 border-b border-[var(--border-subtle)]">
             <FieldGroup>
@@ -192,43 +178,79 @@ export function PublicQuoteForm({
           </div>
         )}
 
-        {mode === "guest" && editingAddressee && (
-          <div className="mb-6 pb-6 border-b border-[var(--border-subtle)]">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] font-medium text-[var(--foreground)]">견적서 수신/발신 정보</p>
+        {mode === "guest" && (
+          <div className="-mt-2 -mr-2 mb-1">
+            <div className="flex justify-end">
               <button
                 type="button"
-                onClick={() => setEditingAddressee(false)}
-                className="flex items-center gap-1 text-[12px] font-medium text-[var(--accent)] hover:underline"
+                onClick={() => setEditingAddressee((v) => !v)}
+                className="flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full text-[12px] font-medium text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-bg)] transition-colors"
+                title="견적서 수신/발신 정보 수정"
+                aria-label="견적서 수신/발신 정보 수정"
+                aria-expanded={editingAddressee}
               >
-                <Pencil size={13} /> 완료
+                <Pencil
+                  size={13}
+                  className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
+                  style={{ transform: editingAddressee ? "rotate(-25deg) scale(1.05)" : "rotate(0deg)" }}
+                />
+                <span
+                  className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out motion-reduce:transition-none ${
+                    editingAddressee ? "max-w-[40px] opacity-100" : "max-w-0 opacity-0"
+                  }`}
+                >
+                  완료
+                </span>
               </button>
             </div>
-            <div className="grid sm:grid-cols-3 gap-4">
-              <FieldGroup>
-                <FieldLabel>화주명</FieldLabel>
-                <Input
-                  value={guestCustomerName}
-                  onChange={(e) => setGuestCustomerName(e.target.value)}
-                  placeholder="화주명"
-                />
-              </FieldGroup>
-              <FieldGroup>
-                <FieldLabel>담당자</FieldLabel>
-                <Input
-                  value={guestContactName}
-                  onChange={(e) => setGuestContactName(e.target.value)}
-                  placeholder={DEFAULT_GUEST_CONTACT_NAME}
-                />
-              </FieldGroup>
-              <FieldGroup>
-                <FieldLabel>발신 담당자</FieldLabel>
-                <Input
-                  value={guestPreparedBy}
-                  onChange={(e) => setGuestPreparedBy(e.target.value)}
-                  placeholder="담당자명"
-                />
-              </FieldGroup>
+
+            {/* Smoothly grows/shrinks via an animated grid-row track (0fr <-> 1fr)
+                rather than an instant mount/unmount - the same reveal technique
+                already used for the admin wizard's container-type quantity field
+                (quotes/new/page.tsx), just applied here to a taller block. */}
+            <div
+              className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${
+                editingAddressee ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+              }`}
+            >
+              <div className="overflow-hidden">
+                <div
+                  inert={!editingAddressee || undefined}
+                  className={`pt-1 pb-6 mb-5 border-b border-[var(--border-subtle)] transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
+                    editingAddressee ? "opacity-100 translate-y-0 delay-100" : "opacity-0 -translate-y-1.5"
+                  }`}
+                >
+                  <p className="text-[13px] font-medium text-[var(--foreground)] mb-3">
+                    견적서 수신/발신 정보
+                  </p>
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <FieldGroup>
+                      <FieldLabel>화주명</FieldLabel>
+                      <Input
+                        value={guestCustomerName}
+                        onChange={(e) => setGuestCustomerName(e.target.value)}
+                        placeholder="화주명"
+                      />
+                    </FieldGroup>
+                    <FieldGroup>
+                      <FieldLabel>담당자</FieldLabel>
+                      <Input
+                        value={guestContactName}
+                        onChange={(e) => setGuestContactName(e.target.value)}
+                        placeholder={DEFAULT_GUEST_CONTACT_NAME}
+                      />
+                    </FieldGroup>
+                    <FieldGroup>
+                      <FieldLabel>발신 담당자</FieldLabel>
+                      <Input
+                        value={guestPreparedBy}
+                        onChange={(e) => setGuestPreparedBy(e.target.value)}
+                        placeholder="담당자명"
+                      />
+                    </FieldGroup>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
