@@ -254,7 +254,7 @@ export function PublicQuoteForm({
                   </p>
                   <div className="grid sm:grid-cols-3 gap-4">
                     <FieldGroup>
-                      <FieldLabel>화주명</FieldLabel>
+                      <FieldLabel>화주</FieldLabel>
                       <Input
                         value={guestCustomerName}
                         onChange={(e) => setGuestCustomerName(e.target.value)}
@@ -270,7 +270,7 @@ export function PublicQuoteForm({
                       />
                     </FieldGroup>
                     <FieldGroup>
-                      <FieldLabel>발신 담당자</FieldLabel>
+                      <FieldLabel>견적 담당자 (발신)</FieldLabel>
                       <SalesRepCombobox value={guestSalesRepId} onChange={setGuestSalesRepId} options={salesReps} />
                     </FieldGroup>
                   </div>
