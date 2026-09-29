@@ -3,7 +3,12 @@
 import { Input } from "@/components/ui/Field";
 import type { SalesRep } from "@/lib/types";
 import { Contact } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+
+// Enough room for every seeded rep row (~36px each) plus the panel's own
+// border/padding - used to decide whether opening downward would run out
+// of viewport space before the last option.
+const ESTIMATED_PANEL_HEIGHT = 190;
 
 /** Strict, id-based selection among a small in-memory roster of sales
  * reps - modeled on PortCombobox.tsx (same open/filter/arrow-key/Enter/
@@ -23,8 +28,27 @@ export function SalesRepCombobox({
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  // Opening downward by default can bury whatever sits right below the
+  // field (e.g. guest mode's POL/POD row, packed close under the
+  // addressee editor) under the dropdown panel - flip to opening upward
+  // whenever there isn't enough room below but there is above.
+  const [openUpward, setOpenUpward] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useLayoutEffect(() => {
+    if (!open || !wrapperRef.current) return;
+    const rect = wrapperRef.current.getBoundingClientRect();
+    // Prefer opening upward whenever there's room for it: both usages of
+    // this combobox (admin wizard, guest/customer addressee editor) sit
+    // directly above another field row, which opening downward would
+    // otherwise bury under the panel - there's nothing similarly packed
+    // above either usage (a heading/prior row with far less height), so
+    // upward is the safer default. Only fall back to downward when the
+    // field itself is near the top of the viewport (not enough room above).
+    const spaceAbove = rect.top;
+    setOpenUpward(spaceAbove >= ESTIMATED_PANEL_HEIGHT);
+  }, [open]);
 
   const selectedRep = options.find((r) => r.id === value);
 
@@ -102,7 +126,12 @@ export function SalesRepCombobox({
         autoComplete="off"
       />
       {open && (
-        <div className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white shadow-lg animate-dropdown-panel">
+        <div
+          className={`absolute z-20 w-full max-h-64 overflow-y-auto rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white shadow-lg animate-dropdown-panel ${
+            openUpward ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+          style={{ transformOrigin: openUpward ? "bottom" : "top" }}
+        >
           {filtered.length === 0 ? (
             <p className="px-3 py-3 text-[13px] text-[var(--muted)]">검색 결과가 없습니다.</p>
           ) : (
