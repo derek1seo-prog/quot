@@ -10,6 +10,7 @@ import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
 import { SalesRepCombobox } from "./SalesRepCombobox";
 import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
+import { useDebouncedValue } from "@/lib/hooks";
 import type {
   CompanyInfo,
   ContainerType,
@@ -113,6 +114,12 @@ export function PublicQuoteForm({
 
   const quickRep = salesReps.find((r) => r.id === quickSalesRepId);
   const matchedQuickCustomer = isAdmin ? customers.find((c) => c.name === quickCustomerName) : undefined;
+  // The live-preview /api/calculate call below only fires on route/
+  // incoterms/container changes, not on every keystroke - debounce this
+  // one so selecting/typing 화주 (which matters for an admin session's
+  // trucking-rate resolution) still triggers a recalculation, without
+  // firing a request on every single letter typed.
+  const debouncedQuickCustomerName = useDebouncedValue(quickCustomerName, 400);
 
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [calculating, setCalculating] = useState(false);
@@ -193,7 +200,7 @@ export function PublicQuoteForm({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originPortId, destinationPortId, incoterms, containerTypeId, containerQuantity]);
+  }, [originPortId, destinationPortId, incoterms, containerTypeId, containerQuantity, debouncedQuickCustomerName]);
 
   async function handleIssue() {
     setSaving(true);
@@ -209,6 +216,35 @@ export function PublicQuoteForm({
       router.push(`/quotes/${data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "견적서 발급에 실패했습니다.");
+      setSaving(false);
+    }
+  }
+
+  // Admin's 인쇄 in quick-quote records a real quote (unlike an anonymous
+  // visitor, who only ever gets an unsaved, ephemeral preview) - save it
+  // first, then open the same dedicated print route + autoprint mechanism
+  // QuoteActions already uses for every other saved quote, so the printed
+  // output and the resulting record are the exact canonical ones, not a
+  // one-off local rendering of this page.
+  async function handleQuickPrint() {
+    if (!isAdmin) {
+      window.print();
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildInput()),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "견적서 저장에 실패했습니다.");
+      window.open(`/quotes/${data.id}/print?autoprint=1`, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "견적서 저장에 실패했습니다.");
+    } finally {
       setSaving(false);
     }
   }
@@ -334,8 +370,8 @@ export function PublicQuoteForm({
             <PortCombobox value={destinationPortId} onChange={setDestinationPortId} options={podOptions} />
           </FieldGroup>
           <FieldGroup>
-            <FieldLabel hint={mode === "quick" ? "FOB 고정" : undefined}>선적 조건 (Incoterms)</FieldLabel>
-            {mode === "quick" ? (
+            <FieldLabel hint={mode === "quick" && !isAdmin ? "FOB 고정" : undefined}>선적 조건 (Incoterms)</FieldLabel>
+            {mode === "quick" && !isAdmin ? (
               <Input value="FOB" disabled />
             ) : (
               <IncotermsSelect value={incoterms} onChange={setIncoterms} />
@@ -376,7 +412,7 @@ export function PublicQuoteForm({
         </div>
       </Card>
 
-      {mode === "quick" && (
+      {mode === "quick" && !isAdmin && (
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-[var(--radius-md)] bg-[var(--accent-soft)]">
           <Badge tone="accent">체험용</Badge>
           <p className="text-[13px] text-[var(--accent)]">
@@ -404,10 +440,11 @@ export function PublicQuoteForm({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => window.print()}
-                icon={<Printer size={15} />}
+                onClick={handleQuickPrint}
+                disabled={saving}
+                icon={saving ? <Loader2 size={15} className="animate-spin" /> : <Printer size={15} />}
               >
-                인쇄
+                {saving ? "저장 중..." : "인쇄"}
               </Button>
             </div>
           )}
@@ -433,12 +470,17 @@ export function PublicQuoteForm({
         </>
       )}
     </div>
-    {/* Print-only counterpart of the result above - quick-quote mode has no
-        saved quote id to route to a dedicated /print page (see QuoteActions),
-        so printing happens directly off this page via window.print().
-        Hidden on screen (.print-only), shown only under @media print
-        (globals.css), matching the dense forceTable layout the real
-        print route and PDF export already use. */}
+    {/* Print-only counterpart of the result above - a non-admin visitor
+        has no saved quote id to route to a dedicated /print page (see
+        QuoteActions), so printing happens directly off this page via
+        window.print() (handleQuickPrint's non-admin branch). An admin
+        session instead saves a real quote first and opens its own
+        canonical /print route in a new tab, so this counterpart never
+        actually renders for that flow - kept mode-only (not admin-gated)
+        as a harmless fallback for a manual Ctrl+P on this page. Hidden on
+        screen (.print-only), shown only under @media print (globals.css),
+        matching the dense forceTable layout the real print route and PDF
+        export already use. */}
     {mode === "quick" && !calculating && !error && result && (
       <div className="print-only">
         <QuoteDocument
