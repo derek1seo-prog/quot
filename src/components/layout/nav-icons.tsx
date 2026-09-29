@@ -6,6 +6,7 @@ import {
   Settings,
   Ship,
   Users,
+  Zap,
 } from "lucide-react";
 import { countryFlag } from "@/lib/format";
 import type { NavItemDef } from "@/lib/nav";
@@ -26,6 +27,8 @@ export function NavIcon({
       return <FilePlus2 size={size} />;
     case "quote-list":
       return <ListChecks size={size} />;
+    case "quick-quote":
+      return <Zap size={size} />;
     case "region":
       // A country's flag reads at a glance which region a rate page covers,
       // and scales to more countries automatically - no icon to pick or

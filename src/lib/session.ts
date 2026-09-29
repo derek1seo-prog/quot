@@ -5,8 +5,8 @@ import { SITE_PASSWORD } from "./site-lock";
 /** Role-aware session, replacing the old boolean "unlocked or not" cookie.
  * - "admin": the forwarder/staff, unlocked via the shared PIN on /unlock -
  *   full access, exactly as before this feature.
- * - "guest": entered via /guest with no PIN at all - can only reach the
- *   guest quote-lookup experience.
+ * - "guest": entered via "/" (or /quick-quote) with no PIN at all - can
+ *   only reach the quick-quote lookup experience.
  * - "customer": entered via a per-customer link (/c/[token]) - can only
  *   reach /my and their own saved quotes. */
 export type Role = "admin" | "guest" | "customer";

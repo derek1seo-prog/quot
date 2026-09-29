@@ -3,15 +3,23 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { CountUpStat } from "@/components/dashboard/CountUpStat";
 import { QuoteTrendSparkline, type TrendPoint } from "@/components/dashboard/QuoteTrendSparkline";
+import { QuickQuoteScreen } from "@/components/quote/QuickQuoteScreen";
 import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck } from "lucide-react";
+import { decodeSessionCookie } from "@/lib/session";
+import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const session = decodeSessionCookie(await cookies());
+  if (session?.role !== "admin") {
+    return <QuickQuoteScreen isAdmin={false} />;
+  }
+
   const [quotes, exchangeRate] = await Promise.all([getQuotes(), getCurrentExchangeRate("USD")]);
   const allPorts = getPorts();
   const portNameById = new Map(allPorts.map((p) => [p.id, p.nameKo]));
@@ -94,15 +102,14 @@ export default async function DashboardPage() {
             바로 전달 가능한 견적서가 만들어집니다.
           </p>
         </div>
-        <LinkButton
-          href="/quotes/new"
-          size="lg"
-          icon={<FilePlus2 size={18} />}
-          className="animate-dashboard-fade-up"
-          style={{ animationDelay: "80ms" }}
-        >
-          새 견적 만들기
-        </LinkButton>
+        <div className="flex gap-2 animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
+          <LinkButton href="/quick-quote" variant="secondary" size="lg" icon={<Zap size={18} />}>
+            빠른 견적조회
+          </LinkButton>
+          <LinkButton href="/quotes/new" size="lg" icon={<FilePlus2 size={18} />}>
+            새 견적 만들기
+          </LinkButton>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">

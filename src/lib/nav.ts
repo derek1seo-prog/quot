@@ -1,7 +1,15 @@
 export interface NavItemDef {
   href: string;
   label: string;
-  icon: "dashboard" | "new-quote" | "quote-list" | "region" | "customers" | "sales-reps" | "settings";
+  icon:
+    | "dashboard"
+    | "new-quote"
+    | "quote-list"
+    | "quick-quote"
+    | "region"
+    | "customers"
+    | "sales-reps"
+    | "settings";
   /** ISO-ish country code (Country.id, e.g. "CN") for icon: "region" items -
    * rendered as that country's flag instead of a generic icon, since 요율
    * 관리 already groups regions by country and more countries keep getting
@@ -25,6 +33,7 @@ export const navSections: NavSectionDef[] = [
     items: [
       { href: "/quotes/new", label: "새 견적 만들기", icon: "new-quote" },
       { href: "/quotes", label: "견적 목록", icon: "quote-list" },
+      { href: "/quick-quote", label: "빠른 견적조회", icon: "quick-quote" },
     ],
   },
   {
@@ -49,8 +58,9 @@ export const navSections: NavSectionDef[] = [
 // Guest/customer get a single, purpose-built nav item instead of the full
 // admin sidebar - see src/proxy.ts for the actual access enforcement; this
 // is just what's visually offered per role (never the security boundary).
+// "/" is the homepage itself for a non-admin visitor - see proxy.ts.
 export const guestNavSections: NavSectionDef[] = [
-  { items: [{ href: "/guest", label: "견적 조회", icon: "new-quote" }] },
+  { items: [{ href: "/", label: "빠른 견적조회", icon: "quick-quote" }] },
 ];
 
 export const customerNavSections: NavSectionDef[] = [

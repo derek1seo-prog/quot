@@ -162,10 +162,10 @@ export function UnlockForm({ next }: { next: string }) {
             </p>
 
             <Link
-              href="/guest"
+              href="/"
               className="mt-6 text-[12.5px] text-[var(--muted)] underline-offset-2 hover:text-[var(--accent)] hover:underline"
             >
-              게스트 모드로 입장하기
+              빠른 견적조회로 이동하기
             </Link>
           </>
         )}

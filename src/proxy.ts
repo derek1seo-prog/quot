@@ -2,6 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCustomerByAccessToken } from "@/lib/data-store";
 import { getSessionFromRequest, setSessionCookie, type Role } from "@/lib/session";
 
+/** Paths that render the quick-quote lookup experience with no PIN
+ * required - "/" itself (the default homepage for anyone not logged in as
+ * admin) and "/quick-quote" (the same experience, also reachable as its
+ * own nav tab once logged in as admin). */
+function isQuickQuotePath(pathname: string): boolean {
+  return pathname === "/" || pathname === "/quick-quote" || pathname.startsWith("/quick-quote/");
+}
+
 /** Coarse per-page allowlist for non-admin roles - default-deny, explicit-
  * allow (safer than trying to enumerate every admin-only page, which only
  * has to miss one new page to leak it). API routes are NOT gated here -
@@ -10,7 +18,7 @@ import { getSessionFromRequest, setSessionCookie, type Role } from "@/lib/sessio
  * an HTML redirect for a fetch() caller. */
 function isAllowedForRole(pathname: string, role: Role): boolean {
   if (role === "admin") return true;
-  if (role === "guest") return pathname === "/guest" || pathname.startsWith("/guest/");
+  if (role === "guest") return isQuickQuotePath(pathname);
   // role === "customer" - /my (their own lookup + 내 견적) and any saved
   // quote under /quotes/:id (+ its /print sibling), but never the admin
   // quote list or wizard. Per-record ownership (this quote is actually
@@ -41,11 +49,12 @@ export async function proxy(request: NextRequest) {
 
   const session = getSessionFromRequest(request);
 
-  // /guest needs no PIN at all - visiting it for the first time silently
-  // issues a guest session (this is what "게스트 모드로 입장하기" actually
-  // does - a plain link, no separate API call).
-  const isGuestPath = pathname === "/guest" || pathname.startsWith("/guest/");
-  if (isGuestPath && !session) {
+  // "/" and "/quick-quote" need no PIN at all - visiting either for the
+  // first time silently issues a guest session and renders directly (this
+  // is what used to be "게스트 모드로 입장하기" - a plain link/visit, no
+  // separate API call - now widened to be the site's default homepage
+  // experience rather than a dedicated /guest path).
+  if (isQuickQuotePath(pathname) && !session) {
     const res = NextResponse.next();
     setSessionCookie(res, { role: "guest" });
     return res;
@@ -53,14 +62,14 @@ export async function proxy(request: NextRequest) {
 
   if (!session) {
     const url = new URL("/unlock", request.url);
-    if (pathname !== "/") url.searchParams.set("next", pathname + search);
+    url.searchParams.set("next", pathname + search);
     return NextResponse.redirect(url);
   }
 
   if (pathname.startsWith("/api/")) return NextResponse.next();
 
   if (!isAllowedForRole(pathname, session.role)) {
-    const home = session.role === "customer" ? "/my" : session.role === "guest" ? "/guest" : "/";
+    const home = session.role === "customer" ? "/my" : "/";
     return NextResponse.redirect(new URL(home, request.url));
   }
 

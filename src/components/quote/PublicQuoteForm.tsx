@@ -4,25 +4,36 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
+import { CustomerCombobox } from "./CustomerCombobox";
 import { IncotermsSelect } from "./IncotermsSelect";
 import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
 import { SalesRepCombobox } from "./SalesRepCombobox";
 import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
-import type { CompanyInfo, ContainerType, Port, QuoteInput, QuoteResult, Region, SalesRep } from "@/lib/types";
+import type {
+  CompanyInfo,
+  ContainerType,
+  Customer,
+  Port,
+  QuoteInput,
+  QuoteResult,
+  Region,
+  SalesRep,
+} from "@/lib/types";
 import { Loader2, Pencil, Printer, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
-// Guest mode has no real customer behind it, so there's no real company
-// name to default 화주명 to - it starts blank (its placeholder just reads
+// Quick-quote mode has no real customer behind it unless isAdmin (an
+// authenticated admin session resolves a real match via CustomerCombobox
+// below), so 화주 starts blank for everyone (its placeholder just reads
 // "화주명"). 담당자 does get a real default so the printed quote's 수신
 // line never starts out blank - still editable (see editingAddressee
 // below) for anyone who wants their own name/company to show on a
 // printed/PDF'd sample quote.
-const DEFAULT_GUEST_CONTACT_NAME = "수입 담당자님";
+const DEFAULT_QUICK_CONTACT_NAME = "수입 담당자님";
 
 function endOfMonthIso(dateIso: string): string {
   const [year, month] = dateIso.split("-").map(Number);
@@ -32,13 +43,15 @@ function endOfMonthIso(dateIso: string): string {
   ).padStart(2, "0")}`;
 }
 
-/** Shared by /guest and /my - a single-screen (not the admin wizard's
- * multi-step) rate-lookup form. Reuses the same functional building blocks
- * as the admin wizard (PortCombobox, IncotermsSelect, QuoteDocument) but
- * never touches that file - guest/customer are a deliberately simpler,
- * separate flow so the existing admin wizard stays completely unchanged. */
+/** Shared by /quick-quote (and "/" for a non-admin visitor) and /my - a
+ * single-screen (not the admin wizard's multi-step) rate-lookup form.
+ * Reuses the same functional building blocks as the admin wizard
+ * (PortCombobox, IncotermsSelect, QuoteDocument) but never touches that
+ * file - quick-quote/customer are a deliberately simpler, separate flow
+ * so the existing admin wizard stays completely unchanged. */
 export function PublicQuoteForm({
   mode,
+  isAdmin = false,
   originPorts,
   destinationPorts,
   regions,
@@ -49,8 +62,16 @@ export function PublicQuoteForm({
   preparedByEmail,
   preparedByPhone,
   salesReps = [],
+  customers = [],
 }: {
-  mode: "guest" | "customer";
+  mode: "quick" | "customer";
+  /** True only for an authenticated admin session using the quick-quote
+   * screen (never for an anonymous/guest visitor). Gates the addressee
+   * editor's pencil button and swaps 화주 between a plain free-text input
+   * and the real CustomerCombobox (auto-fill + rate resolution). The real
+   * security boundary is server-side (/api/calculate's session-keyed
+   * guard) - this only controls what a person can type. */
+  isAdmin?: boolean;
   originPorts: Port[];
   destinationPorts: Port[];
   regions: Region[];
@@ -61,6 +82,7 @@ export function PublicQuoteForm({
   preparedByEmail?: string;
   preparedByPhone?: string;
   salesReps?: SalesRep[];
+  customers?: Customer[];
 }) {
   const router = useRouter();
   const [originPortId, setOriginPortId] = useState("");
@@ -68,9 +90,9 @@ export function PublicQuoteForm({
   const [incoterms, setIncoterms] = useState("FOB");
   const [containerTypeId, setContainerTypeId] = useState(containerTypes[0]?.id ?? "");
   const [containerQuantity, setContainerQuantity] = useState(1);
-  const [guestCustomerName, setGuestCustomerName] = useState("");
-  const [guestContactName, setGuestContactName] = useState(DEFAULT_GUEST_CONTACT_NAME);
-  const [guestSalesRepId, setGuestSalesRepId] = useState(DEFAULT_SALES_REP_ID);
+  const [quickCustomerName, setQuickCustomerName] = useState("");
+  const [quickContactName, setQuickContactName] = useState(DEFAULT_QUICK_CONTACT_NAME);
+  const [quickSalesRepId, setQuickSalesRepId] = useState(DEFAULT_SALES_REP_ID);
   const [editingAddressee, setEditingAddressee] = useState(false);
   // The reveal block below needs overflow-hidden while collapsed/animating
   // (so the 0fr->1fr height transition doesn't show spilling content), but
@@ -89,7 +111,8 @@ export function PublicQuoteForm({
     return () => clearTimeout(timer);
   }, [editingAddressee]);
 
-  const guestRep = salesReps.find((r) => r.id === guestSalesRepId);
+  const quickRep = salesReps.find((r) => r.id === quickSalesRepId);
+  const matchedQuickCustomer = isAdmin ? customers.find((c) => c.name === quickCustomerName) : undefined;
 
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [calculating, setCalculating] = useState(false);
@@ -114,12 +137,12 @@ export function PublicQuoteForm({
 
   function buildInput(): QuoteInput {
     return {
-      customerName: mode === "guest" ? guestCustomerName : (lockedCustomer?.name ?? ""),
-      contactName: mode === "guest" ? guestContactName : lockedCustomer?.contactName,
-      salesRepId: mode === "guest" ? guestSalesRepId : undefined,
-      preparedBy: mode === "guest" ? (guestRep?.name ?? "") : (preparedBy ?? ""),
-      preparedByEmail: mode === "guest" ? guestRep?.email : preparedByEmail,
-      preparedByPhone: mode === "guest" ? guestRep?.phone : preparedByPhone,
+      customerName: mode === "quick" ? quickCustomerName : (lockedCustomer?.name ?? ""),
+      contactName: mode === "quick" ? quickContactName : lockedCustomer?.contactName,
+      salesRepId: mode === "quick" ? quickSalesRepId : undefined,
+      preparedBy: mode === "quick" ? (quickRep?.name ?? "") : (preparedBy ?? ""),
+      preparedByEmail: mode === "quick" ? quickRep?.email : preparedByEmail,
+      preparedByPhone: mode === "quick" ? quickRep?.phone : preparedByPhone,
       quoteDate: TODAY,
       validUntil: endOfMonthIso(TODAY),
       transportMode: "FCL",
@@ -207,14 +230,15 @@ export function PublicQuoteForm({
           </div>
         )}
 
-        {mode === "guest" && (
+        {mode === "quick" && (
           <div className="-mt-2 -mr-2 mb-1">
             <div className="flex justify-end">
               <button
                 type="button"
                 onClick={() => setEditingAddressee((v) => !v)}
-                className="flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full text-[12px] font-medium text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-bg)] transition-colors"
-                title="견적서 수신/발신 정보 수정"
+                disabled={!isAdmin}
+                className="flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full text-[12px] font-medium text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-bg)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[var(--muted)]"
+                title={isAdmin ? "견적서 수신/발신 정보 수정" : "관리자 로그인 후 이용할 수 있습니다"}
                 aria-label="견적서 수신/발신 정보 수정"
                 aria-expanded={editingAddressee}
               >
@@ -255,23 +279,43 @@ export function PublicQuoteForm({
                   <div className="grid sm:grid-cols-3 gap-4">
                     <FieldGroup>
                       <FieldLabel>화주</FieldLabel>
-                      <Input
-                        value={guestCustomerName}
-                        onChange={(e) => setGuestCustomerName(e.target.value)}
-                        placeholder="화주명"
-                      />
+                      {isAdmin ? (
+                        <>
+                          <CustomerCombobox
+                            value={quickCustomerName}
+                            onChange={(name) => {
+                              setQuickCustomerName(name);
+                              const matched = customers.find((c) => c.name === name);
+                              if (matched?.contactName) setQuickContactName(matched.contactName);
+                            }}
+                            customers={customers}
+                            placeholder="예: 지더블유파트너스"
+                          />
+                          {matchedQuickCustomer && (
+                            <p className="text-[11px] text-[var(--accent)] mt-1.5">
+                              ✓ 등록된 화주 정보가 연동되었습니다
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <Input
+                          value={quickCustomerName}
+                          onChange={(e) => setQuickCustomerName(e.target.value)}
+                          placeholder="화주명"
+                        />
+                      )}
                     </FieldGroup>
                     <FieldGroup>
                       <FieldLabel>담당자</FieldLabel>
                       <Input
-                        value={guestContactName}
-                        onChange={(e) => setGuestContactName(e.target.value)}
-                        placeholder={DEFAULT_GUEST_CONTACT_NAME}
+                        value={quickContactName}
+                        onChange={(e) => setQuickContactName(e.target.value)}
+                        placeholder={DEFAULT_QUICK_CONTACT_NAME}
                       />
                     </FieldGroup>
                     <FieldGroup>
                       <FieldLabel>견적 담당자 (발신)</FieldLabel>
-                      <SalesRepCombobox value={guestSalesRepId} onChange={setGuestSalesRepId} options={salesReps} />
+                      <SalesRepCombobox value={quickSalesRepId} onChange={setQuickSalesRepId} options={salesReps} />
                     </FieldGroup>
                   </div>
                 </div>
@@ -290,8 +334,8 @@ export function PublicQuoteForm({
             <PortCombobox value={destinationPortId} onChange={setDestinationPortId} options={podOptions} />
           </FieldGroup>
           <FieldGroup>
-            <FieldLabel hint={mode === "guest" ? "FOB 고정" : undefined}>선적 조건 (Incoterms)</FieldLabel>
-            {mode === "guest" ? (
+            <FieldLabel hint={mode === "quick" ? "FOB 고정" : undefined}>선적 조건 (Incoterms)</FieldLabel>
+            {mode === "quick" ? (
               <Input value="FOB" disabled />
             ) : (
               <IncotermsSelect value={incoterms} onChange={setIncoterms} />
@@ -332,7 +376,7 @@ export function PublicQuoteForm({
         </div>
       </Card>
 
-      {mode === "guest" && (
+      {mode === "quick" && (
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-[var(--radius-md)] bg-[var(--accent-soft)]">
           <Badge tone="accent">체험용</Badge>
           <p className="text-[13px] text-[var(--accent)]">
@@ -355,7 +399,7 @@ export function PublicQuoteForm({
 
       {!calculating && !error && result && (
         <>
-          {mode === "guest" && (
+          {mode === "quick" && (
             <div className="flex justify-end max-w-[900px] mx-auto">
               <Button
                 variant="secondary"
@@ -389,13 +433,13 @@ export function PublicQuoteForm({
         </>
       )}
     </div>
-    {/* Print-only counterpart of the result above - guest mode has no saved
-        quote id to route to a dedicated /print page (see QuoteActions),
+    {/* Print-only counterpart of the result above - quick-quote mode has no
+        saved quote id to route to a dedicated /print page (see QuoteActions),
         so printing happens directly off this page via window.print().
         Hidden on screen (.print-only), shown only under @media print
         (globals.css), matching the dense forceTable layout the real
         print route and PDF export already use. */}
-    {mode === "guest" && !calculating && !error && result && (
+    {mode === "quick" && !calculating && !error && result && (
       <div className="print-only">
         <QuoteDocument
           company={company}
