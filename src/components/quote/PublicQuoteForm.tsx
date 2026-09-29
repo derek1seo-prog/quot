@@ -8,7 +8,7 @@ import { IncotermsSelect } from "./IncotermsSelect";
 import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
 import type { CompanyInfo, ContainerType, Port, QuoteInput, QuoteResult, Region } from "@/lib/types";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Printer, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -150,7 +150,8 @@ export function PublicQuoteForm({
   }
 
   return (
-    <div className="space-y-6">
+    <>
+    <div className="space-y-6 no-print">
       <Card className="p-6 sm:p-8">
         {mode === "customer" && lockedCustomer && (
           <div className="grid sm:grid-cols-2 gap-4 mb-6 pb-6 border-b border-[var(--border-subtle)]">
@@ -227,6 +228,18 @@ export function PublicQuoteForm({
 
       {!calculating && !error && result && (
         <>
+          {mode === "guest" && (
+            <div className="flex justify-end max-w-[900px] mx-auto">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => window.print()}
+                icon={<Printer size={15} />}
+              >
+                인쇄
+              </Button>
+            </div>
+          )}
           <QuoteDocument
             company={company}
             quoteNumber={null}
@@ -249,5 +262,25 @@ export function PublicQuoteForm({
         </>
       )}
     </div>
+    {/* Print-only counterpart of the result above - guest mode has no saved
+        quote id to route to a dedicated /print page (see QuoteActions),
+        so printing happens directly off this page via window.print().
+        Hidden on screen (.print-only), shown only under @media print
+        (globals.css), matching the dense forceTable layout the real
+        print route and PDF export already use. */}
+    {mode === "guest" && !calculating && !error && result && (
+      <div className="print-only">
+        <QuoteDocument
+          company={company}
+          quoteNumber={null}
+          input={buildInput()}
+          result={result}
+          originLabel={originPort ? `${originPort.nameKo} (${originPort.name})` : ""}
+          destinationLabel={destinationPort ? `${destinationPort.nameKo} (${destinationPort.name})` : ""}
+          forceTable
+        />
+      </div>
+    )}
+    </>
   );
 }
