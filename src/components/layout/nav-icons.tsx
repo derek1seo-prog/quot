@@ -1,4 +1,5 @@
 import {
+  Contact,
   FilePlus2,
   LayoutDashboard,
   ListChecks,
@@ -38,6 +39,8 @@ export function NavIcon({
       );
     case "customers":
       return <Users size={size} />;
+    case "sales-reps":
+      return <Contact size={size} />;
     case "settings":
       return <Settings size={size} />;
   }

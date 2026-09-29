@@ -1,7 +1,7 @@
 import { PublicQuoteForm } from "@/components/quote/PublicQuoteForm";
-import { getCompany, getContainerTypes, getPorts, getRegions } from "@/lib/data-store";
+import { getCompany, getContainerTypes, getPorts, getRegions, getSalesReps } from "@/lib/data-store";
 
-export default function GuestPage() {
+export default async function GuestPage() {
   const ports = getPorts();
   const originPorts = ports.filter((p) => p.role !== "DESTINATION");
   const destinationPorts = ports.filter((p) => p.role !== "ORIGIN");
@@ -23,6 +23,7 @@ export default function GuestPage() {
         regions={getRegions()}
         containerTypes={getContainerTypes()}
         company={getCompany()}
+        salesReps={await getSalesReps()}
       />
     </div>
   );

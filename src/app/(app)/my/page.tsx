@@ -7,8 +7,9 @@ import {
   getPorts,
   getQuotes,
   getRegions,
+  getSalesReps,
 } from "@/lib/data-store";
-import { CUSTOMER_QUOTE_PREPARED_BY } from "@/lib/customer-portal";
+import { DEFAULT_SALES_REP_FALLBACK_NAME, DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { decodeSessionCookie } from "@/lib/session";
 import { cookies } from "next/headers";
@@ -34,6 +35,9 @@ export default async function MyQuotesPage() {
   const allQuotes = await getQuotes();
   const myQuotes = allQuotes.filter((q) => q.input.customerId === customer.id);
 
+  const salesReps = await getSalesReps();
+  const defaultRep = salesReps.find((r) => r.id === DEFAULT_SALES_REP_ID);
+
   return (
     <div className="max-w-[1000px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
       <p className="text-[13px] font-medium text-[var(--accent)] mb-2">{customer.name}</p>
@@ -50,7 +54,9 @@ export default async function MyQuotesPage() {
         containerTypes={getContainerTypes()}
         company={getCompany()}
         lockedCustomer={{ name: customer.name, contactName: customer.contactName }}
-        preparedBy={CUSTOMER_QUOTE_PREPARED_BY}
+        preparedBy={defaultRep?.name ?? DEFAULT_SALES_REP_FALLBACK_NAME}
+        preparedByEmail={defaultRep?.email}
+        preparedByPhone={defaultRep?.phone}
       />
 
       <h2 className="text-[19px] font-semibold tracking-tight text-[var(--foreground)] mt-12 mb-4">

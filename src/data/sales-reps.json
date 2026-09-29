@@ -1,0 +1,6 @@
+[
+  { "id": "rep-siwoo", "name": "우선일 부장", "email": "siwoo@isseaair.com", "phone": "010-2937-3151", "createdAt": "2026-09-29" },
+  { "id": "rep-hjlee", "name": "이호재 차장", "email": "hjlee@isseaair.com", "phone": "010-3105-9399", "createdAt": "2026-09-29" },
+  { "id": "rep-cypark", "name": "박찬영 대리", "email": "cypark@isseaair.com", "phone": "010-8881-1726", "createdAt": "2026-09-29" },
+  { "id": "rep-thkim", "name": "김태현 대리", "email": "thkim@isseaair.com", "phone": "010-2390-7089", "createdAt": "2026-09-29" }
+]

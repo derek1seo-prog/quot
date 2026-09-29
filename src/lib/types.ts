@@ -138,6 +138,14 @@ export interface Customer {
   accessToken?: string;
 }
 
+export interface SalesRep {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  createdAt: string;
+}
+
 /** One line the user picks in the "container" step, with a quantity. */
 export interface ContainerSelection {
   containerTypeId: string;
@@ -148,6 +156,15 @@ export interface QuoteInput {
   customerName: string;
   contactName?: string;
   preparedBy: string;
+  /** Reference to the SalesRep selected in the 발신 combobox at creation
+   * time - only used to re-populate the picker's selection; QuoteDocument
+   * never reads it directly (it reads preparedBy/preparedByEmail/
+   * preparedByPhone below, snapshotted at creation so a once-issued
+   * quote's signature stays historically accurate even if the rep's own
+   * contact info is edited later). */
+  salesRepId?: string;
+  preparedByEmail?: string;
+  preparedByPhone?: string;
   /** Set only for quotes created through a customer's self-service session
    * (see /my, src/lib/session.ts) - lets that customer's "내 견적" list (and
    * the ownership check on /quotes/[id]) find exactly their own quotes.

@@ -9,6 +9,7 @@ import {
   getOceanFreightRates,
   getPorts,
   getRegions,
+  getSalesReps,
 } from "@/lib/data-store";
 import { requireAdmin } from "@/lib/session";
 
@@ -21,11 +22,12 @@ export async function GET(req: NextRequest) {
   const forbidden = requireAdmin(req);
   if (forbidden) return forbidden;
 
-  const [oceanFreightRates, chargeRates, exchangeRate, customers] = await Promise.all([
+  const [oceanFreightRates, chargeRates, exchangeRate, customers, salesReps] = await Promise.all([
     getOceanFreightRates(),
     getChargeRates(),
     getCurrentExchangeRate("USD"),
     getCustomers(),
+    getSalesReps(),
   ]);
   return NextResponse.json({
     countries: getCountries(),
@@ -37,5 +39,6 @@ export async function GET(req: NextRequest) {
     chargeRates,
     exchangeRate,
     customers,
+    salesReps,
   });
 }

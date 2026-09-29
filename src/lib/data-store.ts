@@ -33,6 +33,7 @@ import type {
   QuoteInput,
   QuoteResult,
   Region,
+  SalesRep,
 } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "src", "data");
@@ -203,6 +204,15 @@ export async function getCustomerByAccessToken(token: string): Promise<Customer 
   return customers.find((c) => c.accessToken === token);
 }
 
+export async function getSalesReps(): Promise<SalesRep[]> {
+  return readMutable<SalesRep[]>("sales-reps.json");
+}
+
+export async function getSalesRepById(id: string): Promise<SalesRep | undefined> {
+  const reps = await getSalesReps();
+  return reps.find((r) => r.id === id);
+}
+
 /** Quotes saved before the single-container refactor stored
  * `input.containers: ContainerSelection[]` and `result.columns: QuoteColumn[]`
  * instead of today's singular `container`/`column`. Normalize on read (taking
@@ -279,6 +289,25 @@ export async function updateCustomer(customer: Customer): Promise<void> {
 export async function deleteCustomer(id: string): Promise<void> {
   const customers = (await getCustomers()).filter((c) => c.id !== id);
   await writeMutable("customers.json", customers);
+}
+
+export async function addSalesRep(rep: SalesRep): Promise<void> {
+  const reps = await getSalesReps();
+  reps.push(rep);
+  await writeMutable("sales-reps.json", reps);
+}
+
+export async function updateSalesRep(rep: SalesRep): Promise<void> {
+  const reps = await getSalesReps();
+  const idx = reps.findIndex((r) => r.id === rep.id);
+  if (idx >= 0) reps[idx] = rep;
+  else reps.push(rep);
+  await writeMutable("sales-reps.json", reps);
+}
+
+export async function deleteSalesRep(id: string): Promise<void> {
+  const reps = (await getSalesReps()).filter((r) => r.id !== id);
+  await writeMutable("sales-reps.json", reps);
 }
 
 export async function addQuote(quote: Quote): Promise<void> {

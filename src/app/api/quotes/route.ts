@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addQuote, getCustomerById, getQuotes } from "@/lib/data-store";
+import { addQuote, getCustomerById, getQuotes, getSalesRepById } from "@/lib/data-store";
 import { generateId, generateQuoteNumber } from "@/lib/id";
 import { calculateQuote } from "@/lib/quote-engine";
 import { getSessionFromRequest } from "@/lib/session";
-import { CUSTOMER_QUOTE_PREPARED_BY } from "@/lib/customer-portal";
+import { DEFAULT_SALES_REP_FALLBACK_NAME, DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
 import type { Quote, QuoteInput } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
@@ -37,10 +37,14 @@ export async function POST(req: NextRequest) {
     if (!customer) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+    const defaultRep = await getSalesRepById(DEFAULT_SALES_REP_ID);
     input.customerId = customer.id;
     input.customerName = customer.name;
     input.contactName = customer.contactName;
-    input.preparedBy = CUSTOMER_QUOTE_PREPARED_BY;
+    input.salesRepId = defaultRep?.id ?? DEFAULT_SALES_REP_ID;
+    input.preparedBy = defaultRep?.name ?? DEFAULT_SALES_REP_FALLBACK_NAME;
+    input.preparedByEmail = defaultRep?.email;
+    input.preparedByPhone = defaultRep?.phone;
     input.rateOverrides = undefined;
   }
 

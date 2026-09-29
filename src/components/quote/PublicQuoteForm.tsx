@@ -7,7 +7,9 @@ import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
 import { IncotermsSelect } from "./IncotermsSelect";
 import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
-import type { CompanyInfo, ContainerType, Port, QuoteInput, QuoteResult, Region } from "@/lib/types";
+import { SalesRepCombobox } from "./SalesRepCombobox";
+import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
+import type { CompanyInfo, ContainerType, Port, QuoteInput, QuoteResult, Region, SalesRep } from "@/lib/types";
 import { Loader2, Pencil, Printer, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -44,6 +46,9 @@ export function PublicQuoteForm({
   company,
   lockedCustomer,
   preparedBy,
+  preparedByEmail,
+  preparedByPhone,
+  salesReps = [],
 }: {
   mode: "guest" | "customer";
   originPorts: Port[];
@@ -53,6 +58,9 @@ export function PublicQuoteForm({
   company: CompanyInfo;
   lockedCustomer?: { name: string; contactName?: string };
   preparedBy?: string;
+  preparedByEmail?: string;
+  preparedByPhone?: string;
+  salesReps?: SalesRep[];
 }) {
   const router = useRouter();
   const [originPortId, setOriginPortId] = useState("");
@@ -62,8 +70,10 @@ export function PublicQuoteForm({
   const [containerQuantity, setContainerQuantity] = useState(1);
   const [guestCustomerName, setGuestCustomerName] = useState("");
   const [guestContactName, setGuestContactName] = useState(DEFAULT_GUEST_CONTACT_NAME);
-  const [guestPreparedBy, setGuestPreparedBy] = useState("");
+  const [guestSalesRepId, setGuestSalesRepId] = useState(DEFAULT_SALES_REP_ID);
   const [editingAddressee, setEditingAddressee] = useState(false);
+
+  const guestRep = salesReps.find((r) => r.id === guestSalesRepId);
 
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [calculating, setCalculating] = useState(false);
@@ -90,7 +100,10 @@ export function PublicQuoteForm({
     return {
       customerName: mode === "guest" ? guestCustomerName : (lockedCustomer?.name ?? ""),
       contactName: mode === "guest" ? guestContactName : lockedCustomer?.contactName,
-      preparedBy: mode === "guest" ? guestPreparedBy : (preparedBy ?? ""),
+      salesRepId: mode === "guest" ? guestSalesRepId : undefined,
+      preparedBy: mode === "guest" ? (guestRep?.name ?? "") : (preparedBy ?? ""),
+      preparedByEmail: mode === "guest" ? guestRep?.email : preparedByEmail,
+      preparedByPhone: mode === "guest" ? guestRep?.phone : preparedByPhone,
       quoteDate: TODAY,
       validUntil: endOfMonthIso(TODAY),
       transportMode: "FCL",
@@ -242,11 +255,7 @@ export function PublicQuoteForm({
                     </FieldGroup>
                     <FieldGroup>
                       <FieldLabel>발신 담당자</FieldLabel>
-                      <Input
-                        value={guestPreparedBy}
-                        onChange={(e) => setGuestPreparedBy(e.target.value)}
-                        placeholder="담당자명"
-                      />
+                      <SalesRepCombobox value={guestSalesRepId} onChange={setGuestSalesRepId} options={salesReps} />
                     </FieldGroup>
                   </div>
                 </div>

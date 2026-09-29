@@ -82,6 +82,15 @@ export function QuoteDocument({
   forceTable = false,
   onRateChange,
 }: QuoteDocumentProps) {
+  // The selected sales rep's own email/mobile number, snapshotted onto the
+  // quote at creation time - falls back to the company-wide static values
+  // for quotes created before this feature existed. Only these two change
+  // per rep; the company's own office TEL/FAX stay static everywhere.
+  const displayEmail = input.preparedByEmail ?? company.email;
+  const sealLine = input.preparedByPhone
+    ? `${company.nameKo ?? company.name}   TEL) ${input.preparedByPhone}`
+    : (company.sealText ?? company.name);
+
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
   // EXW_LOCAL (LSS, EXW LOCAL CHARGE) gets its own "현지 부대비용" category
   // block below 국내 부대비용, rather than being folded into it - it only
@@ -161,7 +170,7 @@ export function QuoteDocument({
                 {company.fax ? `  ·  FAX ${company.fax}` : ""}
               </p>
               <p className="text-[12px] text-[var(--muted)]">
-                {company.email}
+                {displayEmail}
                 {company.website ? `  ·  ${company.website}` : ""}
               </p>
             </div>
@@ -358,13 +367,13 @@ export function QuoteDocument({
                 TEL {company.tel}
                 {company.fax ? `  ·  FAX ${company.fax}` : ""}
                 {"  ·  "}
-                {company.email}
+                {displayEmail}
                 {company.website ? `  ·  ${company.website}` : ""}
               </p>
-              <p className="mt-1 font-medium text-[var(--foreground)]">{company.sealText ?? company.name}</p>
+              <p className="mt-1 font-medium text-[var(--foreground)]">{sealLine}</p>
             </>
           ) : (
-            company.sealText ?? company.name
+            sealLine
           )}
         </div>
       </div>

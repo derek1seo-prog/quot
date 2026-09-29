@@ -7,7 +7,9 @@ import { CustomerCombobox } from "@/components/quote/CustomerCombobox";
 import { IncotermsSelect } from "@/components/quote/IncotermsSelect";
 import { PortCombobox, type PortOption } from "@/components/quote/PortCombobox";
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
+import { SalesRepCombobox } from "@/components/quote/SalesRepCombobox";
 import { Step, StepIndicator } from "@/components/quote/StepIndicator";
+import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
 import type {
   ChargeRate,
   CompanyInfo,
@@ -19,6 +21,7 @@ import type {
   QuoteInput,
   QuoteResult,
   Region,
+  SalesRep,
   TransportMode,
 } from "@/lib/types";
 import { AlertTriangle, ArrowLeft, ArrowRight, Loader2, Save } from "lucide-react";
@@ -33,6 +36,7 @@ interface MetaResponse {
   chargeRates: ChargeRate[];
   exchangeRate: ExchangeRate;
   customers: Customer[];
+  salesReps: SalesRep[];
 }
 
 const steps: Step[] = [
@@ -79,7 +83,7 @@ export default function NewQuotePage() {
   // Step 3 - basic info
   const [customerName, setCustomerName] = useState("");
   const [contactName, setContactName] = useState("");
-  const [preparedBy, setPreparedBy] = useState("김태현 대리");
+  const [salesRepId, setSalesRepId] = useState(DEFAULT_SALES_REP_ID);
   const [quoteDate, setQuoteDate] = useState(todayIso());
   const [validUntil, setValidUntil] = useState(endOfMonthIso(todayIso()));
   const [hsCode, setHsCode] = useState("");
@@ -138,6 +142,7 @@ export default function NewQuotePage() {
   const originPort = meta?.ports.find((p) => p.id === originPortId);
   const destinationPort = meta?.ports.find((p) => p.id === destinationPortId);
   const matchedCustomer = meta?.customers.find((c) => c.name === customerName);
+  const selectedRep = meta?.salesReps.find((r) => r.id === salesRepId);
 
   function hasRateForContainer(containerTypeId: string) {
     if (!meta || !originPortId || !destinationPortId) return false;
@@ -153,7 +158,10 @@ export default function NewQuotePage() {
     return {
       customerName,
       contactName,
-      preparedBy,
+      salesRepId,
+      preparedBy: selectedRep?.name ?? "",
+      preparedByEmail: selectedRep?.email,
+      preparedByPhone: selectedRep?.phone,
       quoteDate,
       validUntil,
       transportMode,
@@ -242,7 +250,7 @@ export default function NewQuotePage() {
 
   const step1Valid = Boolean(originPortId && destinationPortId && incoterms);
   const step2Valid = Boolean(containerTypeId);
-  const step3Valid = Boolean(customerName && preparedBy && quoteDate && validUntil);
+  const step3Valid = Boolean(customerName && salesRepId && quoteDate && validUntil);
 
   if (!meta) {
     return (
@@ -431,7 +439,7 @@ export default function NewQuotePage() {
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>견적 담당자 (발신)</FieldLabel>
-              <Input value={preparedBy} onChange={(e) => setPreparedBy(e.target.value)} placeholder="본인 성함" />
+              <SalesRepCombobox value={salesRepId} onChange={setSalesRepId} options={meta.salesReps} />
             </FieldGroup>
             <FieldGroup>
               <FieldLabel hint="선택">HS CODE</FieldLabel>

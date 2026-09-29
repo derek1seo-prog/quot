@@ -1,8 +1,12 @@
-/** Shared between src/app/(app)/my/page.tsx (display) and
- * src/app/api/quotes/route.ts (the actual server-side enforcement) - a
- * customer-issued quote's "견적 담당자" is always this fixed value, matching
- * the admin wizard's own default (src/app/(app)/quotes/new/page.tsx). No
- * per-customer assignment exists yet; this is the simplest thing that
- * satisfies "시스템에 등록된 담당자로 자동 지정" without inventing new
- * admin-configurable state that wasn't asked for. */
-export const CUSTOMER_QUOTE_PREPARED_BY = "김태현 대리";
+/** Which SalesRep a customer-issued quote's "견적 담당자" (발신) is always
+ * assigned to - resolved against src/data/sales-reps.json (via
+ * getSalesRepById) by both src/app/(app)/my/page.tsx (display/preview) and
+ * src/app/api/quotes/route.ts (server-side enforcement). Storing an id
+ * rather than a bare name string means editing that rep's email/phone in
+ * /sales-reps automatically applies to future customer-issued quotes,
+ * without touching this file. */
+export const DEFAULT_SALES_REP_ID = "rep-thkim";
+/** Defensive fallback name only, for the unlikely case the referenced rep
+ * record is ever missing - keeps a customer's 발신 line from rendering
+ * blank instead of crashing. */
+export const DEFAULT_SALES_REP_FALLBACK_NAME = "김태현 대리";
