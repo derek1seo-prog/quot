@@ -14,11 +14,13 @@ import { useEffect, useMemo, useState } from "react";
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
-// Guest mode has no real customer behind it, so the printed quote's
-// addressee line defaults to a generic placeholder rather than a blank -
-// still editable (see editingAddressee below) for anyone who wants their
-// own name/company to show on a printed/PDF'd sample quote.
-const DEFAULT_GUEST_ADDRESSEE = "수입 담당자님";
+// Guest mode has no real customer behind it, so there's no real company
+// name to default 화주명 to - it starts blank (its placeholder just reads
+// "화주명"). 담당자 does get a real default so the printed quote's 수신
+// line never starts out blank - still editable (see editingAddressee
+// below) for anyone who wants their own name/company to show on a
+// printed/PDF'd sample quote.
+const DEFAULT_GUEST_CONTACT_NAME = "수입 담당자님";
 
 function endOfMonthIso(dateIso: string): string {
   const [year, month] = dateIso.split("-").map(Number);
@@ -58,8 +60,8 @@ export function PublicQuoteForm({
   const [incoterms, setIncoterms] = useState("FOB");
   const [containerTypeId, setContainerTypeId] = useState(containerTypes[0]?.id ?? "");
   const [containerQuantity, setContainerQuantity] = useState(1);
-  const [guestCustomerName, setGuestCustomerName] = useState(DEFAULT_GUEST_ADDRESSEE);
-  const [guestContactName, setGuestContactName] = useState("");
+  const [guestCustomerName, setGuestCustomerName] = useState("");
+  const [guestContactName, setGuestContactName] = useState(DEFAULT_GUEST_CONTACT_NAME);
   const [guestPreparedBy, setGuestPreparedBy] = useState("");
   const [editingAddressee, setEditingAddressee] = useState(false);
 
@@ -195,7 +197,7 @@ export function PublicQuoteForm({
                   <Input
                     value={guestCustomerName}
                     onChange={(e) => setGuestCustomerName(e.target.value)}
-                    placeholder={DEFAULT_GUEST_ADDRESSEE}
+                    placeholder="화주명"
                   />
                 </FieldGroup>
                 <FieldGroup>
@@ -203,7 +205,7 @@ export function PublicQuoteForm({
                   <Input
                     value={guestContactName}
                     onChange={(e) => setGuestContactName(e.target.value)}
-                    placeholder="담당자명"
+                    placeholder={DEFAULT_GUEST_CONTACT_NAME}
                   />
                 </FieldGroup>
                 <FieldGroup>
@@ -217,7 +219,11 @@ export function PublicQuoteForm({
               </div>
             ) : (
               <p className="text-[13px] text-[var(--muted)]">
-                수신: {guestCustomerName ? `${guestCustomerName}${guestContactName ? ` / ${guestContactName}` : ""}` : "-"} · 발신: {guestPreparedBy || "-"}
+                수신:{" "}
+                {guestCustomerName
+                  ? `${guestCustomerName}${guestContactName ? ` / ${guestContactName}` : ""}`
+                  : guestContactName || "-"}{" "}
+                · 발신: {guestPreparedBy || "-"}
               </p>
             )}
           </div>

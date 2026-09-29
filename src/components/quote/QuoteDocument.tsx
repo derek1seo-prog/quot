@@ -184,8 +184,15 @@ export function QuoteDocument({
           }`}
         >
           <p>
-            수신 : <span className="font-medium">{input.customerName}</span>
-            {input.contactName ? ` / ${input.contactName}` : ""}
+            수신 :{" "}
+            {input.customerName ? (
+              <>
+                <span className="font-medium">{input.customerName}</span>
+                {input.contactName ? ` / ${input.contactName}` : ""}
+              </>
+            ) : (
+              <span className="font-medium">{input.contactName}</span>
+            )}
           </p>
           <p>
             발신 : <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
@@ -205,7 +212,7 @@ export function QuoteDocument({
         ) : (
           /* Basic info (on-screen preview) */
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4 py-5 px-5 bg-[var(--sidebar-bg)] rounded-[var(--radius-md)]">
-            <InfoField label="CUSTOMER" value={input.customerName} />
+            <InfoField label="CUSTOMER" value={input.customerName || input.contactName || ""} />
             <InfoField label="INCOTERMS" value={input.incoterms} />
             <InfoField label="POL" value={originLabel} />
             <InfoField label="POD" value={destinationLabel} />
