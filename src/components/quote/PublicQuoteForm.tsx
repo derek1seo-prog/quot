@@ -231,7 +231,7 @@ export function PublicQuoteForm({
         )}
 
         {mode === "quick" && (
-          <div className="-mt-2 -mr-2 mb-1">
+          <div className="-mt-2 -mr-2 mb-1 relative z-10">
             <div className="flex justify-end">
               <button
                 type="button"
