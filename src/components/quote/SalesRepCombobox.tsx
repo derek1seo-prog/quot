@@ -39,15 +39,17 @@ export function SalesRepCombobox({
   useLayoutEffect(() => {
     if (!open || !wrapperRef.current) return;
     const rect = wrapperRef.current.getBoundingClientRect();
-    // Prefer opening upward whenever there's room for it: both usages of
-    // this combobox (admin wizard, guest/customer addressee editor) sit
-    // directly above another field row, which opening downward would
-    // otherwise bury under the panel - there's nothing similarly packed
-    // above either usage (a heading/prior row with far less height), so
-    // upward is the safer default. Only fall back to downward when the
-    // field itself is near the top of the viewport (not enough room above).
-    const spaceAbove = rect.top;
-    setOpenUpward(spaceAbove >= ESTIMATED_PANEL_HEIGHT);
+    // Prefer opening downward (the ordinary combobox default) - the
+    // addressee editor's own stacking-context fix (PublicQuoteForm.tsx's
+    // "relative z-10" wrapper) already makes a downward panel correctly
+    // paint above whatever field row follows it, so there's no longer a
+    // reason to prefer upward by default. Only flip upward when there's
+    // genuinely insufficient room below (near the bottom of the viewport)
+    // and enough room above to fit the panel instead - otherwise a field
+    // that simply has a heading or prior content above it would open
+    // upward and overlap that unrelated content instead.
+    const spaceBelow = window.innerHeight - rect.bottom;
+    setOpenUpward(spaceBelow < ESTIMATED_PANEL_HEIGHT && rect.top >= ESTIMATED_PANEL_HEIGHT);
   }, [open]);
 
   const selectedRep = options.find((r) => r.id === value);
