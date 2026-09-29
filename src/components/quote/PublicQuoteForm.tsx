@@ -8,11 +8,17 @@ import { IncotermsSelect } from "./IncotermsSelect";
 import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
 import type { CompanyInfo, ContainerType, Port, QuoteInput, QuoteResult, Region } from "@/lib/types";
-import { Loader2, Printer, Save } from "lucide-react";
+import { Loader2, Pencil, Printer, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const TODAY = new Date().toISOString().slice(0, 10);
+
+// Guest mode has no real customer behind it, so the printed quote's
+// addressee line defaults to a generic placeholder rather than a blank -
+// still editable (see editingAddressee below) for anyone who wants their
+// own name/company to show on a printed/PDF'd sample quote.
+const DEFAULT_GUEST_ADDRESSEE = "수입 담당자님";
 
 function endOfMonthIso(dateIso: string): string {
   const [year, month] = dateIso.split("-").map(Number);
@@ -52,6 +58,9 @@ export function PublicQuoteForm({
   const [incoterms, setIncoterms] = useState("FOB");
   const [containerTypeId, setContainerTypeId] = useState(containerTypes[0]?.id ?? "");
   const [containerQuantity, setContainerQuantity] = useState(1);
+  const [guestAddressee, setGuestAddressee] = useState(DEFAULT_GUEST_ADDRESSEE);
+  const [guestPreparedBy, setGuestPreparedBy] = useState("");
+  const [editingAddressee, setEditingAddressee] = useState(false);
 
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [calculating, setCalculating] = useState(false);
@@ -76,9 +85,9 @@ export function PublicQuoteForm({
 
   function buildInput(): QuoteInput {
     return {
-      customerName: lockedCustomer?.name ?? "",
+      customerName: mode === "guest" ? guestAddressee : (lockedCustomer?.name ?? ""),
       contactName: lockedCustomer?.contactName,
-      preparedBy: preparedBy ?? "",
+      preparedBy: mode === "guest" ? guestPreparedBy : (preparedBy ?? ""),
       quoteDate: TODAY,
       validUntil: endOfMonthIso(TODAY),
       transportMode: "FCL",
@@ -163,6 +172,45 @@ export function PublicQuoteForm({
               <FieldLabel hint="고정">견적 담당자</FieldLabel>
               <Input value={preparedBy ?? ""} disabled />
             </FieldGroup>
+          </div>
+        )}
+
+        {mode === "guest" && (
+          <div className="mb-6 pb-6 border-b border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[13px] font-medium text-[var(--foreground)]">견적서 수신/발신 정보</p>
+              <button
+                type="button"
+                onClick={() => setEditingAddressee((v) => !v)}
+                className="flex items-center gap-1 text-[12px] font-medium text-[var(--accent)] hover:underline"
+              >
+                <Pencil size={13} /> {editingAddressee ? "완료" : "수정"}
+              </button>
+            </div>
+            {editingAddressee ? (
+              <div className="grid sm:grid-cols-2 gap-4">
+                <FieldGroup>
+                  <FieldLabel>수신</FieldLabel>
+                  <Input
+                    value={guestAddressee}
+                    onChange={(e) => setGuestAddressee(e.target.value)}
+                    placeholder={DEFAULT_GUEST_ADDRESSEE}
+                  />
+                </FieldGroup>
+                <FieldGroup>
+                  <FieldLabel>발신 담당자</FieldLabel>
+                  <Input
+                    value={guestPreparedBy}
+                    onChange={(e) => setGuestPreparedBy(e.target.value)}
+                    placeholder="담당자명"
+                  />
+                </FieldGroup>
+              </div>
+            ) : (
+              <p className="text-[13px] text-[var(--muted)]">
+                수신: {guestAddressee || "-"} · 발신 담당자: {guestPreparedBy || "-"}
+              </p>
+            )}
           </div>
         )}
 
