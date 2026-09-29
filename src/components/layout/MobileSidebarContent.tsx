@@ -19,7 +19,7 @@ export function MobileSidebarContent({
   let itemIndex = 0;
 
   return (
-    <nav className="flex-1 overflow-y-auto px-3 pb-6 space-y-6">
+    <nav className="flex-1 overflow-y-auto px-3 pt-4 pb-6 space-y-6">
       {navSections.map((section, i) => (
         <div key={i}>
           {section.title && (
