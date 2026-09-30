@@ -10,9 +10,13 @@ const DESTINATION_ORDER = ["incheon", "busan", "pyeongtaek"] as const;
 // Column widths as percentages of the table (sums to 100) - table-fixed
 // makes these exact regardless of content, so all six rate columns stay
 // identical width instead of the browser's auto layout redistributing
-// space unevenly between them (same fix as RegionRatesEditor.tsx).
-const portColPct = 25;
-const rateColPct = 12.5; // x6 destination/size columns = 75
+// space unevenly between them (same fix as RegionRatesEditor.tsx). The
+// port column only needs to be a touch narrower than a rate column (its
+// two-line "청도 / Qingdao" content is no wider than a rate cell's own
+// two-line "₩990,577 / 해상 $250") - not the 2x-wider split that table
+// used, which made 항구 read as oversized relative to the rest.
+const portColPct = 13;
+const rateColPct = 14.5; // x6 destination/size columns = 87
 
 // Sequential blue ramp (dataviz skill's reference palette, steps 150-650) -
 // bucket 3 (#2a78d6) sits almost exactly on this app's own --accent, so it
