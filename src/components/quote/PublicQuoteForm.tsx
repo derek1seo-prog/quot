@@ -94,7 +94,12 @@ export function PublicQuoteForm({
   const [quickCustomerName, setQuickCustomerName] = useState("");
   const [quickContactName, setQuickContactName] = useState(DEFAULT_QUICK_CONTACT_NAME);
   const [quickSalesRepId, setQuickSalesRepId] = useState(DEFAULT_SALES_REP_ID);
-  const [editingAddressee, setEditingAddressee] = useState(false);
+  // Admin sessions can actually use this editor (auto-fill + rate
+  // resolution), so it starts already open for them rather than making
+  // every visit start with an extra click just to reach it - isAdmin
+  // never changes while this component is mounted, so a plain useState
+  // initializer is enough, no effect needed to keep it in sync.
+  const [editingAddressee, setEditingAddressee] = useState(isAdmin);
   // The reveal block below needs overflow-hidden while collapsed/animating
   // (so the 0fr->1fr height transition doesn't show spilling content), but
   // that same overflow-hidden clips the 발신 담당자 combobox's dropdown
