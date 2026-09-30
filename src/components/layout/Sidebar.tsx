@@ -58,12 +58,15 @@ export function Sidebar({ role }: { role: Role }) {
                     ref={active ? activeRef : undefined}
                     className={cn(
                       "relative z-10 flex items-center gap-2.5 px-3 h-9 rounded-[var(--radius-sm)] text-[13.5px] font-medium transition-colors",
+                      item.highlight && "border border-[var(--accent)]/40",
                       active
                         ? "text-[var(--foreground)]"
-                        : "text-[var(--muted)] hover:bg-white/60 hover:text-[var(--foreground)]",
+                        : item.highlight
+                          ? "bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+                          : "text-[var(--muted)] hover:bg-white/60 hover:text-[var(--foreground)]",
                     )}
                   >
-                    <span className={active ? "text-[var(--accent)]" : ""}>
+                    <span className={active || item.highlight ? "text-[var(--accent)]" : ""}>
                       <NavIcon icon={item.icon} countryId={item.countryId} />
                     </span>
                     {item.label}

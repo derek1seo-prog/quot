@@ -15,6 +15,10 @@ export interface NavItemDef {
    * 관리 already groups regions by country and more countries keep getting
    * added there. */
   countryId?: string;
+  /** Renders with a subtle accent border/tint so it reads as a
+   * recommended item among its siblings - used sparingly (today just
+   * 빠른 견적조회 in the admin nav). */
+  highlight?: boolean;
 }
 
 export interface NavSectionDef {
@@ -33,7 +37,7 @@ export const navSections: NavSectionDef[] = [
     items: [
       { href: "/quotes/new", label: "새 견적 만들기", icon: "new-quote" },
       { href: "/quotes", label: "견적 목록", icon: "quote-list" },
-      { href: "/quick-quote", label: "빠른 견적조회", icon: "quick-quote" },
+      { href: "/quick-quote", label: "빠른 견적조회", icon: "quick-quote", highlight: true },
     ],
   },
   {
