@@ -330,6 +330,54 @@ input[type="number"] {
   animation: success-text-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Success ring/checkmark draw (UnlockForm.tsx) - pathLength={1} on both
+ * the circle and the check path normalizes their length to 1 regardless
+ * of actual geometry, so the draw is just stroke-dashoffset: 1 -> 0 for
+ * either shape, no manual path-length math. stroke-dasharray is a plain
+ * (non-animated) property, so under reduced motion (animation: none
+ * below) stroke-dashoffset falls back to its SVG-initial value of 0 -
+ * fully drawn instantly, same degrade-for-free pattern as success-pop. */
+@keyframes success-ring-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes success-check-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.animate-success-ring {
+  stroke-dasharray: 1;
+  animation: success-ring-draw 0.6s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+.animate-success-check {
+  stroke-dasharray: 1;
+  animation: success-check-draw 0.35s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+/* Progress fill under "이동 중입니다" (UnlockForm.tsx) - duration matches
+ * the 900ms redirect delay in submit() so the bar finishes right as
+ * navigation actually happens. */
+@keyframes success-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.animate-success-progress {
+  animation: success-progress 0.9s linear both;
+  transform-origin: left;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
@@ -342,7 +390,10 @@ input[type="number"] {
   .animate-brand-spin,
   .animate-shake,
   .animate-success-pop,
-  .animate-success-text-in {
+  .animate-success-text-in,
+  .animate-success-ring,
+  .animate-success-check,
+  .animate-success-progress {
     animation: none;
   }
 }

@@ -75,35 +75,54 @@ export function UnlockForm({ next }: { next: string }) {
           status === "error" || status === "locked" ? "animate-dashboard-fade-up-shake" : "animate-dashboard-fade-up"
         }`}
       >
-        <BrandMark imageClassName="w-12 h-12" />
         {status === "success" ? (
           <>
-            <span className="mt-4 w-12 h-12 rounded-full bg-[var(--success)]/10 flex items-center justify-center animate-success-pop">
-              <svg
-                viewBox="0 0 24 24"
-                className="w-6 h-6 text-[var(--success)]"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <span className="relative inline-flex items-center justify-center w-16 h-16 animate-success-pop">
+              <span
+                className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-[var(--success)]/20 blur-lg"
                 aria-hidden
-              >
-                <path d="M20 6 9 17l-5-5" />
+              />
+              <svg viewBox="0 0 24 24" className="relative w-16 h-16" fill="none" aria-hidden>
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  pathLength={1}
+                  stroke="var(--success)"
+                  strokeWidth="1.5"
+                  className="animate-success-ring"
+                />
+                <path
+                  d="M20 6 9 17l-5-5"
+                  pathLength={1}
+                  stroke="var(--success)"
+                  strokeWidth="2.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="animate-success-check"
+                  style={{ animationDelay: "0.4s" }}
+                />
               </svg>
             </span>
-            <h1 className="mt-4 text-[17px] font-semibold text-[var(--foreground)] animate-success-text-in">
+            <h1
+              className="mt-5 text-[19px] font-semibold text-[var(--foreground)] animate-success-text-in"
+              style={{ animationDelay: "0.5s" }}
+            >
               환영합니다
             </h1>
             <p
               className="mt-1 text-[13px] text-[var(--muted)] animate-success-text-in"
-              style={{ animationDelay: "0.05s" }}
+              style={{ animationDelay: "0.58s" }}
             >
-              이동 중입니다...
+              이동 중입니다
             </p>
+            <span className="mt-4 w-20 h-[3px] rounded-full bg-[var(--success)]/15 overflow-hidden">
+              <span className="block h-full w-full origin-left rounded-full bg-[var(--success)] animate-success-progress" />
+            </span>
           </>
         ) : (
           <>
+            <BrandMark imageClassName="w-12 h-12" />
             <h1 className="mt-4 text-[17px] font-semibold text-[var(--foreground)]">
               접근 코드를 입력해주세요
             </h1>
