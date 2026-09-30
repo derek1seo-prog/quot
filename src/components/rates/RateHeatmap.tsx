@@ -2,7 +2,8 @@
 
 import type { RateOverviewRow } from "@/lib/rate-overview";
 import type { ContainerType } from "@/lib/types";
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { createPortal } from "react-dom";
 
 const DESTINATION_ORDER = ["incheon", "busan", "pyeongtaek"] as const;
 
@@ -46,29 +47,44 @@ export function RateHeatmap({
   destinationPortNames: Record<string, string>;
   containerTypes: ContainerType[];
 }) {
-  const [activeCell, setActiveCell] = useState<string | null>(null);
-  const [openDownward, setOpenDownward] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Flipping the tooltip's open direction per-row (tried previously) reads
+  // as jumpy, and a short 2-row table still has no direction that fully
+  // avoids the region table's own overflow-x-auto clipping its top/bottom
+  // edge either way. Simplest and most robust: render the tooltip through
+  // a portal straight onto document.body, positioned with fixed coordinates
+  // computed from the cell's own real position - this takes it completely
+  // outside the table's clipping container, so it can never be cut off
+  // regardless of which row is hovered, and it always opens in the exact
+  // same direction (below the cell) for a consistent, predictable feel.
+  interface TooltipState {
+    cellKey: string;
+    x: number;
+    y: number;
+    portNameKo: string;
+    destLabel: string;
+    ctLabel: string;
+    oceanFreightSubtotalKrw: number;
+    localSubtotalKrw: number;
+    grandTotalKrw: number;
+  }
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
-  // The tooltip opens upward by default (bottom-full). The actual clipping
-  // boundary is this region's own overflow-x-auto container (its top/
-  // bottom edges), NOT the viewport - a top row can have plenty of room in
-  // the viewport above it while still having only ~1 row's height of room
-  // above it *inside the container* before the tooltip's top gets clipped
-  // by the container's own edge. Measure space within the container at
-  // hover/focus time and flip to whichever side has more room, mirroring
-  // the same open-direction heuristic already used for SalesRepCombobox's
-  // dropdown.
-  const TOOLTIP_HEIGHT_ESTIMATE = 150;
-  function activateCell(cellKey: string, target: HTMLElement) {
-    const containerRect = containerRef.current?.getBoundingClientRect();
-    if (containerRect) {
-      const cellRect = target.getBoundingClientRect();
-      const spaceAbove = cellRect.top - containerRect.top;
-      const spaceBelow = containerRect.bottom - cellRect.bottom;
-      setOpenDownward(spaceAbove < TOOLTIP_HEIGHT_ESTIMATE && spaceBelow > spaceAbove);
-    }
-    setActiveCell(cellKey);
+  const TOOLTIP_HALF_WIDTH = 104; // half of w-52 (208px)
+  const VIEWPORT_MARGIN = 8;
+  function activateCell(target: HTMLElement, data: Omit<TooltipState, "x" | "y">) {
+    const rect = target.getBoundingClientRect();
+    // Center under the cell by default, but slide inward on a narrow
+    // viewport so it never runs off the left/right edge of the screen -
+    // it's fine to spill outside the table's own box, not off-screen.
+    const idealX = rect.left + rect.width / 2;
+    const x = Math.min(
+      Math.max(idealX, TOOLTIP_HALF_WIDTH + VIEWPORT_MARGIN),
+      window.innerWidth - TOOLTIP_HALF_WIDTH - VIEWPORT_MARGIN,
+    );
+    setTooltip({ ...data, x, y: rect.bottom + 8 });
+  }
+  function deactivate() {
+    setTooltip(null);
   }
 
   const totals = rows
@@ -95,7 +111,7 @@ export function RateHeatmap({
         )}
       </div>
 
-      <div ref={containerRef} className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--border-subtle)]">
+      <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--border-subtle)]">
         <table className="w-full min-w-[720px] border-collapse text-[13px]">
           <thead>
             <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide bg-[var(--sidebar-bg)]">
@@ -142,20 +158,29 @@ export function RateHeatmap({
 
                   const bucket = bucketFor(cell.grandTotalKrw, min, max);
                   const isLight = bucket.ink === "light";
-                  const active = activeCell === cellKey;
+                  const active = tooltip?.cellKey === cellKey;
                   const tooltipLabel = `${row.port.nameKo} → ${destLabel} · ${ctLabel}. 해상운임 ${krw(
                     cell.oceanFreightSubtotalKrw ?? 0,
                   )}, 부대비용 계 ${krw(cell.localSubtotalKrw ?? 0)}, 예상 총비용 ${krw(cell.grandTotalKrw)}. 실제 견적은 상이할 수 있습니다.`;
+                  const tooltipData = {
+                    cellKey,
+                    portNameKo: row.port.nameKo,
+                    destLabel,
+                    ctLabel,
+                    oceanFreightSubtotalKrw: cell.oceanFreightSubtotalKrw ?? 0,
+                    localSubtotalKrw: cell.localSubtotalKrw ?? 0,
+                    grandTotalKrw: cell.grandTotalKrw,
+                  };
 
                   return (
                     <td
                       key={cellKey}
                       tabIndex={0}
                       aria-label={tooltipLabel}
-                      onMouseEnter={(e) => activateCell(cellKey, e.currentTarget)}
-                      onMouseLeave={() => setActiveCell(null)}
-                      onFocus={(e) => activateCell(cellKey, e.currentTarget)}
-                      onBlur={() => setActiveCell(null)}
+                      onMouseEnter={(e) => activateCell(e.currentTarget, tooltipData)}
+                      onMouseLeave={deactivate}
+                      onFocus={(e) => activateCell(e.currentTarget, tooltipData)}
+                      onBlur={deactivate}
                       className={`relative py-2.5 px-3 text-center cursor-default outline-none whitespace-nowrap transition-shadow duration-150 ${
                         isFirstOfGroup ? "border-l border-[var(--border-subtle)]" : ""
                       } ${active ? "z-10 shadow-lg ring-2 ring-inset ring-white/60" : ""}`}
@@ -170,32 +195,6 @@ export function RateHeatmap({
                           해상 ${cell.oceanFreightUsd.toLocaleString("en-US")}
                         </p>
                       )}
-                      {active && (
-                        <div
-                          aria-hidden
-                          className={`pointer-events-none absolute left-1/2 z-20 w-52 -translate-x-1/2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white p-3 text-left shadow-lg animate-dropdown-panel ${
-                            openDownward ? "top-full mt-2" : "bottom-full mb-2"
-                          }`}
-                        >
-                          <p className="text-[11.5px] font-semibold text-[var(--foreground)] mb-1.5 whitespace-normal">
-                            {row.port.nameKo} → {destLabel} · {ctLabel}
-                          </p>
-                          <div className="space-y-1 text-[11px] text-[var(--muted)]">
-                            <div className="flex justify-between gap-3">
-                              <span>해상운임</span>
-                              <span>{krw(cell.oceanFreightSubtotalKrw ?? 0)}</span>
-                            </div>
-                            <div className="flex justify-between gap-3">
-                              <span>부대비용 계</span>
-                              <span>{krw(cell.localSubtotalKrw ?? 0)}</span>
-                            </div>
-                            <div className="flex justify-between gap-3 font-semibold text-[var(--foreground)] pt-1 mt-1 border-t border-[var(--border-subtle)]">
-                              <span>예상 총비용</span>
-                              <span>{krw(cell.grandTotalKrw)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </td>
                   );
                 })}
@@ -204,6 +203,34 @@ export function RateHeatmap({
           </tbody>
         </table>
       </div>
+
+      {tooltip &&
+        createPortal(
+          <div
+            aria-hidden
+            className="pointer-events-none fixed z-50 w-52 -translate-x-1/2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white p-3 text-left shadow-lg animate-dropdown-panel"
+            style={{ left: tooltip.x, top: tooltip.y }}
+          >
+            <p className="text-[11.5px] font-semibold text-[var(--foreground)] mb-1.5 whitespace-normal">
+              {tooltip.portNameKo} → {tooltip.destLabel} · {tooltip.ctLabel}
+            </p>
+            <div className="space-y-1 text-[11px] text-[var(--muted)]">
+              <div className="flex justify-between gap-3">
+                <span>해상운임</span>
+                <span>{krw(tooltip.oceanFreightSubtotalKrw)}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>부대비용 계</span>
+                <span>{krw(tooltip.localSubtotalKrw)}</span>
+              </div>
+              <div className="flex justify-between gap-3 font-semibold text-[var(--foreground)] pt-1 mt-1 border-t border-[var(--border-subtle)]">
+                <span>예상 총비용</span>
+                <span>{krw(tooltip.grandTotalKrw)}</span>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
