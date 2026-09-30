@@ -11,17 +11,18 @@ const buttonClass =
 
 /** Icon-only login/logout toggle - shown in the sidebar (desktop) and
  * mobile top bar, next to the brand mark, so it's visible regardless of
- * which page is open. Admin sessions log out (the quick-quote screen is
- * now its own always-present nav tab, so there's no more need for a
- * separate "preview" of it - logging out is the only thing this icon does
- * for an admin). Guest sessions still need the real PIN, so that
- * direction points at /unlock. Customer sessions get neither - their
- * portal doesn't invite switching to admin. */
+ * which page is open. Admin AND customer sessions log out (a customer
+ * session is entered via their own /c/[accessToken] link, with no PIN
+ * step to "undo" - without this, there was genuinely no way back to the
+ * admin login screen or a logged-out state once inside /my, since "/"
+ * itself always redirects an active customer session straight back to
+ * /my). Guest sessions still need the real PIN, so that direction points
+ * at /unlock. */
 export function RoleSwitchButton({ role }: { role: Role }) {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
 
-  if (role === "admin") {
+  if (role === "admin" || role === "customer") {
     async function handleLogout() {
       setLoggingOut(true);
       await fetch("/api/logout", { method: "POST" });
