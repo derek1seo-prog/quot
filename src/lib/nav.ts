@@ -32,9 +32,9 @@ export const navSections: NavSectionDef[] = [
   {
     title: "견적 관리",
     items: [
+      { href: "/quick-quote", label: "빠른 견적조회", icon: "quick-quote" },
       { href: "/quotes/new", label: "새 견적 만들기", icon: "new-quote" },
       { href: "/quotes", label: "견적 목록", icon: "quote-list" },
-      { href: "/quick-quote", label: "빠른 견적조회", icon: "quick-quote" },
     ],
   },
   {

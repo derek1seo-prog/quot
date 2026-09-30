@@ -103,10 +103,10 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-2 animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
-          <LinkButton href="/quick-quote" variant="secondary" size="lg" icon={<Zap size={18} />}>
+          <LinkButton href="/quick-quote" size="lg" icon={<Zap size={18} />}>
             빠른 견적조회
           </LinkButton>
-          <LinkButton href="/quotes/new" size="lg" icon={<FilePlus2 size={18} />}>
+          <LinkButton href="/quotes/new" variant="secondary" size="lg" icon={<FilePlus2 size={18} />}>
             새 견적 만들기
           </LinkButton>
         </div>
