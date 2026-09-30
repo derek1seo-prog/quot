@@ -149,7 +149,6 @@ export function SalesRepCombobox({
               >
                 <Contact size={14} className="shrink-0 text-[var(--muted)]" />
                 {rep.name}
-                {rep.phone && <span className="text-[var(--muted)]">· {rep.phone}</span>}
               </button>
             ))
           )}
