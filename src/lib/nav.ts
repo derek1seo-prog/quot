@@ -44,6 +44,7 @@ export const navSections: NavSectionDef[] = [
       { href: "/rates/south-china", label: "남중국", icon: "region", countryId: "CN" },
       { href: "/rates/vietnam", label: "베트남", icon: "region", countryId: "VN" },
       { href: "/rates/thailand", label: "태국", icon: "region", countryId: "TH" },
+      { href: "/my/rates", label: "운임표 보기", icon: "rates" },
     ],
   },
   {
@@ -61,7 +62,12 @@ export const navSections: NavSectionDef[] = [
 // is just what's visually offered per role (never the security boundary).
 // "/" is the homepage itself for a non-admin visitor - see proxy.ts.
 export const guestNavSections: NavSectionDef[] = [
-  { items: [{ href: "/", label: "빠른 견적조회", icon: "quick-quote" }] },
+  {
+    items: [
+      { href: "/", label: "빠른 견적조회", icon: "quick-quote" },
+      { href: "/my/rates", label: "운임표 보기", icon: "rates" },
+    ],
+  },
 ];
 
 export const customerNavSections: NavSectionDef[] = [

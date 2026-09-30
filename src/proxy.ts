@@ -10,6 +10,16 @@ function isQuickQuotePath(pathname: string): boolean {
   return pathname === "/" || pathname === "/quick-quote" || pathname.startsWith("/quick-quote/");
 }
 
+/** Paths any anonymous visitor may reach with no PIN and no customer
+ * login at all - the quick-quote lookup experience, plus the read-only
+ * rate overview ("/my/rates"), which was originally customer-portal-only
+ * but is now opened up the same way quick-quote already is, since it's
+ * the same kind of public reference material (registered base rates, no
+ * customer-specific data). */
+function isPublicPath(pathname: string): boolean {
+  return isQuickQuotePath(pathname) || pathname === "/my/rates";
+}
+
 /** Coarse per-page allowlist for non-admin roles - default-deny, explicit-
  * allow (safer than trying to enumerate every admin-only page, which only
  * has to miss one new page to leak it). API routes are NOT gated here -
@@ -18,7 +28,7 @@ function isQuickQuotePath(pathname: string): boolean {
  * an HTML redirect for a fetch() caller. */
 function isAllowedForRole(pathname: string, role: Role): boolean {
   if (role === "admin") return true;
-  if (role === "guest") return isQuickQuotePath(pathname);
+  if (role === "guest") return isPublicPath(pathname);
   // role === "customer" - /my (their own lookup + 내 견적) and any saved
   // quote under /quotes/:id (+ its /print sibling), but never the admin
   // quote list or wizard. Per-record ownership (this quote is actually
@@ -49,12 +59,11 @@ export async function proxy(request: NextRequest) {
 
   const session = getSessionFromRequest(request);
 
-  // "/" and "/quick-quote" need no PIN at all - visiting either for the
-  // first time silently issues a guest session and renders directly (this
-  // is what used to be "게스트 모드로 입장하기" - a plain link/visit, no
-  // separate API call - now widened to be the site's default homepage
-  // experience rather than a dedicated /guest path).
-  if (isQuickQuotePath(pathname) && !session) {
+  // "/", "/quick-quote", and "/my/rates" need no PIN at all - visiting any
+  // of them for the first time silently issues a guest session and renders
+  // directly (this is what used to be "게스트 모드로 입장하기" - a plain
+  // link/visit, no separate API call).
+  if (isPublicPath(pathname) && !session) {
     const res = NextResponse.next();
     setSessionCookie(res, { role: "guest" });
     return res;

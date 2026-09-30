@@ -133,9 +133,9 @@ export function RateHeatmap({
                       onMouseLeave={() => setActiveCell(null)}
                       onFocus={() => setActiveCell(cellKey)}
                       onBlur={() => setActiveCell(null)}
-                      className={`relative py-2.5 px-3 text-center cursor-default outline-none whitespace-nowrap transition-transform duration-150 ${
+                      className={`relative py-2.5 px-3 text-center cursor-default outline-none whitespace-nowrap transition-shadow duration-150 ${
                         isFirstOfGroup ? "border-l border-[var(--border-subtle)]" : ""
-                      } ${active ? "z-10 scale-[1.06] shadow-lg" : ""}`}
+                      } ${active ? "z-10 shadow-lg ring-2 ring-inset ring-white/60" : ""}`}
                       style={{ backgroundColor: bucket.bg, color: isLight ? "#ffffff" : "var(--foreground)" }}
                     >
                       <p className="font-semibold">{krw(cell.grandTotalKrw)}</p>
