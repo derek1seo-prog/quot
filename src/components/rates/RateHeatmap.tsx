@@ -2,7 +2,7 @@
 
 import type { RateOverviewRow } from "@/lib/rate-overview";
 import type { ContainerType } from "@/lib/types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const DESTINATION_ORDER = ["incheon", "busan", "pyeongtaek"] as const;
 
@@ -48,17 +48,26 @@ export function RateHeatmap({
 }) {
   const [activeCell, setActiveCell] = useState<string | null>(null);
   const [openDownward, setOpenDownward] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // The tooltip opens upward by default (bottom-full), but a cell near the
-  // top of its own region's table (little/no room above it before hitting
-  // the container's own top edge) would get its tooltip visually clipped
-  // there instead - measure real available space at the moment of hover/
-  // focus and flip to opening downward when there isn't enough of it,
-  // mirroring the same open-direction heuristic already used for
-  // SalesRepCombobox's dropdown.
+  // The tooltip opens upward by default (bottom-full). The actual clipping
+  // boundary is this region's own overflow-x-auto container (its top/
+  // bottom edges), NOT the viewport - a top row can have plenty of room in
+  // the viewport above it while still having only ~1 row's height of room
+  // above it *inside the container* before the tooltip's top gets clipped
+  // by the container's own edge. Measure space within the container at
+  // hover/focus time and flip to whichever side has more room, mirroring
+  // the same open-direction heuristic already used for SalesRepCombobox's
+  // dropdown.
   const TOOLTIP_HEIGHT_ESTIMATE = 150;
   function activateCell(cellKey: string, target: HTMLElement) {
-    setOpenDownward(target.getBoundingClientRect().top < TOOLTIP_HEIGHT_ESTIMATE);
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (containerRect) {
+      const cellRect = target.getBoundingClientRect();
+      const spaceAbove = cellRect.top - containerRect.top;
+      const spaceBelow = containerRect.bottom - cellRect.bottom;
+      setOpenDownward(spaceAbove < TOOLTIP_HEIGHT_ESTIMATE && spaceBelow > spaceAbove);
+    }
     setActiveCell(cellKey);
   }
 
@@ -86,7 +95,7 @@ export function RateHeatmap({
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--border-subtle)]">
+      <div ref={containerRef} className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--border-subtle)]">
         <table className="w-full min-w-[720px] border-collapse text-[13px]">
           <thead>
             <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide bg-[var(--sidebar-bg)]">
