@@ -157,6 +157,7 @@ export default function NewQuotePage() {
 
   function buildInput(overrides: Record<string, number> = rateOverrides): QuoteInput {
     return {
+      customerId: matchedCustomer?.id,
       customerName,
       contactName,
       salesRepId,

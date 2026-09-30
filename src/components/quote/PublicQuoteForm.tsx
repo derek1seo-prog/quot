@@ -157,6 +157,7 @@ export function PublicQuoteForm({
 
   function buildInput(overrides: Record<string, number> = rateOverrides): QuoteInput {
     return {
+      customerId: mode === "quick" && isAdmin ? matchedQuickCustomer?.id : undefined,
       customerName: mode === "quick" ? quickCustomerName : (lockedCustomer?.name ?? ""),
       contactName: mode === "quick" ? quickContactName : lockedCustomer?.contactName,
       salesRepId: mode === "quick" && isAdmin ? quickSalesRepId : undefined,
