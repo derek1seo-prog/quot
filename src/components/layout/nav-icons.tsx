@@ -5,6 +5,7 @@ import {
   ListChecks,
   Settings,
   Ship,
+  Table2,
   Users,
   Zap,
 } from "lucide-react";
@@ -46,5 +47,7 @@ export function NavIcon({
       return <Contact size={size} />;
     case "settings":
       return <Settings size={size} />;
+    case "rates":
+      return <Table2 size={size} />;
   }
 }

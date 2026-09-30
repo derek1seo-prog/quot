@@ -9,7 +9,8 @@ export interface NavItemDef {
     | "region"
     | "customers"
     | "sales-reps"
-    | "settings";
+    | "settings"
+    | "rates";
   /** ISO-ish country code (Country.id, e.g. "CN") for icon: "region" items -
    * rendered as that country's flag instead of a generic icon, since 요율
    * 관리 already groups regions by country and more countries keep getting
@@ -67,6 +68,7 @@ export const customerNavSections: NavSectionDef[] = [
   {
     items: [
       { href: "/my", label: "견적 조회", icon: "new-quote" },
+      { href: "/my/rates", label: "운임표 보기", icon: "rates" },
     ],
   },
 ];
