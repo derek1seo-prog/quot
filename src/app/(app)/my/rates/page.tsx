@@ -27,7 +27,6 @@ export default async function MyRatesPage() {
       <h1 className="text-[28px] font-semibold tracking-tight mb-1">구간별 운임 한눈에 보기</h1>
       <p className="text-[13px] text-[var(--muted)] mb-8">
         색이 진할수록 예상 비용이 높은 구간입니다. 셀에 마우스를 올리면 상세 내역을 볼 수 있습니다.
-        내륙운송료는 화주별로 별도 협의되며, 아래 금액에는 포함되어 있지 않습니다.
       </p>
 
       {regionsWithData.length === 0 ? (
