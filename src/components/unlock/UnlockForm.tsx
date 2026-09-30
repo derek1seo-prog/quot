@@ -179,7 +179,7 @@ export function UnlockForm({ next }: { next: string }) {
               href="/"
               className="mt-6 text-[12.5px] text-[var(--muted)] underline-offset-2 hover:text-[var(--accent)] hover:underline"
             >
-              빠른 견적조회로 이동하기
+              빠른 견적 만들기로 이동하기
             </Link>
           </>
         )}

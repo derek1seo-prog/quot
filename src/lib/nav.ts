@@ -32,7 +32,7 @@ export const navSections: NavSectionDef[] = [
   {
     title: "견적 관리",
     items: [
-      { href: "/quick-quote", label: "빠른 견적조회", icon: "quick-quote" },
+      { href: "/quick-quote", label: "빠른 견적 만들기", icon: "quick-quote" },
       { href: "/quotes/new", label: "새 견적 만들기", icon: "new-quote" },
       { href: "/quotes", label: "견적 목록", icon: "quote-list" },
     ],
@@ -64,7 +64,7 @@ export const navSections: NavSectionDef[] = [
 export const guestNavSections: NavSectionDef[] = [
   {
     items: [
-      { href: "/", label: "빠른 견적조회", icon: "quick-quote" },
+      { href: "/", label: "빠른 견적 만들기", icon: "quick-quote" },
       { href: "/my/rates", label: "운임표 보기", icon: "rates" },
     ],
   },
