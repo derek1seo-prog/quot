@@ -3,8 +3,11 @@
 import { RateCell } from "./RateCell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import type { ChargeRate, ChargeType, Currency, ContainerType, OceanFreightRate, Port } from "@/lib/types";
-import { useState } from "react";
+import { Textarea } from "@/components/ui/Field";
+import { formatDate } from "@/lib/format";
+import type { ChargeRate, ChargeType, Currency, ContainerType, OceanFreightRate, Port, PortCarrierNote } from "@/lib/types";
+import { Check, Loader2, Ship } from "lucide-react";
+import { Fragment, useState } from "react";
 
 interface Props {
   regionId: string;
@@ -14,6 +17,7 @@ interface Props {
   chargeTypes: ChargeType[];
   initialOceanFreightRates: OceanFreightRate[];
   initialChargeRates: ChargeRate[];
+  initialPortNotes: PortCarrierNote[];
 }
 
 // The Korea-side leg (Incheon vs Busan vs Pyeongtaek) changes ocean freight
@@ -41,9 +45,12 @@ export function RegionRatesEditor({
   chargeTypes,
   initialOceanFreightRates,
   initialChargeRates,
+  initialPortNotes,
 }: Props) {
   const [oceanFreightRates, setOceanFreightRates] = useState(initialOceanFreightRates);
   const [chargeRates, setChargeRates] = useState(initialChargeRates);
+  const [portNotes, setPortNotes] = useState(initialPortNotes);
+  const [expandedPorts, setExpandedPorts] = useState<Set<string>>(new Set());
 
   function findOceanFreight(portId: string, destinationPortId: string, containerTypeId: string) {
     return oceanFreightRates.find(
@@ -52,6 +59,48 @@ export function RegionRatesEditor({
         r.destinationPortId === destinationPortId &&
         r.containerTypeId === containerTypeId,
     );
+  }
+
+  // Most recent updatedAt across a port's 6 rate cells - null when none of
+  // them has ever been saved yet.
+  function lastModifiedForPort(portId: string): string | null {
+    const dates = DESTINATION_PORTS.flatMap((dest) =>
+      containerTypes.map((ct) => findOceanFreight(portId, dest.portId, ct.id)?.updatedAt),
+    ).filter((d): d is string => Boolean(d));
+    if (dates.length === 0) return null;
+    return dates.reduce((a, b) => (a > b ? a : b));
+  }
+
+  function findPortNote(portId: string) {
+    return portNotes.find((n) => n.portId === portId);
+  }
+
+  function toggleExpanded(portId: string) {
+    setExpandedPorts((prev) => {
+      const next = new Set(prev);
+      if (next.has(portId)) next.delete(portId);
+      else next.add(portId);
+      return next;
+    });
+  }
+
+  async function savePortNote(portId: string, notes: string) {
+    const res = await fetch("/api/rates/port-notes", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ portId, notes }),
+    });
+    if (!res.ok) throw new Error("save failed");
+    const updated = (await res.json()) as PortCarrierNote;
+    setPortNotes((prev) => {
+      const idx = prev.findIndex((n) => n.portId === updated.portId);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = updated;
+        return next;
+      }
+      return [...prev, updated];
+    });
   }
 
   async function saveOceanFreight(
@@ -159,30 +208,74 @@ export function RegionRatesEditor({
                 </tr>
               </thead>
               <tbody>
-                {ports.map((port) => (
-                  <tr key={port.id} className="border-t border-[var(--border-subtle)]">
-                    <td className="py-2.5 pr-3">
-                      <p className="font-medium text-[var(--foreground)]">{port.nameKo}</p>
-                      <p className="text-[11px] text-[var(--muted)]">{port.name}</p>
-                    </td>
-                    {DESTINATION_PORTS.flatMap((dest) =>
-                      containerTypes.map((ct, i) => {
-                        const existing = findOceanFreight(port.id, dest.portId, ct.id);
-                        return (
-                          <td
-                            key={`${dest.portId}-${ct.id}`}
-                            className={`py-2 px-2 ${i === 0 ? "border-l border-[var(--border-subtle)]" : ""}`}
-                          >
-                            <RateCell
-                              value={existing?.rate ?? null}
-                              onSave={(v) => saveOceanFreight(port.id, dest.portId, ct.id, v)}
+                {ports.map((port) => {
+                  const expanded = expandedPorts.has(port.id);
+                  const lastModified = lastModifiedForPort(port.id);
+                  const note = findPortNote(port.id);
+                  const totalCols = 1 + DESTINATION_PORTS.length * containerTypes.length;
+                  return (
+                    <Fragment key={port.id}>
+                      <tr className="border-t border-[var(--border-subtle)]">
+                        <td className="py-2.5 pr-3">
+                          <div className="flex items-start justify-between gap-1.5">
+                            <div>
+                              <p className="font-medium text-[var(--foreground)]">{port.nameKo}</p>
+                              <p className="text-[11px] text-[var(--muted)]">{port.name}</p>
+                              {lastModified && (
+                                <p className="text-[10.5px] text-[var(--muted)] mt-0.5">
+                                  {formatDate(lastModified)} 수정
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => toggleExpanded(port.id)}
+                              className={`shrink-0 w-6 h-6 -mt-0.5 flex items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
+                                note?.notes
+                                  ? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+                                  : "text-[var(--muted)] hover:bg-[var(--sidebar-bg)]"
+                              }`}
+                              title="주요 선사 메모"
+                              aria-label="주요 선사 메모"
+                              aria-expanded={expanded}
+                            >
+                              <Ship size={13} />
+                            </button>
+                          </div>
+                        </td>
+                        {DESTINATION_PORTS.flatMap((dest) =>
+                          containerTypes.map((ct, i) => {
+                            const existing = findOceanFreight(port.id, dest.portId, ct.id);
+                            return (
+                              <td
+                                key={`${dest.portId}-${ct.id}`}
+                                className={`py-2 px-2 ${i === 0 ? "border-l border-[var(--border-subtle)]" : ""}`}
+                              >
+                                <RateCell
+                                  value={existing?.rate ?? null}
+                                  onSave={(v) => saveOceanFreight(port.id, dest.portId, ct.id, v)}
+                                />
+                              </td>
+                            );
+                          }),
+                        )}
+                      </tr>
+                      {expanded && (
+                        <tr className="border-t border-[var(--border-subtle)] bg-[var(--sidebar-bg)]/40">
+                          <td colSpan={totalCols} className="py-3 px-3">
+                            <p className="text-[11px] font-medium text-[var(--muted)] mb-1.5 flex items-center gap-1.5">
+                              <Ship size={12} /> 주요 선사
+                            </p>
+                            <PortNotesEditor
+                              value={note?.notes ?? ""}
+                              onSave={(notes) => savePortNote(port.id, notes)}
                             />
                           </td>
-                        );
-                      }),
-                    )}
-                  </tr>
-                ))}
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -195,6 +288,11 @@ export function RegionRatesEditor({
                 containerTypes={containerTypes}
                 findRate={findOceanFreight}
                 onSave={saveOceanFreight}
+                lastModified={lastModifiedForPort(port.id)}
+                note={findPortNote(port.id)}
+                expanded={expandedPorts.has(port.id)}
+                onToggleExpanded={() => toggleExpanded(port.id)}
+                onSaveNote={(notes) => savePortNote(port.id, notes)}
               />
             ))}
           </div>
@@ -283,11 +381,21 @@ function MobilePortRateCard({
   containerTypes,
   findRate,
   onSave,
+  lastModified,
+  note,
+  expanded,
+  onToggleExpanded,
+  onSaveNote,
 }: {
   port: Port;
   containerTypes: ContainerType[];
   findRate: (portId: string, destinationPortId: string, containerTypeId: string) => OceanFreightRate | undefined;
   onSave: (portId: string, destinationPortId: string, containerTypeId: string, rate: number) => Promise<void>;
+  lastModified: string | null;
+  note?: PortCarrierNote;
+  expanded: boolean;
+  onToggleExpanded: () => void;
+  onSaveNote: (notes: string) => Promise<void>;
 }) {
   return (
     <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] p-4">
@@ -295,8 +403,27 @@ function MobilePortRateCard({
         <div>
           <p className="font-medium text-[var(--foreground)] text-[14px]">{port.nameKo}</p>
           <p className="text-[11px] text-[var(--muted)]">{port.name}</p>
+          {lastModified && (
+            <p className="text-[10.5px] text-[var(--muted)] mt-0.5">{formatDate(lastModified)} 수정</p>
+          )}
         </div>
-        <Badge tone="neutral">USD</Badge>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Badge tone="neutral">USD</Badge>
+          <button
+            type="button"
+            onClick={onToggleExpanded}
+            className={`w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
+              note?.notes
+                ? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+                : "text-[var(--muted)] hover:bg-[var(--sidebar-bg)]"
+            }`}
+            title="주요 선사 메모"
+            aria-label="주요 선사 메모"
+            aria-expanded={expanded}
+          >
+            <Ship size={14} />
+          </button>
+        </div>
       </div>
       <div className="mt-3 space-y-3">
         {DESTINATION_PORTS.map((dest) => (
@@ -319,6 +446,59 @@ function MobilePortRateCard({
           </div>
         ))}
       </div>
+      {expanded && (
+        <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
+          <p className="text-[11px] font-medium text-[var(--muted)] mb-1.5 flex items-center gap-1.5">
+            <Ship size={12} /> 주요 선사
+          </p>
+          <PortNotesEditor value={note?.notes ?? ""} onSave={onSaveNote} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Free-text notes on which shipping carriers/lines are mainly used for a
+ * port - autosaves on blur, matching RateCell's own commit convention
+ * ("포커스를 벗어나면 자동 저장됩니다"), just for a text field instead of a
+ * numeric rate. */
+function PortNotesEditor({
+  value,
+  onSave,
+}: {
+  value: string;
+  onSave: (notes: string) => Promise<void>;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
+
+  async function commit() {
+    if (draft === value) return;
+    setState("saving");
+    try {
+      await onSave(draft);
+      setState("saved");
+      setTimeout(() => setState("idle"), 1200);
+    } catch {
+      setState("idle");
+    }
+  }
+
+  return (
+    <div className="relative">
+      <Textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        placeholder="예: 청도-인천 구간은 주로 SITC, 고려해운 이용"
+        className="text-[13px] min-h-[64px]"
+      />
+      {state === "saving" && (
+        <Loader2 size={13} className="animate-spin absolute right-2.5 top-2.5 text-[var(--muted)]" />
+      )}
+      {state === "saved" && (
+        <Check size={13} className="absolute right-2.5 top-2.5 text-[var(--success)]" />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import {
   getChargeRates,
   getContainerTypes,
   getOceanFreightRates,
+  getPortCarrierNotes,
   getPorts,
   getRegionById,
 } from "@/lib/data-store";
@@ -17,14 +18,16 @@ export default async function NorthChinaRatesPage() {
   const ports = getPorts().filter((p) => p.regionId === REGION_ID);
   const containerTypes = getContainerTypes();
   const chargeTypes = getApplicableLocalChargeTypes(REGION_ID, "FCL");
-  const [allOceanFreightRates, allChargeRates] = await Promise.all([
+  const [allOceanFreightRates, allChargeRates, allPortNotes] = await Promise.all([
     getOceanFreightRates(),
     getChargeRates(),
+    getPortCarrierNotes(),
   ]);
   const oceanFreightRates = allOceanFreightRates.filter((r) =>
     ports.some((p) => p.id === r.portId),
   );
   const chargeRates = allChargeRates.filter((r) => r.regionId === REGION_ID);
+  const portNotes = allPortNotes.filter((n) => ports.some((p) => p.id === n.portId));
 
   return (
     <div className="max-w-[1100px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
@@ -45,6 +48,7 @@ export default async function NorthChinaRatesPage() {
           chargeTypes={chargeTypes}
           initialOceanFreightRates={oceanFreightRates}
           initialChargeRates={chargeRates}
+          initialPortNotes={portNotes}
         />
       </div>
     </div>

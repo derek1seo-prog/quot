@@ -81,6 +81,15 @@ export interface OceanFreightRate {
   updatedAt: string;
 }
 
+/** Free-text note on which shipping carriers/lines are mainly used for a
+ * given origin port - admin-editable, one per port, shown collapsed by
+ * default in the rates table (src/components/rates/RegionRatesEditor.tsx). */
+export interface PortCarrierNote {
+  portId: string;
+  notes: string;
+  updatedAt: string;
+}
+
 /**
  * Surcharges and local charges are keyed by (regionId, chargeTypeId, containerTypeId).
  * Regions carry the rate, not individual ports - matching the source rate

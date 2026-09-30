@@ -28,6 +28,7 @@ import type {
   ExchangeRate,
   OceanFreightRate,
   Port,
+  PortCarrierNote,
   Quote,
   QuoteColumn,
   QuoteInput,
@@ -159,6 +160,10 @@ export async function getOceanFreightRates(): Promise<OceanFreightRate[]> {
   return normalizeOceanFreightRates(rates);
 }
 
+export async function getPortCarrierNotes(): Promise<PortCarrierNote[]> {
+  return readMutable<PortCarrierNote[]>("port-carrier-notes.json");
+}
+
 /** LSS is a brand-new USD-only charge type; some environments' mutable
  * store still have a stray KRW-labeled row for it, saved through the
  * rates admin UI before it had ever seen a registered LSS rate (its
@@ -254,6 +259,14 @@ export async function upsertOceanFreightRate(rate: OceanFreightRate): Promise<vo
   if (idx >= 0) rates[idx] = rate;
   else rates.push(rate);
   await writeMutable("ocean-freight-rates.json", rates);
+}
+
+export async function upsertPortCarrierNote(note: PortCarrierNote): Promise<void> {
+  const notes = await getPortCarrierNotes();
+  const idx = notes.findIndex((n) => n.portId === note.portId);
+  if (idx >= 0) notes[idx] = note;
+  else notes.push(note);
+  await writeMutable("port-carrier-notes.json", notes);
 }
 
 export async function upsertChargeRate(rate: ChargeRate): Promise<void> {
