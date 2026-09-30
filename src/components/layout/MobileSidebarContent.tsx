@@ -40,14 +40,18 @@ export function MobileSidebarContent({
                   href={item.href}
                   onClick={onNavigate}
                   className={cn(
-                    "flex items-center gap-2.5 px-3 h-10 rounded-[var(--radius-sm)] text-[14px] font-medium transition-colors animate-menu-item",
+                    "group flex items-center gap-2.5 px-3 h-10 rounded-[var(--radius-sm)] text-[14px] font-medium transition-colors animate-menu-item",
                     active
                       ? "bg-white text-[var(--foreground)] shadow-sm"
-                      : "text-[var(--muted)] active:bg-white/60",
+                      : "text-[var(--muted)] hover:bg-white/60 hover:text-[var(--foreground)] active:bg-white/60",
                   )}
                   style={{ animationDelay: `${delay}ms` }}
                 >
-                  <span className={active ? "text-[var(--accent)]" : ""}>
+                  <span
+                    className={`transition-transform duration-200 ${
+                      active ? "text-[var(--accent)]" : "group-hover:scale-110 group-hover:text-[var(--accent)]"
+                    }`}
+                  >
                     <NavIcon icon={item.icon} countryId={item.countryId} />
                   </span>
                   {item.label}
