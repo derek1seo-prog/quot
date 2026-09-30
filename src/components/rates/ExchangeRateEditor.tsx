@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
-import { formatDate, formatNumber } from "@/lib/format";
+import { formatDateTime, formatNumber } from "@/lib/format";
 import type { ExchangeRate } from "@/lib/types";
 import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -64,7 +64,7 @@ export function ExchangeRateEditor({ initial }: { initial: ExchangeRate }) {
           {saving ? "저장 중..." : saved ? "저장됨" : "환율 저장"}
         </Button>
       </div>
-      <p className="text-[12px] text-[var(--muted)] mt-3">마지막 업데이트: {formatDate(updatedAt)}</p>
+      <p className="text-[12px] text-[var(--muted)] mt-3">마지막 업데이트: {formatDateTime(updatedAt)}</p>
     </div>
   );
 }

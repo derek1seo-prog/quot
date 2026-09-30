@@ -19,7 +19,7 @@ export async function PUT(req: NextRequest) {
     base: "KRW" as const,
     rate: body.rate,
     asOf: body.asOf ?? new Date().toISOString().slice(0, 10),
-    updatedAt: new Date().toISOString().slice(0, 10),
+    updatedAt: new Date().toISOString(),
   };
   await upsertExchangeRate(updated);
   return NextResponse.json(updated);

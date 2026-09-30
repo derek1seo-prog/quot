@@ -29,3 +29,20 @@ export function formatDate(iso: string): string {
   if (Number.isNaN(d.getTime())) return iso;
   return d.toISOString().slice(0, 10);
 }
+
+/** Date + KST time (explicit timezone, not the server/browser's own) -
+ * consistent with why the exchange-rate cron route itself computes KST
+ * dates rather than trusting toISOString(). */
+export function formatDateTime(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const date = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(d);
+  const time = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
+  return `${date} ${time}`;
+}

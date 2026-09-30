@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     base: "KRW" as const,
     rate,
     asOf: today,
-    updatedAt: today,
+    updatedAt: new Date().toISOString(),
   };
   await upsertExchangeRate(updated);
 
