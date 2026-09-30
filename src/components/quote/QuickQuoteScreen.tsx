@@ -3,17 +3,20 @@ import { getCompany, getContainerTypes, getCustomers, getPorts, getRegions, getS
 
 /** Shared by "/" (shown to anyone not logged in as admin) and "/quick-quote"
  * (reachable by admins too, as its own nav tab, alongside the full wizard).
- * isAdmin is the ONLY thing that changes what's fetched/rendered - the
- * customer list is only ever fetched when true, so a non-admin session's
- * server-rendered payload never contains real customer data in the first
- * place, not just UI-hidden. */
+ * isAdmin is the ONLY thing that changes what's fetched/rendered - both the
+ * sales-rep roster (names/emails/phones) and the customer list are only
+ * ever fetched when true, so a non-admin session's server-rendered payload
+ * never contains real staff or customer data in the first place, not just
+ * UI-hidden (PublicQuoteForm's SalesRepCombobox/CustomerCombobox stay in
+ * the DOM even while collapsed for a guest, so an unconditionally-fetched
+ * roster would otherwise ship to every anonymous visitor's page source). */
 export async function QuickQuoteScreen({ isAdmin }: { isAdmin: boolean }) {
   const ports = getPorts();
   const originPorts = ports.filter((p) => p.role !== "DESTINATION");
   const destinationPorts = ports.filter((p) => p.role !== "ORIGIN");
 
   const [salesReps, customers] = await Promise.all([
-    getSalesReps(),
+    isAdmin ? getSalesReps() : Promise.resolve([]),
     isAdmin ? getCustomers() : Promise.resolve([]),
   ]);
 

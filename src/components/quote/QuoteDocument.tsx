@@ -90,6 +90,11 @@ export function QuoteDocument({
   const sealLine = input.preparedByPhone
     ? `${company.nameKo ?? company.name}   TEL) ${input.preparedByPhone}`
     : (company.sealText ?? company.name);
+  // No rep assigned (a guest-produced quote) -> displayEmail is blank, and
+  // there's no company-wide fallback email anymore - join only the parts
+  // that actually exist so a missing email never leaves a dangling "·"
+  // separator behind.
+  const emailWebsiteLine = [displayEmail, company.website].filter(Boolean).join("  ·  ");
 
   const oceanFreightRow = result.chargeCatalog.find((c) => c.category === "OCEAN_FREIGHT");
   // EXW_LOCAL (LSS, EXW LOCAL CHARGE) gets its own "현지 부대비용" category
@@ -169,10 +174,7 @@ export function QuoteDocument({
                 TEL {company.tel}
                 {company.fax ? `  ·  FAX ${company.fax}` : ""}
               </p>
-              <p className="text-[12px] text-[var(--muted)]">
-                {displayEmail}
-                {company.website ? `  ·  ${company.website}` : ""}
-              </p>
+              <p className="text-[12px] text-[var(--muted)]">{emailWebsiteLine}</p>
             </div>
             <div className="text-left sm:text-right shrink-0">
               <p className="text-[12px] uppercase tracking-wide text-[var(--muted)] font-medium">
@@ -204,7 +206,8 @@ export function QuoteDocument({
             )}
           </p>
           <p>
-            발신 : <span className="font-medium">{company.nameKo ?? company.name}</span> / {input.preparedBy}
+            발신 : <span className="font-medium">{company.nameKo ?? company.name}</span>
+            {input.preparedBy ? ` / ${input.preparedBy}` : ""}
           </p>
         </div>
 
@@ -366,9 +369,7 @@ export function QuoteDocument({
               <p>
                 TEL {company.tel}
                 {company.fax ? `  ·  FAX ${company.fax}` : ""}
-                {"  ·  "}
-                {displayEmail}
-                {company.website ? `  ·  ${company.website}` : ""}
+                {emailWebsiteLine ? `  ·  ${emailWebsiteLine}` : ""}
               </p>
               <p className="mt-1 font-medium text-[var(--foreground)]">{sealLine}</p>
             </>
