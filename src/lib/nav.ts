@@ -16,6 +16,12 @@ export interface NavItemDef {
    * 관리 already groups regions by country and more countries keep getting
    * added there. */
   countryId?: string;
+  /** Renders a small, muted "구버전" tag next to the label - used only
+   * for 새 견적 만들기 now that 빠른 견적 만들기 is the recommended path.
+   * Deliberately subtle (tone="neutral", same bg token as the sidebar
+   * itself) - a loud permanent nav marker was tried earlier this session
+   * and reverted for feeling too "selected." */
+  legacy?: boolean;
 }
 
 export interface NavSectionDef {
@@ -33,7 +39,7 @@ export const navSections: NavSectionDef[] = [
     title: "견적 관리",
     items: [
       { href: "/quick-quote", label: "빠른 견적 만들기", icon: "quick-quote" },
-      { href: "/quotes/new", label: "새 견적 만들기", icon: "new-quote" },
+      { href: "/quotes/new", label: "새 견적 만들기", icon: "new-quote", legacy: true },
       { href: "/quotes", label: "견적 목록", icon: "quote-list" },
     ],
   },

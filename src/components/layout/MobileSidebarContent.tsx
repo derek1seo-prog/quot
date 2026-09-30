@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import { getActiveHref, getNavSections, type Role } from "@/lib/nav";
 import Link from "next/link";
@@ -54,7 +55,14 @@ export function MobileSidebarContent({
                   >
                     <NavIcon icon={item.icon} countryId={item.countryId} />
                   </span>
-                  {item.label}
+                  <span className="inline-flex items-center gap-1.5">
+                    {item.label}
+                    {item.legacy && (
+                      <Badge tone="neutral" className="px-1.5 py-0 text-[10px] font-normal">
+                        구버전
+                      </Badge>
+                    )}
+                  </span>
                 </Link>
               );
             })}
