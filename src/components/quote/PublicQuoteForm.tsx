@@ -94,6 +94,7 @@ export function PublicQuoteForm({
   const [quickCustomerName, setQuickCustomerName] = useState("");
   const [quickContactName, setQuickContactName] = useState(DEFAULT_QUICK_CONTACT_NAME);
   const [quickSalesRepId, setQuickSalesRepId] = useState(DEFAULT_SALES_REP_ID);
+  const [quickValidUntil, setQuickValidUntil] = useState(endOfMonthIso(TODAY));
   // Admin sessions can actually use this editor (auto-fill + rate
   // resolution), so it starts already open for them rather than making
   // every visit start with an extra click just to reach it - isAdmin
@@ -162,7 +163,7 @@ export function PublicQuoteForm({
       preparedByEmail: mode === "quick" ? quickRep?.email : preparedByEmail,
       preparedByPhone: mode === "quick" ? quickRep?.phone : preparedByPhone,
       quoteDate: TODAY,
-      validUntil: endOfMonthIso(TODAY),
+      validUntil: mode === "quick" ? quickValidUntil : endOfMonthIso(TODAY),
       transportMode: "FCL",
       originCountryId: originPort?.countryId ?? "",
       originPortId,
@@ -347,7 +348,7 @@ export function PublicQuoteForm({
                   <p className="text-[13px] font-medium text-[var(--foreground)] mb-3">
                     견적서 수신/발신 정보
                   </p>
-                  <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="grid sm:grid-cols-4 gap-4">
                     <FieldGroup>
                       <FieldLabel>화주</FieldLabel>
                       {isAdmin ? (
@@ -387,6 +388,14 @@ export function PublicQuoteForm({
                     <FieldGroup>
                       <FieldLabel>견적 담당자 (발신)</FieldLabel>
                       <SalesRepCombobox value={quickSalesRepId} onChange={setQuickSalesRepId} options={salesReps} />
+                    </FieldGroup>
+                    <FieldGroup>
+                      <FieldLabel>유효기간</FieldLabel>
+                      <Input
+                        type="date"
+                        value={quickValidUntil}
+                        onChange={(e) => setQuickValidUntil(e.target.value)}
+                      />
                     </FieldGroup>
                   </div>
                 </div>

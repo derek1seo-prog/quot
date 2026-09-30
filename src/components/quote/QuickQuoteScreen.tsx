@@ -23,7 +23,9 @@ export async function QuickQuoteScreen({ isAdmin }: { isAdmin: boolean }) {
         <p className="text-[13px] font-medium text-[var(--accent)] mb-2">빠른 견적 만들기</p>
         <h1 className="text-[28px] font-semibold tracking-tight mb-1">견적 조회</h1>
         <p className="text-[13px] text-[var(--muted)] mb-8">
-          출발지와 도착지, 컨테이너 타입을 선택하면 견적을 체험해볼 수 있습니다.
+          {isAdmin
+            ? "출발지와 도착지, 컨테이너 타입을 선택하면 운임과 부대비용이 자동으로 계산되어 바로 인쇄할 수 있습니다."
+            : "출발지와 도착지, 컨테이너 타입을 선택하면 견적을 체험해볼 수 있습니다."}
         </p>
       </div>
 
