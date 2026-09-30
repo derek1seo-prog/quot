@@ -7,6 +7,13 @@ import { createPortal } from "react-dom";
 
 const DESTINATION_ORDER = ["incheon", "busan", "pyeongtaek"] as const;
 
+// Column widths as percentages of the table (sums to 100) - table-fixed
+// makes these exact regardless of content, so all six rate columns stay
+// identical width instead of the browser's auto layout redistributing
+// space unevenly between them (same fix as RegionRatesEditor.tsx).
+const portColPct = 25;
+const rateColPct = 12.5; // x6 destination/size columns = 75
+
 // Sequential blue ramp (dataviz skill's reference palette, steps 150-650) -
 // bucket 3 (#2a78d6) sits almost exactly on this app's own --accent, so it
 // reads as cohesive rather than a foreign palette dropped in. Ink switches
@@ -124,7 +131,13 @@ export function RateHeatmap({
       </div>
 
       <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--border-subtle)]">
-        <table className="w-full min-w-[720px] border-collapse text-[13px]">
+        <table className="w-full table-fixed min-w-[720px] border-collapse text-[13px]">
+          <colgroup>
+            <col style={{ width: `${portColPct}%` }} />
+            {DESTINATION_ORDER.flatMap((destId) =>
+              containerTypes.map((ct) => <col key={`${destId}-${ct.id}`} style={{ width: `${rateColPct}%` }} />),
+            )}
+          </colgroup>
           <thead>
             <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide bg-[var(--sidebar-bg)]">
               <th className="text-left py-2.5 px-3 font-medium whitespace-nowrap">항구</th>
