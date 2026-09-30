@@ -42,6 +42,7 @@ button:not(:disabled),
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 body {
