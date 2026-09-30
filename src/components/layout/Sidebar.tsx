@@ -57,16 +57,17 @@ export function Sidebar({ role }: { role: Role }) {
                     href={item.href}
                     ref={active ? activeRef : undefined}
                     className={cn(
-                      "relative z-10 flex items-center gap-2.5 px-3 h-9 rounded-[var(--radius-sm)] text-[13.5px] font-medium transition-colors",
-                      item.highlight && "border border-[var(--accent)]/40",
+                      "group relative z-10 flex items-center gap-2.5 px-3 h-9 rounded-[var(--radius-sm)] text-[13.5px] font-medium transition-colors",
                       active
                         ? "text-[var(--foreground)]"
-                        : item.highlight
-                          ? "bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent-soft)]"
-                          : "text-[var(--muted)] hover:bg-white/60 hover:text-[var(--foreground)]",
+                        : "text-[var(--muted)] hover:bg-white/60 hover:text-[var(--foreground)]",
                     )}
                   >
-                    <span className={active || item.highlight ? "text-[var(--accent)]" : ""}>
+                    <span
+                      className={`transition-transform duration-200 ${
+                        active ? "text-[var(--accent)]" : "group-hover:scale-110 group-hover:text-[var(--accent)]"
+                      }`}
+                    >
                       <NavIcon icon={item.icon} countryId={item.countryId} />
                     </span>
                     {item.label}

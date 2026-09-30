@@ -41,16 +41,13 @@ export function MobileSidebarContent({
                   onClick={onNavigate}
                   className={cn(
                     "flex items-center gap-2.5 px-3 h-10 rounded-[var(--radius-sm)] text-[14px] font-medium transition-colors animate-menu-item",
-                    item.highlight && "border border-[var(--accent)]/40",
                     active
                       ? "bg-white text-[var(--foreground)] shadow-sm"
-                      : item.highlight
-                        ? "bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent-soft)]"
-                        : "text-[var(--muted)] active:bg-white/60",
+                      : "text-[var(--muted)] active:bg-white/60",
                   )}
                   style={{ animationDelay: `${delay}ms` }}
                 >
-                  <span className={active || item.highlight ? "text-[var(--accent)]" : ""}>
+                  <span className={active ? "text-[var(--accent)]" : ""}>
                     <NavIcon icon={item.icon} countryId={item.countryId} />
                   </span>
                   {item.label}
