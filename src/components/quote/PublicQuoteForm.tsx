@@ -432,7 +432,7 @@ export function PublicQuoteForm({
                       key={ct.id}
                       type="button"
                       onClick={() => setContainerTypeId(ct.id)}
-                      className={`flex-1 h-10 rounded-[var(--radius-sm)] border-2 text-[13.5px] font-semibold transition-colors ${
+                      className={`flex-1 h-10 rounded-[var(--radius-sm)] border-2 text-[13.5px] font-semibold transition-toggle-select ${
                         selected
                           ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
                           : "border-[var(--border)] text-[var(--foreground)] hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40"

@@ -296,6 +296,18 @@ input[type="number"] {
     shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) 1;
 }
 
+/* Container-type toggle (PublicQuoteForm.tsx, quotes/new/page.tsx) - the
+ * accent border fills in a beat after the background/text tint commits,
+ * instead of every property snapping together on one clock, so a
+ * selection reads as a considered two-stage reveal rather than an
+ * instant flat swap. */
+.transition-toggle-select {
+  transition-property: background-color, color, border-color;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-duration: 150ms, 150ms, 320ms;
+  transition-delay: 0ms, 0ms, 90ms;
+}
+
 /* Correct-PIN success moment (UnlockForm.tsx) - checkmark pops in with
  * the same overshoot curve as the brand-mark spin (this is the other
  * intentionally playful spot in the app), the two text lines ease up
@@ -395,5 +407,9 @@ input[type="number"] {
   .animate-success-check,
   .animate-success-progress {
     animation: none;
+  }
+
+  .transition-toggle-select {
+    transition: none;
   }
 }
