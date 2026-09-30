@@ -1,20 +1,21 @@
 "use client";
 
 import { BrandMark } from "@/components/layout/BrandMark";
+import { Button } from "@/components/ui/Button";
+import { Eye, EyeOff, Loader2, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-const PIN_LENGTH = 4;
-
 export function UnlockForm({ next }: { next: string }) {
   const router = useRouter();
-  const [digits, setDigits] = useState<string[]>(Array(PIN_LENGTH).fill(""));
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<"idle" | "checking" | "success" | "error" | "locked">(
     "idle",
   );
   const [lockSeconds, setLockSeconds] = useState(0);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Ticks the lockout countdown down to 0, then unlocks the form again -
   // matches "제한이 해제되면 정상적으로 로그인을 시도할 수 있도록".
@@ -28,13 +29,14 @@ export function UnlockForm({ next }: { next: string }) {
     return () => clearTimeout(timer);
   }, [status, lockSeconds]);
 
-  async function submit(pin: string) {
+  async function submit() {
+    if (!password || status === "checking" || status === "locked") return;
     setStatus("checking");
     try {
       const res = await fetch("/api/unlock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: pin }),
+        body: JSON.stringify({ password }),
       });
       if (res.ok) {
         setStatus("success");
@@ -50,36 +52,20 @@ export function UnlockForm({ next }: { next: string }) {
       if (res.status === 429 && body?.reason === "rate_limited") {
         setStatus("locked");
         setLockSeconds(body.retryAfterSec ?? 60);
-        setDigits(Array(PIN_LENGTH).fill(""));
+        setPassword("");
         return;
       }
     } catch {
-      // fall through to the same error state as a wrong PIN
+      // fall through to the same error state as a wrong password
     }
     setStatus("error");
-    setDigits(Array(PIN_LENGTH).fill(""));
-    inputRefs.current[0]?.focus();
+    setPassword("");
+    inputRef.current?.focus();
   }
 
-  function handleChange(index: number, raw: string) {
-    const value = raw.replace(/\D/g, "").slice(-1);
-    const updated = [...digits];
-    updated[index] = value;
-    setDigits(updated);
-    setStatus("idle");
-
-    if (value && index < PIN_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-    if (value && index === PIN_LENGTH - 1 && updated.every((d) => d)) {
-      submit(updated.join(""));
-    }
-  }
-
-  function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    submit();
   }
 
   return (
@@ -125,31 +111,59 @@ export function UnlockForm({ next }: { next: string }) {
               이 사이트는 비공개로 운영됩니다.
             </p>
 
-            <div className="mt-6 flex gap-2.5">
-              {digits.map((digit, i) => (
+            <form onSubmit={handleSubmit} className="mt-6 w-full flex flex-col items-center gap-3">
+              <div className="relative w-full">
+                <span
+                  className={`pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${
+                    status === "error" || status === "locked" ? "text-[var(--danger)]" : "text-[var(--muted)]"
+                  }`}
+                >
+                  {status === "checking" ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Lock size={16} />
+                  )}
+                </span>
                 <input
-                  key={i}
-                  ref={(el) => {
-                    inputRefs.current[i] = el;
-                  }}
-                  type="text"
-                  inputMode="numeric"
+                  ref={inputRef}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="off"
-                  autoFocus={i === 0}
-                  maxLength={1}
-                  value={digit}
+                  autoFocus
+                  value={password}
                   disabled={status === "checking" || status === "locked"}
-                  onChange={(e) => handleChange(i, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(i, e)}
-                  aria-label={`접근 코드 ${i + 1}번째 자리`}
-                  className={`w-12 h-14 text-center text-[20px] font-semibold rounded-[var(--radius-sm)] border bg-white text-[var(--foreground)] outline-none transition-shadow focus:ring-4 focus:ring-[var(--accent-soft)] disabled:opacity-50 ${
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setStatus("idle");
+                  }}
+                  placeholder="비밀번호"
+                  aria-label="비밀번호"
+                  className={`w-full h-12 pl-10 pr-10 rounded-[var(--radius-md)] border bg-white text-[15px] text-[var(--foreground)] outline-none transition-all duration-200 focus:ring-4 focus:ring-[var(--accent-soft)] focus:scale-[1.01] disabled:opacity-50 motion-reduce:transition-none ${
                     status === "error" || status === "locked"
                       ? "border-[var(--danger)]"
                       : "border-[var(--border)] focus:border-[var(--accent)]"
                   }`}
                 />
-              ))}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  tabIndex={-1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                  aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 표시"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={!password || status === "checking" || status === "locked"}
+                icon={status === "checking" ? <Loader2 size={16} className="animate-spin" /> : undefined}
+              >
+                {status === "checking" ? "확인 중..." : "입장하기"}
+              </Button>
+            </form>
 
             <p
               className={`mt-4 h-4 text-[12.5px] font-medium text-[var(--danger)] transition-opacity duration-200 ${
@@ -158,7 +172,7 @@ export function UnlockForm({ next }: { next: string }) {
             >
               {status === "locked"
                 ? `너무 많이 시도했습니다. ${lockSeconds}초 후 다시 시도해주세요.`
-                : "코드가 올바르지 않습니다."}
+                : "비밀번호가 올바르지 않습니다."}
             </p>
 
             <Link
