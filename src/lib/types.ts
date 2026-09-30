@@ -122,7 +122,11 @@ export interface CompanyInfo {
   addressLines: string[];
   tel: string;
   fax?: string;
-  email: string;
+  // No single "company" email - each quote's letterhead/footer email comes
+  // from its assigned sales rep (QuoteInput.preparedByEmail); this stays
+  // optional only as a legacy fallback for quotes saved before that field
+  // existed (see QuoteDocument.tsx's displayEmail).
+  email?: string;
   website?: string;
   sealText?: string; // signature line at the bottom of the quote letter
 }

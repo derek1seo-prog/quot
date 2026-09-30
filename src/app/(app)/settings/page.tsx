@@ -54,10 +54,6 @@ export default async function SettingsPage() {
               <dd className="mt-0.5">{company.addressLines.join(", ")}</dd>
             </div>
             <div>
-              <dt className="text-[11px] uppercase tracking-wide text-[var(--muted)] font-medium">이메일</dt>
-              <dd className="mt-0.5">{company.email}</dd>
-            </div>
-            <div>
               <dt className="text-[11px] uppercase tracking-wide text-[var(--muted)] font-medium">웹사이트</dt>
               <dd className="mt-0.5">{company.website}</dd>
             </div>
