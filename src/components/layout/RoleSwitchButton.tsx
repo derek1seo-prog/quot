@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/nav";
 import { LogOut, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -43,11 +44,42 @@ export function RoleSwitchButton({ role }: { role: Role }) {
     );
   }
   if (role === "guest") {
-    return (
-      <Link href="/unlock" title="관리자 로그인" aria-label="관리자 로그인" className={buttonClass}>
-        <ShieldCheck size={16} />
-      </Link>
-    );
+    return <AdminLoginButton />;
   }
   return null;
+}
+
+/** Slightly more noticeable than a plain icon button (accent-tinted, not
+ * muted) since this is the one action a would-be admin actually needs to
+ * find - and a hover/focus tooltip, same pattern as BrandMark's own
+ * speech-bubble, so its purpose reads at a glance without a label taking
+ * up permanent space next to it. Anchored to the right edge (`right-0`),
+ * not left like BrandMark's - this button sits at the right end of its
+ * row in both the sidebar header and the mobile top bar, so a
+ * left-anchored bubble would run off the edge instead of BrandMark's
+ * near-left-edge case, which grows safely rightward. */
+function AdminLoginButton() {
+  const [hovering, setHovering] = useState(false);
+  return (
+    <span className="relative inline-flex">
+      <Link
+        href="/unlock"
+        aria-label="관리자 로그인"
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+        onFocus={() => setHovering(true)}
+        onBlur={() => setHovering(false)}
+        className={cn(buttonClass, "text-[var(--accent)] hover:bg-[var(--accent-soft)]")}
+      >
+        <ShieldCheck size={16} />
+      </Link>
+      <span
+        className={`pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-full bg-[var(--foreground)] px-2.5 py-1 text-[11px] font-medium text-white shadow-lg transition-all duration-200 motion-reduce:transition-none ${
+          hovering ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+        }`}
+      >
+        관리자 로그인하기
+      </span>
+    </span>
+  );
 }
