@@ -47,19 +47,23 @@ export function RateHeatmap({
   destinationPortNames: Record<string, string>;
   containerTypes: ContainerType[];
 }) {
-  // Flipping the tooltip's open direction per-row (tried previously) reads
-  // as jumpy, and a short 2-row table still has no direction that fully
-  // avoids the region table's own overflow-x-auto clipping its top/bottom
-  // edge either way. Simplest and most robust: render the tooltip through
-  // a portal straight onto document.body, positioned with fixed coordinates
+  // Flipping the tooltip's open direction per-row based on the region
+  // table's own container (tried previously) reads as jumpy, and a short
+  // 2-row table still had no direction that fully avoided the container's
+  // own overflow-x-auto clipping either way. Render the tooltip through a
+  // portal straight onto document.body, positioned with fixed coordinates
   // computed from the cell's own real position - this takes it completely
-  // outside the table's clipping container, so it can never be cut off
-  // regardless of which row is hovered, and it always opens in the exact
-  // same direction (below the cell) for a consistent, predictable feel.
+  // outside the table's clipping container, so it can never be cut off by
+  // it regardless of which row is hovered. It always opens ABOVE the cell
+  // (reads better than below) except in the one case that would otherwise
+  // push it off the very top of the visible browser window - unlike being
+  // clipped by the table's own container, that's not something scrolling
+  // could ever reveal, so it's the one case still worth checking for.
   interface TooltipState {
     cellKey: string;
     x: number;
-    y: number;
+    verticalAnchor: "top" | "bottom";
+    verticalValue: number;
     portNameKo: string;
     destLabel: string;
     ctLabel: string;
@@ -70,8 +74,12 @@ export function RateHeatmap({
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   const TOOLTIP_HALF_WIDTH = 104; // half of w-52 (208px)
+  const TOOLTIP_HEIGHT_ESTIMATE = 130;
   const VIEWPORT_MARGIN = 8;
-  function activateCell(target: HTMLElement, data: Omit<TooltipState, "x" | "y">) {
+  function activateCell(
+    target: HTMLElement,
+    data: Omit<TooltipState, "x" | "verticalAnchor" | "verticalValue">,
+  ) {
     const rect = target.getBoundingClientRect();
     // Center under the cell by default, but slide inward on a narrow
     // viewport so it never runs off the left/right edge of the screen -
@@ -81,7 +89,11 @@ export function RateHeatmap({
       Math.max(idealX, TOOLTIP_HALF_WIDTH + VIEWPORT_MARGIN),
       window.innerWidth - TOOLTIP_HALF_WIDTH - VIEWPORT_MARGIN,
     );
-    setTooltip({ ...data, x, y: rect.bottom + 8 });
+    const hasRoomAbove = rect.top >= TOOLTIP_HEIGHT_ESTIMATE + VIEWPORT_MARGIN;
+    const vertical = hasRoomAbove
+      ? { verticalAnchor: "bottom" as const, verticalValue: window.innerHeight - rect.top + 8 }
+      : { verticalAnchor: "top" as const, verticalValue: rect.bottom + 8 };
+    setTooltip({ ...data, x, ...vertical });
   }
   function deactivate() {
     setTooltip(null);
@@ -209,7 +221,10 @@ export function RateHeatmap({
           <div
             aria-hidden
             className="pointer-events-none fixed z-50 w-52 -translate-x-1/2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white p-3 text-left shadow-lg animate-dropdown-panel"
-            style={{ left: tooltip.x, top: tooltip.y }}
+            style={{
+              left: tooltip.x,
+              [tooltip.verticalAnchor]: tooltip.verticalValue,
+            }}
           >
             <p className="text-[11.5px] font-semibold text-[var(--foreground)] mb-1.5 whitespace-normal">
               {tooltip.portNameKo} → {tooltip.destLabel} · {tooltip.ctLabel}
