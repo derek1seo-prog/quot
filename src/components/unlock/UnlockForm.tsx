@@ -71,8 +71,8 @@ export function UnlockForm({ next }: { next: string }) {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--background)]">
       <div
-        className={`w-full max-w-[360px] bg-[var(--surface)] border border-[var(--border-subtle)] rounded-[var(--radius-lg)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-8 flex flex-col items-center animate-dashboard-fade-up ${
-          status === "error" || status === "locked" ? "animate-shake" : ""
+        className={`w-full max-w-[360px] bg-[var(--surface)] border border-[var(--border-subtle)] rounded-[var(--radius-lg)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-8 flex flex-col items-center ${
+          status === "error" || status === "locked" ? "animate-dashboard-fade-up-shake" : "animate-dashboard-fade-up"
         }`}
       >
         <BrandMark imageClassName="w-12 h-12" />

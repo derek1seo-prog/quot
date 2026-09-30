@@ -281,6 +281,21 @@ input[type="number"] {
   animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) 1;
 }
 
+/* Used instead of stacking .animate-dashboard-fade-up + .animate-shake
+ * (UnlockForm.tsx) - both classes set the same `animation` shorthand, so
+ * combining them let one silently override the other instead of running
+ * together, and removing .animate-shake later made dashboard-fade-up's
+ * name disappear-then-reappear, replaying the whole entrance animation
+ * and reading as a page reload. Listing both animations in one
+ * comma-separated value keeps dashboard-fade-up's name continuously
+ * present (already finished + held via fill:both) while shake plays on
+ * top of it, so removing this class later doesn't retrigger anything. */
+.animate-dashboard-fade-up-shake {
+  animation:
+    dashboard-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both,
+    shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) 1;
+}
+
 /* Correct-PIN success moment (UnlockForm.tsx) - checkmark pops in with
  * the same overshoot curve as the brand-mark spin (this is the other
  * intentionally playful spot in the app), the two text lines ease up
@@ -323,6 +338,7 @@ input[type="number"] {
   .animate-modal-panel,
   .animate-dropdown-panel,
   .animate-dashboard-fade-up,
+  .animate-dashboard-fade-up-shake,
   .animate-brand-spin,
   .animate-shake,
   .animate-success-pop,
