@@ -47,6 +47,20 @@ export function RateHeatmap({
   containerTypes: ContainerType[];
 }) {
   const [activeCell, setActiveCell] = useState<string | null>(null);
+  const [openDownward, setOpenDownward] = useState(false);
+
+  // The tooltip opens upward by default (bottom-full), but a cell near the
+  // top of its own region's table (little/no room above it before hitting
+  // the container's own top edge) would get its tooltip visually clipped
+  // there instead - measure real available space at the moment of hover/
+  // focus and flip to opening downward when there isn't enough of it,
+  // mirroring the same open-direction heuristic already used for
+  // SalesRepCombobox's dropdown.
+  const TOOLTIP_HEIGHT_ESTIMATE = 150;
+  function activateCell(cellKey: string, target: HTMLElement) {
+    setOpenDownward(target.getBoundingClientRect().top < TOOLTIP_HEIGHT_ESTIMATE);
+    setActiveCell(cellKey);
+  }
 
   const totals = rows
     .flatMap((r) => r.cells)
@@ -129,9 +143,9 @@ export function RateHeatmap({
                       key={cellKey}
                       tabIndex={0}
                       aria-label={tooltipLabel}
-                      onMouseEnter={() => setActiveCell(cellKey)}
+                      onMouseEnter={(e) => activateCell(cellKey, e.currentTarget)}
                       onMouseLeave={() => setActiveCell(null)}
-                      onFocus={() => setActiveCell(cellKey)}
+                      onFocus={(e) => activateCell(cellKey, e.currentTarget)}
                       onBlur={() => setActiveCell(null)}
                       className={`relative py-2.5 px-3 text-center cursor-default outline-none whitespace-nowrap transition-shadow duration-150 ${
                         isFirstOfGroup ? "border-l border-[var(--border-subtle)]" : ""
@@ -150,7 +164,9 @@ export function RateHeatmap({
                       {active && (
                         <div
                           aria-hidden
-                          className="pointer-events-none absolute left-1/2 bottom-full z-20 mb-2 w-52 -translate-x-1/2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white p-3 text-left shadow-lg animate-dropdown-panel"
+                          className={`pointer-events-none absolute left-1/2 z-20 w-52 -translate-x-1/2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white p-3 text-left shadow-lg animate-dropdown-panel ${
+                            openDownward ? "top-full mt-2" : "bottom-full mb-2"
+                          }`}
                         >
                           <p className="text-[11.5px] font-semibold text-[var(--foreground)] mb-1.5 whitespace-normal">
                             {row.port.nameKo} → {destLabel} · {ctLabel}
