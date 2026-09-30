@@ -8,6 +8,7 @@ import { CustomerCombobox } from "./CustomerCombobox";
 import { IncotermsSelect } from "./IncotermsSelect";
 import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
+import { QuoteResultSkeleton } from "./QuoteResultSkeleton";
 import { SalesRepCombobox } from "./SalesRepCombobox";
 import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
 import { useDebouncedValue } from "@/lib/hooks";
@@ -465,11 +466,7 @@ export function PublicQuoteForm({
         </div>
       )}
 
-      {calculating && (
-        <div className="flex items-center justify-center gap-2 text-[var(--muted)] py-16">
-          <Loader2 className="animate-spin" size={18} /> 견적을 계산하는 중...
-        </div>
-      )}
+      {calculating && <QuoteResultSkeleton />}
 
       {!calculating && error && (
         <Card className="p-8 text-center">

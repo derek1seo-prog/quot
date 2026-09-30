@@ -7,6 +7,7 @@ import { CustomerCombobox } from "@/components/quote/CustomerCombobox";
 import { IncotermsSelect } from "@/components/quote/IncotermsSelect";
 import { PortCombobox, type PortOption } from "@/components/quote/PortCombobox";
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
+import { QuoteResultSkeleton } from "@/components/quote/QuoteResultSkeleton";
 import { SalesRepCombobox } from "@/components/quote/SalesRepCombobox";
 import { Step, StepIndicator } from "@/components/quote/StepIndicator";
 import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
@@ -480,11 +481,7 @@ export default function NewQuotePage() {
 
       {step === 3 && (
         <div>
-          {calculating && (
-            <div className="flex items-center justify-center gap-2 text-[var(--muted)] py-20">
-              <Loader2 className="animate-spin" size={18} /> 견적을 계산하는 중...
-            </div>
-          )}
+          {calculating && <QuoteResultSkeleton />}
 
           {!calculating && calcError && (
             <Card className="p-8 text-center">
