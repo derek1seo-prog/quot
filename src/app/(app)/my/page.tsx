@@ -7,7 +7,7 @@ import {
   getPorts,
   getQuotes,
   getRegions,
-  getSalesReps,
+  getSalesRepById,
 } from "@/lib/data-store";
 import { DEFAULT_SALES_REP_FALLBACK_NAME, DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -35,8 +35,7 @@ export default async function MyQuotesPage() {
   const allQuotes = await getQuotes();
   const myQuotes = allQuotes.filter((q) => q.input.customerId === customer.id);
 
-  const salesReps = await getSalesReps();
-  const defaultRep = salesReps.find((r) => r.id === DEFAULT_SALES_REP_ID);
+  const defaultRep = await getSalesRepById(DEFAULT_SALES_REP_ID);
 
   return (
     <div className="max-w-[1000px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">

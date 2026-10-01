@@ -27,6 +27,11 @@ const sizeClasses: Record<Size, string> = {
   lg: "h-12 px-6 text-[15px] rounded-[var(--radius-md)] gap-2",
 };
 
+// Shared by Button and LinkButton - Button alone adds the disabled:*
+// classes below, since a <Link> has no disabled state to style for.
+const baseButtonClass =
+  "inline-flex items-center justify-center font-medium transition-all duration-200 ease-out active:scale-[0.98] whitespace-nowrap cursor-pointer motion-reduce:transition-none";
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
@@ -44,7 +49,8 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center font-medium transition-all duration-200 ease-out active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap cursor-pointer motion-reduce:transition-none",
+        baseButtonClass,
+        "disabled:opacity-40 disabled:pointer-events-none",
         variantClasses[variant],
         sizeClasses[size],
         className,
@@ -80,12 +86,7 @@ export function LinkButton({
     <Link
       href={href}
       style={style}
-      className={cn(
-        "inline-flex items-center justify-center font-medium transition-all duration-200 ease-out active:scale-[0.98] whitespace-nowrap cursor-pointer motion-reduce:transition-none",
-        variantClasses[variant],
-        sizeClasses[size],
-        className,
-      )}
+      className={cn(baseButtonClass, variantClasses[variant], sizeClasses[size], className)}
     >
       {icon}
       {children}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPortCarrierNotes, upsertPortCarrierNote } from "@/lib/data-store";
+import { todayIso } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
 import type { PortCarrierNote } from "@/lib/types";
 
@@ -17,7 +18,7 @@ export async function PUT(req: NextRequest) {
   const updated: PortCarrierNote = {
     portId: body.portId,
     notes: body.notes,
-    updatedAt: new Date().toISOString().slice(0, 10),
+    updatedAt: todayIso(),
   };
   await upsertPortCarrierNote(updated);
   return NextResponse.json(updated);

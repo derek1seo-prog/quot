@@ -1,4 +1,5 @@
 import { getContainerTypes, getPorts } from "./data-store";
+import { todayIso } from "./format";
 import { calculateQuote } from "./quote-engine";
 import type { Port } from "./types";
 
@@ -7,7 +8,7 @@ import type { Port } from "./types";
 // are a small, stable, hand-maintained list of real destination ports.
 const OVERVIEW_DESTINATIONS = ["incheon", "busan", "pyeongtaek"] as const;
 
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = todayIso();
 
 export interface RateOverviewCell {
   destinationPortId: string;

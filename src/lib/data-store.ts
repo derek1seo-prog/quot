@@ -181,7 +181,7 @@ export async function getChargeRates(): Promise<ChargeRate[]> {
   return normalizeChargeRates(rates);
 }
 
-export async function getExchangeRates(): Promise<ExchangeRate[]> {
+async function getExchangeRates(): Promise<ExchangeRate[]> {
   return readMutable<ExchangeRate[]>("exchange-rates.json");
 }
 

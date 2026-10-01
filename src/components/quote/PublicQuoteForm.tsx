@@ -11,6 +11,7 @@ import { QuoteDocument } from "./QuoteDocument";
 import { QuoteResultSkeleton } from "./QuoteResultSkeleton";
 import { SalesRepCombobox } from "./SalesRepCombobox";
 import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
+import { endOfMonthIso, todayIso } from "@/lib/format";
 import { useDebouncedValue } from "@/lib/hooks";
 import type {
   CompanyInfo,
@@ -26,7 +27,7 @@ import { Loader2, Pencil, Printer, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = todayIso();
 
 // Quick-quote mode has no real customer behind it unless isAdmin (an
 // authenticated admin session resolves a real match via CustomerCombobox
@@ -36,14 +37,6 @@ const TODAY = new Date().toISOString().slice(0, 10);
 // below) for anyone who wants their own name/company to show on a
 // printed/PDF'd sample quote.
 const DEFAULT_QUICK_CONTACT_NAME = "수입 담당자님";
-
-function endOfMonthIso(dateIso: string): string {
-  const [year, month] = dateIso.split("-").map(Number);
-  const lastDay = new Date(year, month, 0);
-  return `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, "0")}-${String(
-    lastDay.getDate(),
-  ).padStart(2, "0")}`;
-}
 
 /** Shared by /quick-quote (and "/" for a non-admin visitor) and /my - a
  * single-screen (not the admin wizard's multi-step) rate-lookup form.

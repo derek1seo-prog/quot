@@ -11,6 +11,7 @@ import { QuoteResultSkeleton } from "@/components/quote/QuoteResultSkeleton";
 import { SalesRepCombobox } from "@/components/quote/SalesRepCombobox";
 import { Step, StepIndicator } from "@/components/quote/StepIndicator";
 import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
+import { endOfMonthIso, todayIso } from "@/lib/format";
 import type {
   ChargeRate,
   CompanyInfo,
@@ -46,18 +47,6 @@ const steps: Step[] = [
   { label: "기본 정보" },
   { label: "견적서 미리보기" },
 ];
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function endOfMonthIso(dateIso: string): string {
-  const [year, month] = dateIso.split("-").map(Number);
-  const lastDay = new Date(year, month, 0);
-  const mm = String(lastDay.getMonth() + 1).padStart(2, "0");
-  const dd = String(lastDay.getDate()).padStart(2, "0");
-  return `${lastDay.getFullYear()}-${mm}-${dd}`;
-}
 
 export default function NewQuotePage() {
   const router = useRouter();

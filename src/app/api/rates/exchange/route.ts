@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentExchangeRate, upsertExchangeRate } from "@/lib/data-store";
+import { todayIso } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
@@ -18,7 +19,7 @@ export async function PUT(req: NextRequest) {
     currency: "USD" as const,
     base: "KRW" as const,
     rate: body.rate,
-    asOf: body.asOf ?? new Date().toISOString().slice(0, 10),
+    asOf: body.asOf ?? todayIso(),
     updatedAt: new Date().toISOString(),
   };
   await upsertExchangeRate(updated);
