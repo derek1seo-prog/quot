@@ -1,5 +1,6 @@
 "use client";
 
+import { cn, TOOLTIP_BUBBLE_CLASS } from "@/lib/cn";
 import { useState } from "react";
 
 const VIEW_W = 300;
@@ -129,7 +130,7 @@ export function QuoteTrendSparkline({ data }: { data: TrendPoint[] }) {
 
       {active && (
         <span
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-full bg-[var(--foreground)] px-2.5 py-1 text-[11px] font-medium text-white shadow-lg"
+          className={cn(TOOLTIP_BUBBLE_CLASS, "pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full")}
           style={{
             left: `${(active.x / VIEW_W) * 100}%`,
             top: `${Math.max((active.y / VIEW_H) * 100, 12)}%`,

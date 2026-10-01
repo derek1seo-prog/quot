@@ -1,12 +1,7 @@
-import { getContainerTypes, getPorts } from "./data-store";
+import { getContainerTypes, getDestinationPorts, getPorts } from "./data-store";
 import { todayIso } from "./format";
 import { calculateQuote } from "./quote-engine";
 import type { Port } from "./types";
-
-// Same three Korea-side destinations the admin's own Ocean Freight table
-// (RegionRatesEditor.tsx) already uses - kept in sync manually since both
-// are a small, stable, hand-maintained list of real destination ports.
-const OVERVIEW_DESTINATIONS = ["incheon", "busan", "pyeongtaek"] as const;
 
 const TODAY = todayIso();
 
@@ -36,11 +31,12 @@ export async function getRateOverviewByRegion(regionId: string): Promise<RateOve
   const ports = getPorts();
   const originPorts = ports.filter((p) => p.regionId === regionId && p.role !== "DESTINATION");
   const containerTypes = getContainerTypes();
+  const destinationPortIds = getDestinationPorts().map((p) => p.id);
 
   return Promise.all(
     originPorts.map(async (port) => {
       const cells = await Promise.all(
-        OVERVIEW_DESTINATIONS.flatMap((destinationPortId) =>
+        destinationPortIds.flatMap((destinationPortId) =>
           containerTypes.map(async (ct): Promise<RateOverviewCell> => {
             const destinationPort = ports.find((p) => p.id === destinationPortId);
             const result = await calculateQuote({

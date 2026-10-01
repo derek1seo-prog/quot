@@ -1,5 +1,6 @@
 "use client";
 
+import { cn, TOOLTIP_BUBBLE_CLASS } from "@/lib/cn";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -34,9 +35,11 @@ export function BrandMark({ imageClassName = "w-8 h-8" }: { imageClassName?: str
           padding / mobile top bar) that a centered bubble would run off
           screen to the left. Growing rightward always has room. */}
       <span
-        className={`pointer-events-none absolute left-0 top-full z-50 mt-2 whitespace-nowrap rounded-full bg-[var(--foreground)] px-2.5 py-1 text-[11px] font-medium text-white shadow-lg transition-all duration-200 motion-reduce:transition-none ${
-          hovering ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
-        }`}
+        className={cn(
+          TOOLTIP_BUBBLE_CLASS,
+          "pointer-events-none absolute left-0 top-full z-50 mt-2 transition-all duration-200 motion-reduce:transition-none",
+          hovering ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1",
+        )}
       >
         {message}
       </span>

@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { CollapsiblePanel } from "@/components/ui/CollapsiblePanel";
 import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
 import { formatNumber } from "@/lib/format";
-import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -103,76 +103,38 @@ export function AddCustomerForm() {
   }
 
   return (
-    <div>
-      {/* Trigger button - collapses away as the panel opens */}
-      <div
-        className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${
-          open ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
-        }`}
-      >
-        <div className="overflow-hidden pt-1 -mt-1">
-          <div
-            inert={open || undefined}
-            className={`transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
-              open ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0 delay-100"
-            }`}
-          >
-            <Button onClick={() => setOpen(true)} icon={<Plus size={16} />}>
-              화주 추가
-            </Button>
-          </div>
+    <CollapsiblePanel open={open} onTrigger={() => setOpen(true)} triggerLabel="화주 추가">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FieldGroup>
+          <FieldLabel>화주</FieldLabel>
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel hint="선택">담당자</FieldLabel>
+          <Input value={contactName} onChange={(e) => setContactName(e.target.value)} />
+        </FieldGroup>
+      </div>
+
+      <div>
+        <p className="text-[13px] font-medium text-[var(--foreground)] mb-2">내륙운송료 (KRW)</p>
+        <div className="grid grid-cols-2 gap-3">
+          <TruckingRateField port="인천항" size="20FT" value={incheon20ft} onChange={setIncheon20ft} />
+          <TruckingRateField port="인천항" size="40HQ" value={incheon40hq} onChange={setIncheon40hq} />
+          <TruckingRateField port="부산항" size="20FT" value={busan20ft} onChange={setBusan20ft} />
+          <TruckingRateField port="부산항" size="40HQ" value={busan40hq} onChange={setBusan40hq} />
+          <TruckingRateField port="평택항" size="20FT" value={pyeongtaek20ft} onChange={setPyeongtaek20ft} />
+          <TruckingRateField port="평택항" size="40HQ" value={pyeongtaek40hq} onChange={setPyeongtaek40hq} />
         </div>
       </div>
 
-      {/* Form panel - grows open via a 0fr -> 1fr grid-template-rows
-       * transition, since animating to/from an unknown content height
-       * needs the browser to size the track, not a guessed pixel value. */}
-      <div
-        className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${
-          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-        }`}
-      >
-        <div className="overflow-hidden">
-          <div
-            inert={!open || undefined}
-            className={`bg-white border border-[var(--border-subtle)] rounded-[var(--radius-md)] p-4 space-y-4 transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
-              open ? "opacity-100 translate-y-0 delay-100" : "opacity-0 -translate-y-1"
-            }`}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FieldGroup>
-                <FieldLabel>화주</FieldLabel>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
-              </FieldGroup>
-              <FieldGroup>
-                <FieldLabel hint="선택">담당자</FieldLabel>
-                <Input value={contactName} onChange={(e) => setContactName(e.target.value)} />
-              </FieldGroup>
-            </div>
-
-            <div>
-              <p className="text-[13px] font-medium text-[var(--foreground)] mb-2">내륙운송료 (KRW)</p>
-              <div className="grid grid-cols-2 gap-3">
-                <TruckingRateField port="인천항" size="20FT" value={incheon20ft} onChange={setIncheon20ft} />
-                <TruckingRateField port="인천항" size="40HQ" value={incheon40hq} onChange={setIncheon40hq} />
-                <TruckingRateField port="부산항" size="20FT" value={busan20ft} onChange={setBusan20ft} />
-                <TruckingRateField port="부산항" size="40HQ" value={busan40hq} onChange={setBusan40hq} />
-                <TruckingRateField port="평택항" size="20FT" value={pyeongtaek20ft} onChange={setPyeongtaek20ft} />
-                <TruckingRateField port="평택항" size="40HQ" value={pyeongtaek40hq} onChange={setPyeongtaek40hq} />
-              </div>
-            </div>
-
-            <div className="flex gap-2 justify-end">
-              <Button variant="secondary" onClick={handleCancel}>
-                취소
-              </Button>
-              <Button onClick={handleSubmit} disabled={submitting || !name}>
-                저장
-              </Button>
-            </div>
-          </div>
-        </div>
+      <div className="flex gap-2 justify-end">
+        <Button variant="secondary" onClick={handleCancel}>
+          취소
+        </Button>
+        <Button onClick={handleSubmit} disabled={submitting || !name}>
+          저장
+        </Button>
       </div>
-    </div>
+    </CollapsiblePanel>
   );
 }

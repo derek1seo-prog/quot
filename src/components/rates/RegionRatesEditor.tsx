@@ -13,22 +13,13 @@ interface Props {
   regionId: string;
   regionNameKo: string;
   ports: Port[];
+  destinationPorts: Port[];
   containerTypes: ContainerType[];
   chargeTypes: ChargeType[];
   initialOceanFreightRates: OceanFreightRate[];
   initialChargeRates: ChargeRate[];
   initialPortNotes: PortCarrierNote[];
 }
-
-// The Korea-side leg (Incheon vs Busan vs Pyeongtaek) changes ocean freight
-// just as much as origin port and container type do, so every origin port
-// needs a rate per destination x container type - grouped headers, same
-// pattern as the customer trucking-rate table.
-const DESTINATION_PORTS: { portId: "incheon" | "busan" | "pyeongtaek"; label: string }[] = [
-  { portId: "incheon", label: "인천" },
-  { portId: "busan", label: "부산" },
-  { portId: "pyeongtaek", label: "평택" },
-];
 
 // Column widths as percentages of the table (sums to 100) - table-fixed
 // makes these exact regardless of content, so all six rate columns stay
@@ -41,12 +32,22 @@ export function RegionRatesEditor({
   regionId,
   regionNameKo,
   ports,
+  destinationPorts,
   containerTypes,
   chargeTypes,
   initialOceanFreightRates,
   initialChargeRates,
   initialPortNotes,
 }: Props) {
+  // The Korea-side leg (Incheon vs Busan vs Pyeongtaek) changes ocean
+  // freight just as much as origin port and container type do, so every
+  // origin port needs a rate per destination x container type - grouped
+  // headers, same pattern as the customer trucking-rate table. Derived
+  // from the `destinationPorts` prop (getDestinationPorts(), the real
+  // Korea import ports - these have regionId: null, so they're never
+  // part of the region-scoped `ports` prop) rather than a separately
+  // hand-maintained literal.
+  const DESTINATION_PORTS = destinationPorts.map((p) => ({ portId: p.id, label: p.nameKo }));
   const [oceanFreightRates, setOceanFreightRates] = useState(initialOceanFreightRates);
   const [chargeRates, setChargeRates] = useState(initialChargeRates);
   const [portNotes, setPortNotes] = useState(initialPortNotes);
@@ -285,6 +286,7 @@ export function RegionRatesEditor({
               <MobilePortRateCard
                 key={port.id}
                 port={port}
+                destinationPorts={DESTINATION_PORTS}
                 containerTypes={containerTypes}
                 findRate={findOceanFreight}
                 onSave={saveOceanFreight}
@@ -378,6 +380,7 @@ export function RegionRatesEditor({
  * table uses - just laid out vertically instead of as columns. */
 function MobilePortRateCard({
   port,
+  destinationPorts,
   containerTypes,
   findRate,
   onSave,
@@ -388,6 +391,7 @@ function MobilePortRateCard({
   onSaveNote,
 }: {
   port: Port;
+  destinationPorts: { portId: string; label: string }[];
   containerTypes: ContainerType[];
   findRate: (portId: string, destinationPortId: string, containerTypeId: string) => OceanFreightRate | undefined;
   onSave: (portId: string, destinationPortId: string, containerTypeId: string, rate: number) => Promise<void>;
@@ -426,7 +430,7 @@ function MobilePortRateCard({
         </div>
       </div>
       <div className="mt-3 space-y-3">
-        {DESTINATION_PORTS.map((dest) => (
+        {destinationPorts.map((dest) => (
           <div key={dest.portId}>
             <p className="text-[11px] text-[var(--muted)] uppercase tracking-wide mb-1.5">{dest.label}</p>
             <div className="grid grid-cols-2 gap-2">

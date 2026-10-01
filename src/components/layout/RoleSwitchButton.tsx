@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/cn";
+import { cn, TOOLTIP_BUBBLE_CLASS } from "@/lib/cn";
 import type { Role } from "@/lib/nav";
 import { LogOut, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -74,9 +74,11 @@ function AdminLoginButton() {
         <ShieldCheck size={16} />
       </Link>
       <span
-        className={`pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-full bg-[var(--foreground)] px-2.5 py-1 text-[11px] font-medium text-white shadow-lg transition-all duration-200 motion-reduce:transition-none ${
-          hovering ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
-        }`}
+        className={cn(
+          TOOLTIP_BUBBLE_CLASS,
+          "pointer-events-none absolute right-0 top-full z-50 mt-2 transition-all duration-200 motion-reduce:transition-none",
+          hovering ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1",
+        )}
       >
         관리자 로그인하기
       </span>

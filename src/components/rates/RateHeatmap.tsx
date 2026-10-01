@@ -5,8 +5,6 @@ import type { ContainerType } from "@/lib/types";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
-const DESTINATION_ORDER = ["incheon", "busan", "pyeongtaek"] as const;
-
 // Column widths as percentages of the table (sums to 100) - table-fixed
 // makes these exact regardless of content, so all six rate columns stay
 // identical width instead of the browser's auto layout redistributing
@@ -116,6 +114,10 @@ export function RateHeatmap({
     .filter((v): v is number => v != null);
   const min = totals.length ? Math.min(...totals) : 0;
   const max = totals.length ? Math.max(...totals) : 0;
+  // Order follows the prop's own key order (insertion order, derived from
+  // getDestinationPorts() by the parent page) rather than a separately
+  // hand-maintained id list.
+  const destinationIds = Object.keys(destinationPortNames);
 
   return (
     <div className="mb-10">
@@ -138,14 +140,14 @@ export function RateHeatmap({
         <table className="w-full table-fixed min-w-[720px] border-collapse text-[13px]">
           <colgroup>
             <col style={{ width: `${portColPct}%` }} />
-            {DESTINATION_ORDER.flatMap((destId) =>
+            {destinationIds.flatMap((destId) =>
               containerTypes.map((ct) => <col key={`${destId}-${ct.id}`} style={{ width: `${rateColPct}%` }} />),
             )}
           </colgroup>
           <thead>
             <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide bg-[var(--sidebar-bg)]">
               <th className="text-left py-2.5 px-3 font-medium whitespace-nowrap">항구</th>
-              {DESTINATION_ORDER.flatMap((destId) =>
+              {destinationIds.flatMap((destId) =>
                 containerTypes.map((ct, i) => (
                   <th
                     key={`${destId}-${ct.id}`}

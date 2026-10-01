@@ -2,6 +2,7 @@ import { RegionRatesEditor } from "@/components/rates/RegionRatesEditor";
 import {
   getChargeRates,
   getContainerTypes,
+  getDestinationPorts,
   getOceanFreightRates,
   getPortCarrierNotes,
   getPorts,
@@ -44,6 +45,7 @@ export default async function SouthChinaRatesPage() {
           regionId={REGION_ID}
           regionNameKo={region?.nameKo ?? "남중국"}
           ports={ports}
+          destinationPorts={getDestinationPorts()}
           containerTypes={containerTypes}
           chargeTypes={chargeTypes}
           initialOceanFreightRates={oceanFreightRates}

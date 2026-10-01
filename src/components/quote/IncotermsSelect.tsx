@@ -1,7 +1,8 @@
 "use client";
 
+import { useDismissable } from "@/lib/hooks";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 // Only these two Incoterms actually drive different charge behavior today
 // (EXW adds the 현지 부대비용 category, quote-engine.ts) - the rest are
@@ -21,23 +22,7 @@ export function IncotermsSelect({
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [open]);
+  useDismissable(wrapperRef, open, () => setOpen(false));
 
   function select(v: string) {
     onChange(v);

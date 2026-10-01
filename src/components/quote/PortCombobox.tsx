@@ -1,10 +1,10 @@
 "use client";
 
 import { Input } from "@/components/ui/Field";
-import { useDebouncedValue } from "@/lib/hooks";
+import { useDebouncedValue, useDismissable } from "@/lib/hooks";
 import type { Port } from "@/lib/types";
 import { Ship } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 export interface PortOption {
   port: Port;
@@ -51,16 +51,7 @@ export function PortCombobox({
 
   const clampedHighlightedIndex = Math.min(highlightedIndex, Math.max(filtered.length - 1, 0));
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  useDismissable(wrapperRef, open, () => setOpen(false));
 
   function selectOption(port: Port) {
     onChange(port.id);

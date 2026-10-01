@@ -1,9 +1,10 @@
 "use client";
 
 import { Input } from "@/components/ui/Field";
+import { useDismissable } from "@/lib/hooks";
 import type { SalesRep } from "@/lib/types";
 import { Contact } from "lucide-react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 // Enough room for every seeded rep row (~36px each) plus the panel's own
 // border/padding - used to decide whether opening downward would run out
@@ -62,16 +63,7 @@ export function SalesRepCombobox({
 
   const clampedHighlightedIndex = Math.min(highlightedIndex, Math.max(filtered.length - 1, 0));
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  useDismissable(wrapperRef, open, () => setOpen(false));
 
   function selectOption(rep: SalesRep) {
     onChange(rep.id);

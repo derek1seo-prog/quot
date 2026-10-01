@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, LinkButton } from "@/components/ui/Button";
+import { cn, TOOLTIP_BUBBLE_CLASS } from "@/lib/cn";
 import { ArrowLeft, Download, Loader2, Printer } from "lucide-react";
 import { useState } from "react";
 
@@ -146,7 +147,12 @@ export function QuoteActions({
             {exporting ? "PDF 생성 중..." : "PDF 다운로드"}
           </Button>
           {!exporting && (
-            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -translate-y-1 mb-2 z-50 whitespace-nowrap rounded-full bg-[var(--foreground)] px-2.5 py-1 text-[11px] font-medium text-white shadow-lg opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-y-0 motion-reduce:transition-none">
+            <span
+              className={cn(
+                TOOLTIP_BUBBLE_CLASS,
+                "pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -translate-y-1 mb-2 z-50 opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-y-0 motion-reduce:transition-none",
+              )}
+            >
               업데이트 중
             </span>
           )}

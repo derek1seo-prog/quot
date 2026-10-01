@@ -1,18 +1,15 @@
 import { RateHeatmap } from "@/components/rates/RateHeatmap";
-import { getContainerTypes, getRegions } from "@/lib/data-store";
+import { getContainerTypes, getDestinationPorts, getRegions } from "@/lib/data-store";
 import { getRateOverviewByRegion } from "@/lib/rate-overview";
 
 export const dynamic = "force-dynamic";
 
-const DESTINATION_PORT_NAMES: Record<string, string> = {
-  incheon: "인천",
-  busan: "부산",
-  pyeongtaek: "평택",
-};
-
 export default async function MyRatesPage() {
   const regions = getRegions();
   const containerTypes = getContainerTypes();
+  const destinationPortNames = Object.fromEntries(
+    getDestinationPorts().map((p) => [p.id, p.nameKo]),
+  );
 
   const overviewsByRegion = await Promise.all(
     regions.map(async (region) => ({ region, rows: await getRateOverviewByRegion(region.id) })),
@@ -37,7 +34,7 @@ export default async function MyRatesPage() {
             key={region.id}
             regionNameKo={region.nameKo}
             rows={rows}
-            destinationPortNames={DESTINATION_PORT_NAMES}
+            destinationPortNames={destinationPortNames}
             containerTypes={containerTypes}
           />
         ))

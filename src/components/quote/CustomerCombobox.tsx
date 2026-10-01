@@ -1,9 +1,10 @@
 "use client";
 
 import { Input } from "@/components/ui/Field";
+import { useDismissable } from "@/lib/hooks";
 import type { Customer } from "@/lib/types";
 import { Users } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 /** Autocomplete for 화주 (customer name) - unlike PortCombobox this is not
  * a strict select: customerName is a free-text string on QuoteInput, and
@@ -32,16 +33,7 @@ export function CustomerCombobox({
   const filtered = q ? customers.filter((c) => c.name.toLowerCase().includes(q)) : customers;
   const clampedHighlightedIndex = Math.min(highlightedIndex, Math.max(filtered.length - 1, 0));
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  useDismissable(wrapperRef, open, () => setOpen(false));
 
   function selectOption(customer: Customer) {
     onChange(customer.name);

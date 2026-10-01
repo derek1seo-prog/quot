@@ -66,6 +66,14 @@ export function getPortById(id: string): Port | undefined {
   return getPorts().find((p) => p.id === id);
 }
 
+/** The Korea-side import ports (인천/부산/평택) - a single source for the
+ * destination-port id/label list that several rate-overview surfaces
+ * (RateHeatmap, RegionRatesEditor, my/rates/page) each used to hand-
+ * maintain as their own separate literal, independently of ports.json. */
+export function getDestinationPorts(): Port[] {
+  return getPorts().filter((p) => p.role === "DESTINATION");
+}
+
 export function getContainerTypes(): ContainerType[] {
   return readSeedJson<ContainerType[]>("container-types.json").sort(
     (a, b) => a.order - b.order,
