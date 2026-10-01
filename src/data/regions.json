@@ -12,5 +12,12 @@
     "name": "South China",
     "nameKo": "남중국",
     "description": "EBS, CRS 부대비용이 적용되는 권역"
+  },
+  {
+    "id": "thailand",
+    "countryId": "TH",
+    "name": "Thailand",
+    "nameKo": "태국",
+    "description": "LSS 부대비용이 FOB 조건에서도 적용되는 권역"
   }
 ]

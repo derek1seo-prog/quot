@@ -105,7 +105,7 @@
     "category": "SURCHARGE",
     "unit": "CONTAINER",
     "vatRate": 0,
-    "visibility": { "scope": "ALL" },
+    "visibility": { "scope": "REGION_SPECIFIC", "regionIds": ["north-china", "south-china"] },
     "order": 80,
     "transportModes": ["FCL"]
   },
@@ -127,8 +127,19 @@
     "category": "EXW_LOCAL",
     "unit": "CONTAINER",
     "vatRate": 0,
-    "visibility": { "scope": "ALL" },
+    "visibility": { "scope": "REGION_SPECIFIC", "regionIds": ["north-china", "south-china"] },
     "order": 100,
+    "transportModes": ["FCL"]
+  },
+  {
+    "id": "LSS_SURCHARGE",
+    "name": "Low Sulphur Surcharge",
+    "nameKo": "저유황할증료",
+    "category": "SURCHARGE",
+    "unit": "CONTAINER",
+    "vatRate": 0,
+    "visibility": { "scope": "REGION_SPECIFIC", "regionIds": ["thailand"] },
+    "order": 65,
     "transportModes": ["FCL"]
   },
   {
