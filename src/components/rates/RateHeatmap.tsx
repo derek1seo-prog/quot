@@ -1,8 +1,9 @@
 "use client";
 
+import { useDismissable } from "@/lib/hooks";
 import type { RateOverviewRow } from "@/lib/rate-overview";
 import type { ContainerType } from "@/lib/types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 // Column widths as percentages of the table (sums to 100) - table-fixed
@@ -11,8 +12,8 @@ import { createPortal } from "react-dom";
 // space unevenly between them (same fix as RegionRatesEditor.tsx). The
 // port column only needs to be a touch narrower than a rate column (its
 // two-line "청도 / Qingdao" content is no wider than a rate cell's own
-// two-line "₩990,577 / 해상 $250") - not the 2x-wider split that table
-// used, which made 항구 read as oversized relative to the rest.
+// single-line "$250") - not the 2x-wider split that table used, which
+// made 항구 read as oversized relative to the rest.
 const portColPct = 13;
 const rateColPct = 14.5; // x6 destination/size columns = 87
 
@@ -41,17 +42,21 @@ function bucketFor(value: number, min: number, max: number) {
 }
 
 /** One region's origin-port x destination x container-type grid, colored
- * by 예상 총비용 (a sequential heatmap - see the dataviz skill's
+ * by 해상운임 (a sequential heatmap - see the dataviz skill's
  * choosing-a-form.md: "compare magnitude in a grid" maps to heatmap +
- * sequential color, not a bar chart). Read-only reference sheet, not a
- * live-editing surface - RateCell is intentionally not reused here. */
+ * sequential color, not a bar chart). Color tracks the same value shown
+ * in the cell (ocean freight) rather than the hidden grand total, so the
+ * color and the direct label never disagree. Read-only reference sheet,
+ * not a live-editing surface - RateCell is intentionally not reused here. */
 export function RateHeatmap({
   regionNameKo,
+  surchargeCaption,
   rows,
   destinationPortNames,
   containerTypes,
 }: {
   regionNameKo: string;
+  surchargeCaption: string;
   rows: RateOverviewRow[];
   destinationPortNames: Record<string, string>;
   containerTypes: ContainerType[];
@@ -108,9 +113,12 @@ export function RateHeatmap({
     setTooltip(null);
   }
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  useDismissable(wrapperRef, tooltip != null, deactivate);
+
   const totals = rows
     .flatMap((r) => r.cells)
-    .map((c) => c.grandTotalKrw)
+    .map((c) => c.oceanFreightUsd)
     .filter((v): v is number => v != null);
   const min = totals.length ? Math.min(...totals) : 0;
   const max = totals.length ? Math.max(...totals) : 0;
@@ -120,8 +128,8 @@ export function RateHeatmap({
   const destinationIds = Object.keys(destinationPortNames);
 
   return (
-    <div className="mb-10">
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+    <div className="mb-10" ref={wrapperRef}>
+      <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
         <h2 className="text-[15px] font-semibold text-[var(--foreground)]">{regionNameKo}</h2>
         {totals.length > 0 && (
           <div className="flex items-center gap-2 text-[11px] text-[var(--muted)]">
@@ -135,6 +143,7 @@ export function RateHeatmap({
           </div>
         )}
       </div>
+      <p className="text-[11.5px] text-[var(--muted)] mb-3">{surchargeCaption}</p>
 
       <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--border-subtle)]">
         <table className="w-full table-fixed min-w-[720px] border-collapse text-[13px]">
@@ -174,7 +183,7 @@ export function RateHeatmap({
                   const ctLabel = containerTypes.find((c) => c.id === cell.containerTypeId)?.label ?? "";
                   const destLabel = destinationPortNames[cell.destinationPortId] ?? cell.destinationPortId;
 
-                  if (cell.grandTotalKrw == null) {
+                  if (cell.oceanFreightUsd == null || cell.grandTotalKrw == null) {
                     return (
                       <td
                         key={cellKey}
@@ -187,7 +196,7 @@ export function RateHeatmap({
                     );
                   }
 
-                  const bucket = bucketFor(cell.grandTotalKrw, min, max);
+                  const bucket = bucketFor(cell.oceanFreightUsd, min, max);
                   const isLight = bucket.ink === "light";
                   const active = tooltip?.cellKey === cellKey;
                   const tooltipLabel = `${row.port.nameKo} → ${destLabel} · ${ctLabel}. 해상운임 ${krw(
@@ -212,20 +221,13 @@ export function RateHeatmap({
                       onMouseLeave={deactivate}
                       onFocus={(e) => activateCell(e.currentTarget, tooltipData)}
                       onBlur={deactivate}
-                      className={`relative py-2.5 px-3 text-center cursor-default outline-none whitespace-nowrap transition-shadow duration-150 ${
+                      onClick={(e) => activateCell(e.currentTarget, tooltipData)}
+                      className={`relative py-2.5 px-3 text-center cursor-pointer outline-none whitespace-nowrap transition-shadow duration-150 ${
                         isFirstOfGroup ? "border-l border-[var(--border-subtle)]" : ""
                       } ${active ? "z-10 shadow-lg ring-2 ring-inset ring-white/60" : ""}`}
                       style={{ backgroundColor: bucket.bg, color: isLight ? "#ffffff" : "var(--foreground)" }}
                     >
-                      <p className="font-semibold">{krw(cell.grandTotalKrw)}</p>
-                      {cell.oceanFreightUsd != null && (
-                        <p
-                          className="text-[10.5px] mt-0.5"
-                          style={{ color: isLight ? "rgba(255,255,255,0.8)" : "var(--muted)" }}
-                        >
-                          해상 ${cell.oceanFreightUsd.toLocaleString("en-US")}
-                        </p>
-                      )}
+                      <p className="font-semibold">${cell.oceanFreightUsd.toLocaleString("en-US")}</p>
                     </td>
                   );
                 })}
