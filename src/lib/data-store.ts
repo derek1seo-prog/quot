@@ -172,21 +172,43 @@ export async function getPortCarrierNotes(): Promise<PortCarrierNote[]> {
   return readMutable<PortCarrierNote[]>("port-carrier-notes.json");
 }
 
-/** LSS is a brand-new USD-only charge type; some environments' mutable
- * store still have a stray KRW-labeled row for it, saved through the
- * rates admin UI before it had ever seen a registered LSS rate (its
- * currency-inference fallback defaults to KRW when nothing is on file
- * yet - see RegionRatesEditor.tsx). Correct it transparently on every
- * read, the same way normalizeOceanFreightRates() heals legacy shape. */
+/** A Redis-backed deployment copies charge-rates.json into Redis once, the
+ * first time it's ever read (see readMutable) - every read after that
+ * returns the Redis copy verbatim, so a brand-new region's charge-rate
+ * rows (added to the seed file after that first copy, e.g. Thailand's)
+ * never reach an already-initialized deployment on their own. Fill in
+ * anything the seed file has that the cached copy doesn't, keyed by id,
+ * so new seed rows surface immediately without a manual Redis reset -
+ * purely additive, never touches a row that already exists (including
+ * one an admin has edited away from its seed default). */
+function mergeMissingSeedChargeRates(rates: ChargeRate[]): ChargeRate[] {
+  const existingIds = new Set(rates.map((r) => r.id));
+  const missing = readSeedJson<ChargeRate[]>("charge-rates.json").filter(
+    (r) => !existingIds.has(r.id),
+  );
+  return missing.length > 0 ? [...rates, ...missing] : rates;
+}
+
+/** LSS/LSS_SURCHARGE/HANDLING_CHG are USD-only charge types; some
+ * environments' mutable store still have a stray KRW-labeled row for one
+ * of them, saved through the rates admin UI before it had ever seen a
+ * registered rate (its currency-inference fallback defaults to KRW when
+ * nothing is on file yet - see RegionRatesEditor.tsx). Correct it
+ * transparently on every read, the same way normalizeOceanFreightRates()
+ * heals legacy shape. */
+const USD_ONLY_CHARGE_TYPE_IDS = new Set(["LSS", "LSS_SURCHARGE", "HANDLING_CHG"]);
+
 function normalizeChargeRates(rates: ChargeRate[]): ChargeRate[] {
   return rates.map((r) =>
-    r.chargeTypeId === "LSS" && r.currency !== "USD" ? { ...r, currency: "USD" } : r,
+    USD_ONLY_CHARGE_TYPE_IDS.has(r.chargeTypeId) && r.currency !== "USD"
+      ? { ...r, currency: "USD" }
+      : r,
   );
 }
 
 export async function getChargeRates(): Promise<ChargeRate[]> {
   const rates = await readMutable<ChargeRate[]>("charge-rates.json");
-  return normalizeChargeRates(rates);
+  return normalizeChargeRates(mergeMissingSeedChargeRates(rates));
 }
 
 async function getExchangeRates(): Promise<ExchangeRate[]> {
