@@ -137,11 +137,7 @@ export function UnlockForm({ next }: { next: string }) {
                     status === "error" || status === "locked" ? "text-[var(--danger)]" : "text-[var(--muted)]"
                   }`}
                 >
-                  {status === "checking" ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Lock size={16} />
-                  )}
+                  <Lock size={16} />
                 </span>
                 <input
                   ref={inputRef}
