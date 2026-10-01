@@ -2,7 +2,7 @@
 
 import { cn, TOOLTIP_BUBBLE_CLASS } from "@/lib/cn";
 import type { Role } from "@/lib/nav";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { Loader2, LogOut, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -39,7 +39,7 @@ export function RoleSwitchButton({ role }: { role: Role }) {
         aria-label="로그아웃"
         className={buttonClass}
       >
-        <LogOut size={16} />
+        {loggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
       </button>
     );
   }
