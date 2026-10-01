@@ -139,7 +139,7 @@
     "unit": "CONTAINER",
     "vatRate": 0,
     "visibility": { "scope": "REGION_SPECIFIC", "regionIds": ["thailand"] },
-    "order": 65,
+    "order": 120,
     "transportModes": ["FCL"]
   },
   {
