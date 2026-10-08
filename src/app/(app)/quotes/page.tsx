@@ -1,8 +1,8 @@
 import { LinkButton } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { QuoteListView } from "@/components/quote/QuoteListView";
-import { getPorts, getQuotes, getRegions } from "@/lib/data-store";
-import { parseQuoteListFilters } from "@/lib/quote-list-filters";
+import { getPorts, getQuotes } from "@/lib/data-store";
+import { parseQuoteListFilters, parseQuoteListPage } from "@/lib/quote-list-filters";
 import { FilePlus2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -12,10 +12,11 @@ export default async function QuotesListPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const initialFilters = parseQuoteListFilters(await searchParams);
+  const params = await searchParams;
+  const initialFilters = parseQuoteListFilters(params);
+  const initialPage = parseQuoteListPage(params);
   const quotes = await getQuotes();
   const portNameById = Object.fromEntries(getPorts().map((p) => [p.id, p.nameKo]));
-  const regionCountryById = Object.fromEntries(getRegions().map((r) => [r.id, r.countryId]));
 
   return (
     <div className="max-w-[1200px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
@@ -47,8 +48,8 @@ export default async function QuotesListPage({
           <QuoteListView
             quotes={quotes}
             portNameById={portNameById}
-            regionCountryById={regionCountryById}
             initialFilters={initialFilters}
+            initialPage={initialPage}
           />
         )}
       </Card>

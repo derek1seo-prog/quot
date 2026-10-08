@@ -7,13 +7,14 @@ import { QuoteListCard } from "@/components/quote/QuoteListCard";
 import { QuoteListRow } from "@/components/quote/QuoteListRow";
 import {
   DEFAULT_QUOTE_FILTERS,
+  QUOTE_PAGE_SIZE,
   isQuoteSort,
   QUOTE_SORT_LABELS,
   type QuoteListFilters,
   type QuoteSort,
 } from "@/lib/quote-list-filters";
 import type { Quote } from "@/lib/types";
-import { ChevronDown, RotateCcw, Search } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, RotateCcw, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 /** Filter/sort bar + list for 견적 목록. Everything runs client-side over
@@ -23,42 +24,46 @@ import { useEffect, useMemo, useState } from "react";
 export function QuoteListView({
   quotes,
   portNameById,
-  regionCountryById,
   initialFilters,
+  initialPage,
 }: {
   quotes: Quote[];
   portNameById: Record<string, string>;
-  regionCountryById: Record<string, string>;
   initialFilters: QuoteListFilters;
+  initialPage: number;
 }) {
   const [filters, setFilters] = useState(initialFilters);
-  const set = <K extends keyof QuoteListFilters>(key: K, value: QuoteListFilters[K]) =>
+  const [page, setPage] = useState(initialPage);
+  // Any filter/sort change starts over from page 1.
+  const set = <K extends keyof QuoteListFilters>(key: K, value: QuoteListFilters[K]) => {
     setFilters((f) => ({ ...f, [key]: value }));
+    setPage(1);
+  };
+  const resetFilters = () => {
+    setFilters((f) => ({ ...DEFAULT_QUOTE_FILTERS, sort: f.sort }));
+    setPage(1);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filters)) {
       if (value && value !== DEFAULT_QUOTE_FILTERS[key as keyof QuoteListFilters]) params.set(key, value);
     }
+    if (page > 1) params.set("page", String(page));
     const qs = params.toString();
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, [filters]);
+  }, [filters, page]);
 
-  // 업체 dropdown options, with how many quotes each has - most-quoted first.
-  const customerOptions = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const q of quotes) {
-      const name = q.input.customerName.trim();
-      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
-    }
-    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
-  }, [quotes]);
+  // 업체 / 담당자 dropdown options, with how many quotes each has - most-quoted first.
+  const customerOptions = useMemo(() => countByName(quotes, (q) => q.input.customerName), [quotes]);
+  const repOptions = useMemo(() => countByName(quotes, (q) => q.input.preparedBy), [quotes]);
 
   const visible = useMemo(() => {
     const needle = filters.q.trim().toLowerCase();
     const result = quotes.filter((q) => {
       const { input } = q;
       if (filters.customer && input.customerName.trim() !== filters.customer) return false;
+      if (filters.rep && (input.preparedBy ?? "").trim() !== filters.rep) return false;
       const date = input.quoteDate.slice(0, 10);
       if (filters.from && date < filters.from) return false;
       if (filters.to && date > filters.to) return false;
@@ -93,14 +98,28 @@ export function QuoteListView({
     return result.sort(comparators[filters.sort]);
   }, [quotes, filters, portNameById]);
 
+  const totalPages = Math.max(1, Math.ceil(visible.length / QUOTE_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * QUOTE_PAGE_SIZE;
+  const pageItems = visible.slice(pageStart, pageStart + QUOTE_PAGE_SIZE);
+
+  function goToPage(next: number) {
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   const isFiltered =
-    filters.q !== "" || filters.customer !== "" || filters.from !== "" || filters.to !== "";
+    filters.q !== "" ||
+    filters.customer !== "" ||
+    filters.rep !== "" ||
+    filters.from !== "" ||
+    filters.to !== "";
 
   return (
     <>
       <div className="p-4 sm:px-6 border-b border-[var(--border-subtle)] flex flex-col gap-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto_auto] gap-3">
-          <div className="relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <div className="relative sm:col-span-2 lg:col-span-2">
             <Search
               size={15}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
@@ -117,6 +136,7 @@ export function QuoteListView({
             value={filters.customer}
             onChange={(v) => set("customer", v)}
             aria-label="업체"
+            className="lg:col-span-2"
           >
             <option value="">전체 업체</option>
             {customerOptions.map(([name, count]) => (
@@ -125,7 +145,20 @@ export function QuoteListView({
               </option>
             ))}
           </SelectWithChevron>
-          <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
+          <SelectWithChevron
+            value={filters.rep}
+            onChange={(v) => set("rep", v)}
+            aria-label="담당자"
+            className="lg:col-span-2"
+          >
+            <option value="">전체 담당자</option>
+            {repOptions.map(([name, count]) => (
+              <option key={name} value={name}>
+                {name} ({count})
+              </option>
+            ))}
+          </SelectWithChevron>
+          <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-4">
             <Input
               type="date"
               value={filters.from}
@@ -148,7 +181,7 @@ export function QuoteListView({
             value={filters.sort}
             onChange={(v) => set("sort", isQuoteSort(v) ? v : "newest")}
             aria-label="정렬"
-            className="sm:col-span-2 lg:col-span-1 lg:w-[140px]"
+            className="sm:col-span-2 lg:col-span-2"
           >
             {Object.entries(QUOTE_SORT_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
@@ -170,7 +203,7 @@ export function QuoteListView({
           {isFiltered && (
             <button
               type="button"
-              onClick={() => setFilters((f) => ({ ...DEFAULT_QUOTE_FILTERS, sort: f.sort }))}
+              onClick={resetFilters}
               className="inline-flex items-center gap-1 hover:text-[var(--accent)] transition-colors"
             >
               <RotateCcw size={13} />
@@ -188,7 +221,7 @@ export function QuoteListView({
             variant="secondary"
             icon={<RotateCcw size={15} />}
             className="mx-auto"
-            onClick={() => setFilters((f) => ({ ...DEFAULT_QUOTE_FILTERS, sort: f.sort }))}
+            onClick={resetFilters}
           >
             필터 초기화
           </Button>
@@ -203,19 +236,18 @@ export function QuoteListView({
                   <th className="px-6 py-3 font-medium whitespace-nowrap">고객명</th>
                   <th className="px-6 py-3 font-medium whitespace-nowrap">구간</th>
                   <th className="px-6 py-3 font-medium whitespace-nowrap">인코텀즈</th>
-                  <th className="px-6 py-3 font-medium whitespace-nowrap">권역</th>
+                  <th className="px-6 py-3 font-medium whitespace-nowrap">담당자</th>
                   <th className="px-6 py-3 font-medium whitespace-nowrap">견적일</th>
                   <th className="px-6 py-3 font-medium text-right whitespace-nowrap">합계</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
-                {visible.map((q, i) => (
+                {pageItems.map((q, i) => (
                   <QuoteListRow
                     key={q.id}
                     quote={q}
                     portNameById={portNameById}
-                    regionCountryById={regionCountryById}
                     // Capped so a long list still settles quickly instead of
                     // trickling in row by row for several seconds - only the
                     // first screenful visibly cascades.
@@ -227,19 +259,104 @@ export function QuoteListView({
           </div>
 
           <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
-            {visible.map((q, i) => (
+            {pageItems.map((q, i) => (
               <QuoteListCard
                 key={q.id}
                 quote={q}
                 portNameById={portNameById}
-                regionCountryById={regionCountryById}
                 animationDelayMs={220 + Math.min(i, 10) * 30}
               />
             ))}
           </div>
+
+          {totalPages > 1 && (
+            <Pagination
+              page={currentPage}
+              totalPages={totalPages}
+              rangeLabel={`${pageStart + 1}–${pageStart + pageItems.length} / ${visible.length}건`}
+              onChange={goToPage}
+            />
+          )}
         </>
       )}
     </>
+  );
+}
+
+/** Page numbers to show: always the first and last page plus the current
+ * one and its neighbours, with "…" filling any gap. */
+function pageNumbers(page: number, totalPages: number): (number | "gap")[] {
+  const wanted = new Set([1, totalPages, page - 1, page, page + 1]);
+  const pages = [...wanted].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+  const out: (number | "gap")[] = [];
+  pages.forEach((p, i) => {
+    if (i > 0 && p - pages[i - 1] > 1) out.push(p - pages[i - 1] === 2 ? p - 1 : "gap");
+    out.push(p);
+  });
+  return out;
+}
+
+function Pagination({
+  page,
+  totalPages,
+  rangeLabel,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  rangeLabel: string;
+  onChange: (page: number) => void;
+}) {
+  const navButton =
+    "w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[13px] transition-colors disabled:opacity-30 disabled:pointer-events-none";
+  return (
+    <nav
+      aria-label="페이지"
+      className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 sm:px-6 py-3 border-t border-[var(--border-subtle)]"
+    >
+      <span className="text-[12.5px] text-[var(--muted)]">{rangeLabel}</span>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onChange(page - 1)}
+          disabled={page <= 1}
+          aria-label="이전 페이지"
+          className={`${navButton} text-[var(--muted)] hover:bg-[var(--sidebar-bg)] hover:text-[var(--foreground)]`}
+        >
+          <ChevronLeft size={16} />
+        </button>
+        {pageNumbers(page, totalPages).map((p, i) =>
+          p === "gap" ? (
+            <span key={`gap-${i}`} className="w-8 text-center text-[13px] text-[var(--muted)]">
+              …
+            </span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              onClick={() => onChange(p)}
+              aria-current={p === page ? "page" : undefined}
+              className={`${navButton} ${
+                p === page
+                  ? "bg-[var(--accent)] text-white font-medium"
+                  : "text-[var(--foreground)] hover:bg-[var(--sidebar-bg)]"
+              }`}
+            >
+              {p}
+            </button>
+          ),
+        )}
+        <button
+          type="button"
+          onClick={() => onChange(page + 1)}
+          disabled={page >= totalPages}
+          aria-label="다음 페이지"
+          className={`${navButton} text-[var(--muted)] hover:bg-[var(--sidebar-bg)] hover:text-[var(--foreground)]`}
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+    </nav>
   );
 }
 
@@ -267,4 +384,13 @@ function SelectWithChevron({
       />
     </div>
   );
+}
+
+function countByName(quotes: Quote[], pick: (q: Quote) => string | undefined): [string, number][] {
+  const counts = new Map<string, number>();
+  for (const q of quotes) {
+    const name = (pick(q) ?? "").trim();
+    if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
 }

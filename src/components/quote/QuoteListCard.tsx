@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { countryFlag, formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -15,12 +15,10 @@ import Link from "next/link";
 export function QuoteListCard({
   quote,
   portNameById,
-  regionCountryById,
   animationDelayMs,
 }: {
   quote: Quote;
   portNameById: Record<string, string>;
-  regionCountryById: Record<string, string>;
   animationDelayMs?: number;
 }) {
   const { deleting, confirmOpen, quoteNumber, requestDelete, cancelDelete, confirmDelete } =
@@ -59,17 +57,17 @@ export function QuoteListCard({
         <p className="text-[13.5px] text-[var(--foreground)]">{quote.input.customerName}</p>
         <Badge tone="neutral">{quote.input.incoterms}</Badge>
       </div>
-      <div className="flex items-center gap-2 mt-1.5">
-        <span className="text-[16px]" role="img" title={quote.result.regionNameKo}>
-          {countryFlag(regionCountryById[quote.result.regionId] ?? "")}
-        </span>
+      <div className="mt-1.5">
         <span className="text-[12px] text-[var(--muted)]">
           {portNameById[quote.input.originPortId] ?? quote.input.originPortId} →{" "}
           {portNameById[quote.input.destinationPortId] ?? quote.input.destinationPortId}
         </span>
       </div>
       <div className="flex items-center justify-between mt-1.5">
-        <span className="text-[12px] text-[var(--muted)]">{formatDate(quote.input.quoteDate)}</span>
+        <span className="text-[12px] text-[var(--muted)]">
+          {formatDate(quote.input.quoteDate)}
+          {quote.input.preparedBy?.trim() ? ` · ${quote.input.preparedBy.trim()}` : ""}
+        </span>
         <span className="text-[13.5px] font-semibold text-[var(--foreground)]">
           {formatCurrency(quote.result.column.grandTotalKrw, "KRW")}
         </span>

@@ -1,10 +1,11 @@
-/** Shared between the 견적 목록 server page (parsing ?q=&customer=&from=&to=&sort=)
+/** Shared between the 견적 목록 server page (parsing ?q=&customer=&rep=&from=&to=&sort=)
  * and the client-side QuoteListView that applies them. */
 export type QuoteSort = "newest" | "oldest" | "priceAsc" | "priceDesc";
 
 export interface QuoteListFilters {
   q: string;
   customer: string;
+  rep: string;
   from: string;
   to: string;
   sort: QuoteSort;
@@ -13,6 +14,7 @@ export interface QuoteListFilters {
 export const DEFAULT_QUOTE_FILTERS: QuoteListFilters = {
   q: "",
   customer: "",
+  rep: "",
   from: "",
   to: "",
   sort: "newest",
@@ -29,6 +31,13 @@ export function isQuoteSort(v: unknown): v is QuoteSort {
   return typeof v === "string" && v in QUOTE_SORT_LABELS;
 }
 
+export const QUOTE_PAGE_SIZE = 20;
+
+export function parseQuoteListPage(params: Record<string, string | string[] | undefined>): number {
+  const n = Number(typeof params.page === "string" ? params.page : "");
+  return Number.isInteger(n) && n > 1 ? n : 1;
+}
+
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function parseQuoteListFilters(
@@ -42,6 +51,7 @@ export function parseQuoteListFilters(
   return {
     q: str("q"),
     customer: str("customer"),
+    rep: str("rep"),
     from: DATE_RE.test(str("from")) ? str("from") : "",
     to: DATE_RE.test(str("to")) ? str("to") : "",
     sort: isQuoteSort(sort) ? sort : DEFAULT_QUOTE_FILTERS.sort,

@@ -2,7 +2,7 @@
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { countryFlag, formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -10,12 +10,10 @@ import Link from "next/link";
 export function QuoteListRow({
   quote,
   portNameById,
-  regionCountryById,
   animationDelayMs,
 }: {
   quote: Quote;
   portNameById: Record<string, string>;
-  regionCountryById: Record<string, string>;
   animationDelayMs?: number;
 }) {
   const { deleting, confirmOpen, quoteNumber, requestDelete, cancelDelete, confirmDelete } =
@@ -40,10 +38,8 @@ export function QuoteListRow({
         {portNameById[quote.input.destinationPortId] ?? quote.input.destinationPortId}
       </td>
       <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">{quote.input.incoterms}</td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-[20px]" role="img" title={quote.result.regionNameKo}>
-          {countryFlag(regionCountryById[quote.result.regionId] ?? "")}
-        </span>
+      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
+        {quote.input.preparedBy?.trim() || "-"}
       </td>
       <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">{formatDate(quote.input.quoteDate)}</td>
       <td className="px-6 py-4 text-[13.5px] font-medium text-right text-[var(--foreground)] whitespace-nowrap">
