@@ -196,8 +196,8 @@ export function DatePicker({
           clearable && value && "pr-8",
         )}
       >
-        <CalendarDays size={compact ? 14 : 15} className={cn("shrink-0", value ? "text-[var(--accent)]" : "text-[var(--muted)]")} />
-        <span className={cn("flex-1 min-w-0 truncate tabular-nums", value ? "text-[var(--foreground)]" : "text-[var(--muted)]")}>
+        <CalendarDays size={14} className="shrink-0 text-[var(--muted)]" />
+        <span className={cn("flex-1 min-w-0 truncate", value ? "text-[var(--foreground)]" : "text-[var(--muted)]")}>
           {value ? formatPickerDate(value, compact) : placeholder}
         </span>
       </button>
