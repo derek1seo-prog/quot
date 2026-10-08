@@ -236,17 +236,17 @@ export function QuoteListView({
       ) : (
         <>
           <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-left min-w-[840px]">
+            <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--muted)] uppercase tracking-wide">
-                  <th className="px-6 py-3 font-medium whitespace-nowrap">견적번호</th>
-                  <th className="px-6 py-3 font-medium whitespace-nowrap">고객명</th>
-                  <th className="px-6 py-3 font-medium whitespace-nowrap">구간</th>
-                  <th className="px-6 py-3 font-medium whitespace-nowrap">인코텀즈</th>
-                  <th className="px-6 py-3 font-medium whitespace-nowrap">담당자</th>
-                  <th className="px-6 py-3 font-medium whitespace-nowrap">견적일</th>
-                  <th className="px-6 py-3 font-medium text-right whitespace-nowrap">합계</th>
-                  <th className="px-4 py-3" />
+                  <th className="px-4 min-[1340px]:px-5 py-3 font-medium whitespace-nowrap">견적번호</th>
+                  <th className="px-4 min-[1340px]:px-5 py-3 font-medium whitespace-nowrap">고객명</th>
+                  <th className="px-4 min-[1340px]:px-5 py-3 font-medium whitespace-nowrap">구간</th>
+                  <th className="hidden min-[1340px]:table-cell px-5 py-3 font-medium whitespace-nowrap">인코텀즈</th>
+                  <th className="hidden min-[1340px]:table-cell px-5 py-3 font-medium whitespace-nowrap">담당자</th>
+                  <th className="hidden min-[1340px]:table-cell px-5 py-3 font-medium whitespace-nowrap">견적일</th>
+                  <th className="px-4 min-[1340px]:px-5 py-3 font-medium text-right whitespace-nowrap">합계</th>
+                  <th className="pl-1 pr-3 min-[1340px]:px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
