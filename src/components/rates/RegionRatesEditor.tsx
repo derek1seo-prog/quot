@@ -3,11 +3,20 @@
 import { RateCell } from "./RateCell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Textarea } from "@/components/ui/Field";
+import { CarrierNotesEditor, formatCarrierDate, parseLegacyNotes } from "./CarrierNotesEditor";
 import { formatDate } from "@/lib/format";
-import type { ChargeRate, ChargeType, Currency, ContainerType, OceanFreightRate, Port, PortCarrierNote } from "@/lib/types";
-import { Check, Loader2, Ship } from "lucide-react";
-import { Fragment, useState } from "react";
+import type {
+  CarrierEntry,
+  ChargeRate,
+  ChargeType,
+  Currency,
+  ContainerType,
+  OceanFreightRate,
+  Port,
+  PortCarrierNote,
+} from "@/lib/types";
+import { Ship } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
 
 interface Props {
   regionId: string;
@@ -76,6 +85,16 @@ export function RegionRatesEditor({
     return portNotes.find((n) => n.portId === portId);
   }
 
+  // Carriers / 비고 already used on any port here - offered as suggestions.
+  const knownCarriers = useMemo(
+    () => [...new Set(portNotes.flatMap((n) => n.entries ?? []).map((e) => e.carrier).filter(Boolean))],
+    [portNotes],
+  );
+  const knownRemarks = useMemo(
+    () => [...new Set(portNotes.flatMap((n) => n.entries ?? []).map((e) => e.remark ?? "").filter(Boolean))],
+    [portNotes],
+  );
+
   function toggleExpanded(portId: string) {
     setExpandedPorts((prev) => {
       const next = new Set(prev);
@@ -85,11 +104,11 @@ export function RegionRatesEditor({
     });
   }
 
-  async function savePortNote(portId: string, notes: string) {
+  async function savePortNote(portId: string, notes: string, entries: CarrierEntry[]) {
     const res = await fetch("/api/rates/port-notes", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ portId, notes }),
+      body: JSON.stringify({ portId, notes, entries }),
     });
     if (!res.ok) throw new Error("save failed");
     const updated = (await res.json()) as PortCarrierNote;
@@ -227,12 +246,13 @@ export function RegionRatesEditor({
                                   {formatDate(lastModified)} 수정
                                 </p>
                               )}
+                              {!expanded && <CarrierSummary note={note} destinations={DESTINATION_PORTS} />}
                             </div>
                             <button
                               type="button"
                               onClick={() => toggleExpanded(port.id)}
                               className={`shrink-0 w-6 h-6 -mt-0.5 flex items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
-                                note?.notes
+                                hasCarrierInfo(note)
                                   ? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
                                   : "text-[var(--muted)] hover:bg-[var(--sidebar-bg)]"
                               }`}
@@ -264,12 +284,15 @@ export function RegionRatesEditor({
                       {expanded && (
                         <tr className="border-t border-[var(--border-subtle)] bg-[var(--sidebar-bg)]/40">
                           <td colSpan={totalCols} className="py-3 px-3">
-                            <p className="text-[11px] font-medium text-[var(--muted)] mb-1.5 flex items-center gap-1.5">
-                              <Ship size={12} /> 주요 선사
+                            <p className="text-[11px] font-medium text-[var(--muted)] mb-2 flex items-center gap-1.5">
+                              <Ship size={12} /> {port.nameKo} 주요 선사
                             </p>
-                            <PortNotesEditor
-                              value={note?.notes ?? ""}
-                              onSave={(notes) => savePortNote(port.id, notes)}
+                            <CarrierNotesEditor
+                              note={note}
+                              destinations={DESTINATION_PORTS}
+                              knownCarriers={knownCarriers}
+                              knownRemarks={knownRemarks}
+                              onSave={(notes, entries) => savePortNote(port.id, notes, entries)}
                             />
                           </td>
                         </tr>
@@ -294,7 +317,9 @@ export function RegionRatesEditor({
                 note={findPortNote(port.id)}
                 expanded={expandedPorts.has(port.id)}
                 onToggleExpanded={() => toggleExpanded(port.id)}
-                onSaveNote={(notes) => savePortNote(port.id, notes)}
+                knownCarriers={knownCarriers}
+                knownRemarks={knownRemarks}
+                onSaveNote={(notes, entries) => savePortNote(port.id, notes, entries)}
               />
             ))}
           </div>
@@ -388,6 +413,8 @@ function MobilePortRateCard({
   note,
   expanded,
   onToggleExpanded,
+  knownCarriers,
+  knownRemarks,
   onSaveNote,
 }: {
   port: Port;
@@ -399,7 +426,9 @@ function MobilePortRateCard({
   note?: PortCarrierNote;
   expanded: boolean;
   onToggleExpanded: () => void;
-  onSaveNote: (notes: string) => Promise<void>;
+  knownCarriers: string[];
+  knownRemarks: string[];
+  onSaveNote: (notes: string, entries: CarrierEntry[]) => Promise<void>;
 }) {
   return (
     <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] p-4">
@@ -410,6 +439,7 @@ function MobilePortRateCard({
           {lastModified && (
             <p className="text-[10.5px] text-[var(--muted)] mt-0.5">{formatDate(lastModified)} 수정</p>
           )}
+          {!expanded && <CarrierSummary note={note} destinations={destinationPorts} />}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <Badge tone="neutral">USD</Badge>
@@ -417,7 +447,7 @@ function MobilePortRateCard({
             type="button"
             onClick={onToggleExpanded}
             className={`w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
-              note?.notes
+              hasCarrierInfo(note)
                 ? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
                 : "text-[var(--muted)] hover:bg-[var(--sidebar-bg)]"
             }`}
@@ -452,58 +482,60 @@ function MobilePortRateCard({
       </div>
       {expanded && (
         <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
-          <p className="text-[11px] font-medium text-[var(--muted)] mb-1.5 flex items-center gap-1.5">
+          <p className="text-[11px] font-medium text-[var(--muted)] mb-2 flex items-center gap-1.5">
             <Ship size={12} /> 주요 선사
           </p>
-          <PortNotesEditor value={note?.notes ?? ""} onSave={onSaveNote} />
+          <CarrierNotesEditor
+            note={note}
+            destinations={destinationPorts}
+            knownCarriers={knownCarriers}
+            knownRemarks={knownRemarks}
+            onSave={onSaveNote}
+          />
         </div>
       )}
     </div>
   );
 }
 
-/** Free-text notes on which shipping carriers/lines are mainly used for a
- * port - autosaves on blur, matching RateCell's own commit convention
- * ("포커스를 벗어나면 자동 저장됩니다"), just for a text field instead of a
- * numeric rate. */
-function PortNotesEditor({
-  value,
-  onSave,
+function hasCarrierInfo(note?: PortCarrierNote): boolean {
+  return Boolean(note?.notes?.trim() || note?.entries?.length);
+}
+
+/** One-line peek at a port's 주요 선사 while its editor is collapsed, e.g.
+ * "인천 PANOCEAN · 부산 BESCON" - hover shows every line in full. */
+function CarrierSummary({
+  note,
+  destinations,
 }: {
-  value: string;
-  onSave: (notes: string) => Promise<void>;
+  note?: PortCarrierNote;
+  destinations: { portId: string; label: string }[];
 }) {
-  const [draft, setDraft] = useState(value);
-  const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
-
-  async function commit() {
-    if (draft === value) return;
-    setState("saving");
-    try {
-      await onSave(draft);
-      setState("saved");
-      setTimeout(() => setState("idle"), 1200);
-    } catch {
-      setState("idle");
-    }
-  }
-
+  const entries = note?.entries ?? parseLegacyNotes(note?.notes ?? "", destinations).entries;
+  if (entries.length === 0) return null;
+  const label = (e: CarrierEntry) =>
+    destinations
+      .filter((d) => e.destinationPortIds.includes(d.portId))
+      .map((d) => d.label)
+      .join("/");
+  const full = entries
+    .map(
+      (e) =>
+        `${label(e)} : ${e.carrier}${e.net ? " NET" : ""}${e.date ? ` (${formatCarrierDate(e.date)})` : ""}${
+          e.remark ? ` - ${e.remark}` : ""
+        }`,
+    )
+    .join("\n");
   return (
-    <div className="relative">
-      <Textarea
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        placeholder="예: 청도-인천 구간은 주로 SITC, 고려해운 이용"
-        className="text-[13px] min-h-[64px]"
-      />
-      {state === "saving" && (
-        <Loader2 size={13} className="animate-spin absolute right-2.5 top-2.5 text-[var(--muted)]" />
-      )}
-      {state === "saved" && (
-        <Check size={13} className="absolute right-2.5 top-2.5 text-[var(--success)]" />
-      )}
-    </div>
+    <p className="mt-1 text-[11px] text-[var(--muted)] leading-snug line-clamp-2" title={full}>
+      {entries.map((e, i) => (
+        <span key={e.id}>
+          {i > 0 && " · "}
+          {label(e) && <span>{label(e)} </span>}
+          <span className="font-semibold text-[var(--foreground)]/80">{e.carrier}</span>
+        </span>
+      ))}
+    </p>
   );
 }
 

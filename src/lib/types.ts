@@ -81,12 +81,27 @@ export interface OceanFreightRate {
   updatedAt: string;
 }
 
-/** Free-text note on which shipping carriers/lines are mainly used for a
- * given origin port - admin-editable, one per port, shown collapsed by
- * default in the rates table (src/components/rates/RegionRatesEditor.tsx). */
+/** One "주요 선사" line for an origin port, e.g.
+ * "인천/부산 : KMTC NET (26.10.01) - 별도". */
+export interface CarrierEntry {
+  id: string;
+  destinationPortIds: string[];
+  carrier: string;
+  net: boolean;
+  date?: string; // ISO date the rate applies from
+  remark?: string;
+}
+
+/** Which shipping carriers/lines are mainly used for a given origin port -
+ * admin-editable, one per port, shown collapsed by default in the rates
+ * table (src/components/rates/RegionRatesEditor.tsx). `entries` is the
+ * structured list; `notes` is free text for anything else (and, for notes
+ * saved before entries existed, the original text - parsed into entries
+ * client-side on first edit). */
 export interface PortCarrierNote {
   portId: string;
   notes: string;
+  entries?: CarrierEntry[];
   updatedAt: string;
 }
 
