@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { CardContent } from "@/components/ui/Card";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { Input } from "@/components/ui/Field";
 import { QuoteListCard } from "@/components/quote/QuoteListCard";
@@ -163,22 +164,28 @@ export function QuoteListView({
             ]}
           />
           <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-4">
-            <Input
-              type="date"
+            <DatePicker
               value={filters.from}
               max={filters.to || undefined}
-              onChange={(e) => set("from", e.target.value)}
+              onChange={(v) => set("from", v)}
+              placeholder="시작일"
+              clearable
+              rangeStart={filters.from}
+              rangeEnd={filters.to}
               aria-label="견적일 시작"
-              className="min-w-0"
+              className="flex-1 min-w-0"
             />
             <span className="text-[var(--muted)] text-[13px]">~</span>
-            <Input
-              type="date"
+            <DatePicker
               value={filters.to}
               min={filters.from || undefined}
-              onChange={(e) => set("to", e.target.value)}
+              onChange={(v) => set("to", v)}
+              placeholder="종료일"
+              clearable
+              rangeStart={filters.from}
+              rangeEnd={filters.to}
               aria-label="견적일 종료"
-              className="min-w-0"
+              className="flex-1 min-w-0"
             />
           </div>
           <Dropdown

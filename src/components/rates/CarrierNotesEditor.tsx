@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { useDismissable } from "@/lib/hooks";
 import type { CarrierEntry, PortCarrierNote } from "@/lib/types";
 import { Check, Loader2, X } from "lucide-react";
@@ -223,15 +224,14 @@ export function CarrierNotesEditor({
                 ariaLabel={`${d.label} 선사`}
                 className="w-[150px] font-semibold tracking-wide"
               />
-              <input
-                type="date"
+              <DatePicker
+                compact
+                clearable
                 value={r.date ?? ""}
-                onChange={(e) => update(d.portId, { date: e.target.value || undefined })}
+                onChange={(v) => update(d.portId, { date: v || undefined })}
+                placeholder="기준일"
                 aria-label={`${d.label} 기준일`}
-                className={cn(
-                  "h-8 px-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[13px] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]",
-                  r.date ? "text-[var(--foreground)]" : "text-[var(--muted)]",
-                )}
+                className="w-[128px] shrink-0"
               />
               <SuggestInput
                 value={r.remark ?? ""}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldGroup, FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
 import { CustomerCombobox } from "@/components/quote/CustomerCombobox";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { IncotermsSelect } from "@/components/quote/IncotermsSelect";
 import { PortCombobox, type PortOption } from "@/components/quote/PortCombobox";
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
@@ -441,19 +442,18 @@ export default function NewQuotePage() {
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>견적일</FieldLabel>
-              <Input
-                type="date"
+              <DatePicker
                 value={quoteDate}
-                onChange={(e) => {
-                  const next = e.target.value;
+                onChange={(next) => {
                   setQuoteDate(next);
                   setValidUntil(endOfMonthIso(next));
                 }}
+                aria-label="견적일"
               />
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>유효기간</FieldLabel>
-              <Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
+              <DatePicker value={validUntil} onChange={setValidUntil} min={quoteDate} aria-label="유효기간" />
             </FieldGroup>
             <FieldGroup className="sm:col-span-2">
               <FieldLabel hint="선택">비고</FieldLabel>

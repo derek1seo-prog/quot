@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import type { ExchangeRate } from "@/lib/types";
@@ -54,7 +55,7 @@ export function ExchangeRateEditor({ initial }: { initial: ExchangeRate }) {
         </FieldGroup>
         <FieldGroup>
           <FieldLabel>기준일</FieldLabel>
-          <Input type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} />
+          <DatePicker value={asOf} onChange={setAsOf} aria-label="기준일" />
         </FieldGroup>
         <Button
           onClick={handleSave}

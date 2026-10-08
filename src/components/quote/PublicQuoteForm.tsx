@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
 import { CustomerCombobox } from "./CustomerCombobox";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { IncotermsSelect } from "./IncotermsSelect";
 import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
@@ -388,10 +389,11 @@ export function PublicQuoteForm({
                     </FieldGroup>
                     <FieldGroup>
                       <FieldLabel>유효기간</FieldLabel>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={quickValidUntil}
-                        onChange={(e) => setQuickValidUntil(e.target.value)}
+                        onChange={setQuickValidUntil}
+                        min={TODAY}
+                        aria-label="유효기간"
                       />
                     </FieldGroup>
                   </div>
