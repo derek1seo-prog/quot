@@ -4,7 +4,7 @@ import { cn, TOOLTIP_BUBBLE_CLASS } from "@/lib/cn";
 import type { Role } from "@/lib/nav";
 import { Loader2, LogOut, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 const buttonClass =
@@ -60,10 +60,14 @@ export function RoleSwitchButton({ role }: { role: Role }) {
  * near-left-edge case, which grows safely rightward. */
 function AdminLoginButton() {
   const [hovering, setHovering] = useState(false);
+  // Come back to the page the login started from (e.g. /quick-quote)
+  // instead of always landing on "/", which is the dashboard for admins.
+  const pathname = usePathname();
+  const href = pathname && pathname !== "/" ? `/unlock?next=${encodeURIComponent(pathname)}` : "/unlock";
   return (
     <span className="relative inline-flex">
       <Link
-        href="/unlock"
+        href={href}
         aria-label="관리자 로그인"
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}

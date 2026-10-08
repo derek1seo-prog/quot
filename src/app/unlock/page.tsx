@@ -11,5 +11,5 @@ export default async function UnlockPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  return <UnlockForm next={next && next.startsWith("/") ? next : "/"} />;
+  return <UnlockForm next={next && next.startsWith("/") && !next.startsWith("//") ? next : "/"} />;
 }
