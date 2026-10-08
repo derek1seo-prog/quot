@@ -3,10 +3,10 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
 import { cn } from "@/lib/cn";
+import { useRememberedSalesRepId } from "@/lib/hooks";
 import type { SalesRep } from "@/lib/types";
-import { Mail, Pencil, Phone, Plus, Trash2, UsersRound } from "lucide-react";
+import { Mail, Pencil, Phone, Plus, Star, Trash2, UsersRound } from "lucide-react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { SalesRepDialog, type SalesRepDraft } from "./SalesRepDialog";
@@ -20,6 +20,10 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<SalesRep | null>(null);
   const [flashId, setFlashId] = useState<string | null>(null);
+  // "기본" = the 견적 담당자 this browser pre-selects in the quote forms (the
+  // remembered last pick, else the app default) - setting it here updates
+  // the same stored value.
+  const [defaultRepId, setDefaultRepId] = useRememberedSalesRepId(salesReps);
 
   // initialSalesReps is a fresh array from the server component on every
   // router.refresh() - adjust state during render per React's guidance for
@@ -95,14 +99,15 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
                 )}
               >
                 <Avatar name={r.name} size="sm" />
-                <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,0.9fr)] sm:items-center sm:gap-4">
+                <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[minmax(0,1.05fr)_minmax(0,1.15fr)_minmax(0,0.85fr)] sm:items-center sm:gap-4">
                   <div className="flex items-center gap-2 min-w-0">
                     <p className="text-[14px] font-semibold text-[var(--foreground)] truncate">{r.name}</p>
-                    {r.id === DEFAULT_SALES_REP_ID && (
+                    {r.id === defaultRepId && (
                       <span
-                        className="shrink-0 rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10.5px] font-semibold text-[var(--accent)]"
-                        title="화주 전용 링크로 만든 견적의 기본 발신 담당자"
+                        className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10.5px] font-semibold text-[var(--accent)]"
+                        title="이 브라우저에서 견적 작성 시 기본으로 선택되는 담당자"
                       >
+                        <Star size={10} className="fill-current" />
                         기본
                       </span>
                     )}
@@ -115,7 +120,22 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
                     tabular
                   />
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                {/* Fixed width so rows with and without "기본으로" keep the columns aligned. */}
+                <div className="flex items-center justify-end gap-1 shrink-0 sm:w-[140px]">
+                  {r.id !== defaultRepId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDefaultRepId(r.id);
+                        flash(r.id);
+                      }}
+                      title="견적 작성 시 기본 담당자로 지정"
+                      aria-label={`${r.name} 기본 담당자로 지정`}
+                      className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <Star size={14} />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setDialog({ rep: r })}
