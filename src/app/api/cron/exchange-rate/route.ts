@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     asOf: today,
     updatedAt: new Date().toISOString(),
   };
-  await upsertExchangeRate(updated);
+  await upsertExchangeRate(updated, "auto");
 
   return NextResponse.json({ ok: true, rate, asOf: updated.asOf });
 }

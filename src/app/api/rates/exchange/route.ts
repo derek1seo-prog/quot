@@ -22,6 +22,6 @@ export async function PUT(req: NextRequest) {
     asOf: body.asOf ?? todayIso(),
     updatedAt: new Date().toISOString(),
   };
-  await upsertExchangeRate(updated);
+  await upsertExchangeRate(updated, "manual");
   return NextResponse.json(updated);
 }

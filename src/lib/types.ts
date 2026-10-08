@@ -107,6 +107,17 @@ export interface ChargeRate {
   updatedAt: string;
 }
 
+/** One day's USD->KRW rate, kept so 설정 can chart the recent trend.
+ * "auto" = the morning cron, "manual" = edited in 설정, "ecb" = one-time
+ * backfill from ECB reference rates for days before history was kept. */
+export interface ExchangeRateHistoryEntry {
+  currency: Currency;
+  date: string; // KST calendar date, YYYY-MM-DD
+  rate: number;
+  source: "auto" | "manual" | "ecb";
+  recordedAt: string;
+}
+
 export interface ExchangeRate {
   id: string;
   currency: Currency; // foreign currency, e.g. USD

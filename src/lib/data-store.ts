@@ -26,6 +26,7 @@ import type {
   Country,
   Customer,
   ExchangeRate,
+  ExchangeRateHistoryEntry,
   OceanFreightRate,
   Port,
   PortCarrierNote,
@@ -307,12 +308,40 @@ export async function upsertChargeRate(rate: ChargeRate): Promise<void> {
   await writeMutable("charge-rates.json", rates);
 }
 
-export async function upsertExchangeRate(rate: ExchangeRate): Promise<void> {
+export async function upsertExchangeRate(
+  rate: ExchangeRate,
+  source: ExchangeRateHistoryEntry["source"],
+): Promise<void> {
   const rates = await getExchangeRates();
   const idx = rates.findIndex((r) => r.currency === rate.currency);
   if (idx >= 0) rates[idx] = rate;
   else rates.push(rate);
   await writeMutable("exchange-rates.json", rates);
+  await recordExchangeRateHistory([
+    { currency: rate.currency, date: rate.asOf, rate: rate.rate, source, recordedAt: rate.updatedAt },
+  ]);
+}
+
+const EXCHANGE_RATE_HISTORY_MAX = 120;
+
+export async function getExchangeRateHistory(currency: string): Promise<ExchangeRateHistoryEntry[]> {
+  const history = await readMutable<ExchangeRateHistoryEntry[]>("exchange-rate-history.json");
+  return history.filter((h) => h.currency === currency).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** Upserts one entry per (currency, date). Real recordings ("auto"/
+ * "manual") always win; an "ecb" backfill entry never replaces one. Keeps
+ * only the most recent EXCHANGE_RATE_HISTORY_MAX entries. */
+export async function recordExchangeRateHistory(entries: ExchangeRateHistoryEntry[]): Promise<void> {
+  if (entries.length === 0) return;
+  const history = await readMutable<ExchangeRateHistoryEntry[]>("exchange-rate-history.json");
+  for (const entry of entries) {
+    const idx = history.findIndex((h) => h.currency === entry.currency && h.date === entry.date);
+    if (idx < 0) history.push(entry);
+    else if (entry.source !== "ecb" || history[idx].source === "ecb") history[idx] = entry;
+  }
+  history.sort((a, b) => a.date.localeCompare(b.date));
+  await writeMutable("exchange-rate-history.json", history.slice(-EXCHANGE_RATE_HISTORY_MAX));
 }
 
 export async function addCustomer(customer: Customer): Promise<void> {

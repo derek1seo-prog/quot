@@ -1,12 +1,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { QuoteTrendSparkline } from "@/components/dashboard/QuoteTrendSparkline";
 import { ExchangeRateEditor } from "@/components/rates/ExchangeRateEditor";
 import { getCompany, getCurrentExchangeRate } from "@/lib/data-store";
+import { EXCHANGE_TREND_DAYS, getUsdKrwTrend } from "@/lib/exchange-rate-history";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const company = getCompany();
-  const exchangeRate = await getCurrentExchangeRate("USD");
+  const [exchangeRate, trend] = await Promise.all([getCurrentExchangeRate("USD"), getUsdKrwTrend()]);
+  const trendFirst = trend[0];
+  const trendLast = trend[trend.length - 1];
+  const trendChange = trend.length >= 2 ? trendLast.rate - trendFirst.rate : 0;
+  const hasEcbBackfill = trend.some((t) => t.source === "ecb");
 
   return (
     <div className="max-w-[900px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16 space-y-8">
@@ -29,6 +35,48 @@ export default async function SettingsPage() {
           ) : (
             <p className="text-[13px] text-[var(--muted)]">환율이 설정되어 있지 않습니다.</p>
           )}
+
+          <div className="mt-6 pt-5 border-t border-[var(--border-subtle)]">
+            <div className="flex items-baseline justify-between gap-3 mb-3">
+              <p className="text-[13px] font-medium text-[var(--muted)]">
+                최근 {EXCHANGE_TREND_DAYS}일 환율 추이
+              </p>
+              {trend.length >= 2 && (
+                <p className="text-[12px] text-[var(--muted)]">
+                  {trendFirst.date.slice(5).replace("-", "/")} 대비{" "}
+                  <span
+                    className={
+                      trendChange > 0
+                        ? "font-medium text-[var(--danger)]"
+                        : trendChange < 0
+                          ? "font-medium text-[var(--accent)]"
+                          : "font-medium text-[var(--foreground)]"
+                    }
+                  >
+                    {trendChange > 0 ? "▲" : trendChange < 0 ? "▼" : ""}
+                    {Math.abs(trendChange).toLocaleString("ko-KR")}원
+                  </span>
+                </p>
+              )}
+            </div>
+            {trend.length >= 2 ? (
+              <>
+                <QuoteTrendSparkline
+                  unit="krw"
+                  data={trend.map((t) => ({ date: t.date, count: t.rate }))}
+                />
+                {hasEcbBackfill && (
+                  <p className="text-[11.5px] text-[var(--muted)] mt-3">
+                    기록이 시작되기 전 날짜는 ECB 기준 환율로 채워져 있습니다.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-[13px] text-[var(--muted)]">
+                매일 아침 갱신되는 환율이 쌓이면 추이 그래프가 표시됩니다.
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

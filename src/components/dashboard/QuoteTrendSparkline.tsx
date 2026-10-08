@@ -25,7 +25,16 @@ function formatShortDate(iso: string): string {
  * trend is the point, not "look how blue this is". Single series, so no
  * legend; hover/focus on any day's slot shows that day's exact count,
  * since a plotted line ships hover feedback by default. */
-export function QuoteTrendSparkline({ data }: { data: TrendPoint[] }) {
+export function QuoteTrendSparkline({
+  data,
+  unit = "count",
+}: {
+  data: TrendPoint[];
+  /** How a point's value reads in its label/tooltip: a quote count ("3건")
+   * or a won amount ("1,393원", for the 설정 exchange-rate trend). */
+  unit?: "count" | "krw";
+}) {
+  const formatValue = (n: number) => (unit === "krw" ? `${n.toLocaleString("ko-KR")}원` : `${n}건`);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const counts = data.map((d) => d.count);
@@ -87,7 +96,7 @@ export function QuoteTrendSparkline({ data }: { data: TrendPoint[] }) {
             fill="transparent"
             tabIndex={0}
             role="img"
-            aria-label={`${formatShortDate(p.date)}, ${p.count}건`}
+            aria-label={`${formatShortDate(p.date)}, ${formatValue(p.count)}`}
             onMouseEnter={() => setActiveIndex(i)}
             onMouseLeave={() => setActiveIndex(null)}
             onFocus={() => setActiveIndex(i)}
@@ -125,7 +134,7 @@ export function QuoteTrendSparkline({ data }: { data: TrendPoint[] }) {
           transform: "translate(calc(-100% - 8px), -50%)",
         }}
       >
-        {last.count}건
+        {formatValue(last.count)}
       </span>
 
       {active && (
@@ -137,7 +146,7 @@ export function QuoteTrendSparkline({ data }: { data: TrendPoint[] }) {
             marginTop: "-8px",
           }}
         >
-          {formatShortDate(active.date)} · {active.count}건
+          {formatShortDate(active.date)} · {formatValue(active.count)}
         </span>
       )}
     </div>
