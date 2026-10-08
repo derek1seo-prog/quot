@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Field";
-import { cn } from "@/lib/cn";
+import { cn, TOOLTIP_BUBBLE_CLASS } from "@/lib/cn";
 import { formatNumber } from "@/lib/format";
 import type { Customer, SalesRep } from "@/lib/types";
 import { Building2, Check, Contact, Link2, Pencil, Phone, Plus, Search, Trash2 } from "lucide-react";
@@ -217,22 +217,36 @@ export function CustomersTable({
                   </div>
 
                   <div className="flex items-center gap-0.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => copyAccessLink(c)}
-                      disabled={!c.accessToken}
-                      title={c.accessToken ? "화주 전용 링크 복사" : "화주 정보를 한 번 저장하면 링크가 생성됩니다"}
-                      aria-label={`${c.name} 전용 링크 복사`}
-                      className={cn(
-                        "h-8 px-2 inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] text-[12.5px] font-medium transition-colors disabled:opacity-30",
-                        copiedId === c.id
-                          ? "text-[var(--success)]"
-                          : "text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]",
+                    {/* TEMPORARY: 화주 전용 링크 is still being finished - same
+                        "업데이트 중" hover bubble as PDF 다운로드 (QuoteActions), shown to the
+                        left since the overflow-hidden card would clip one above the first row. */}
+                    <span className="relative inline-flex group/link">
+                      <button
+                        type="button"
+                        onClick={() => copyAccessLink(c)}
+                        disabled={!c.accessToken}
+                        aria-label={`${c.name} 전용 링크 복사`}
+                        className={cn(
+                          "h-8 px-2 inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] text-[12.5px] font-medium transition-colors disabled:opacity-30",
+                          copiedId === c.id
+                            ? "text-[var(--success)]"
+                            : "text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]",
+                        )}
+                      >
+                        {copiedId === c.id ? <Check size={14} /> : <Link2 size={14} />}
+                        <span className="hidden md:inline">{copiedId === c.id ? "복사됨" : "링크"}</span>
+                      </button>
+                      {copiedId !== c.id && (
+                        <span
+                          className={cn(
+                            TOOLTIP_BUBBLE_CLASS,
+                            "pointer-events-none absolute right-full top-1/2 -translate-y-1/2 translate-x-1 mr-1.5 z-50 opacity-0 transition-all duration-200 group-hover/link:opacity-100 group-hover/link:translate-x-0 motion-reduce:transition-none",
+                          )}
+                        >
+                          업데이트 중
+                        </span>
                       )}
-                    >
-                      {copiedId === c.id ? <Check size={14} /> : <Link2 size={14} />}
-                      <span className="hidden md:inline">{copiedId === c.id ? "복사됨" : "링크"}</span>
-                    </button>
+                    </span>
                     <button
                       type="button"
                       onClick={() => setDialog({ customer: c })}
