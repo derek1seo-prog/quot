@@ -1,13 +1,18 @@
 import { LinkButton } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { QuoteListCard } from "@/components/quote/QuoteListCard";
-import { QuoteListRow } from "@/components/quote/QuoteListRow";
+import { QuoteListView } from "@/components/quote/QuoteListView";
 import { getPorts, getQuotes, getRegions } from "@/lib/data-store";
+import { parseQuoteListFilters } from "@/lib/quote-list-filters";
 import { FilePlus2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function QuotesListPage() {
+export default async function QuotesListPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const initialFilters = parseQuoteListFilters(await searchParams);
   const quotes = await getQuotes();
   const portNameById = Object.fromEntries(getPorts().map((p) => [p.id, p.nameKo]));
   const regionCountryById = Object.fromEntries(getRegions().map((r) => [r.id, r.countryId]));
@@ -39,50 +44,12 @@ export default async function QuotesListPage() {
             </LinkButton>
           </CardContent>
         ) : (
-          <>
-          <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full text-left min-w-[840px]">
-            <thead>
-              <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--muted)] uppercase tracking-wide">
-                <th className="px-6 py-3 font-medium whitespace-nowrap">견적번호</th>
-                <th className="px-6 py-3 font-medium whitespace-nowrap">고객명</th>
-                <th className="px-6 py-3 font-medium whitespace-nowrap">구간</th>
-                <th className="px-6 py-3 font-medium whitespace-nowrap">인코텀즈</th>
-                <th className="px-6 py-3 font-medium whitespace-nowrap">권역</th>
-                <th className="px-6 py-3 font-medium whitespace-nowrap">견적일</th>
-                <th className="px-6 py-3 font-medium text-right whitespace-nowrap">합계</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {quotes.map((q, i) => (
-                <QuoteListRow
-                  key={q.id}
-                  quote={q}
-                  portNameById={portNameById}
-                  regionCountryById={regionCountryById}
-                  // Capped so a long list still settles quickly instead of
-                  // trickling in row by row for several seconds - only the
-                  // first screenful visibly cascades.
-                  animationDelayMs={220 + Math.min(i, 10) * 30}
-                />
-              ))}
-            </tbody>
-          </table>
-          </div>
-
-          <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
-            {quotes.map((q, i) => (
-              <QuoteListCard
-                key={q.id}
-                quote={q}
-                portNameById={portNameById}
-                regionCountryById={regionCountryById}
-                animationDelayMs={220 + Math.min(i, 10) * 30}
-              />
-            ))}
-          </div>
-          </>
+          <QuoteListView
+            quotes={quotes}
+            portNameById={portNameById}
+            regionCountryById={regionCountryById}
+            initialFilters={initialFilters}
+          />
         )}
       </Card>
     </div>

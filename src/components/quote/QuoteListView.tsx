@@ -1,0 +1,270 @@
+"use client";
+
+import { Button } from "@/components/ui/Button";
+import { CardContent } from "@/components/ui/Card";
+import { Input, Select } from "@/components/ui/Field";
+import { QuoteListCard } from "@/components/quote/QuoteListCard";
+import { QuoteListRow } from "@/components/quote/QuoteListRow";
+import {
+  DEFAULT_QUOTE_FILTERS,
+  isQuoteSort,
+  QUOTE_SORT_LABELS,
+  type QuoteListFilters,
+  type QuoteSort,
+} from "@/lib/quote-list-filters";
+import type { Quote } from "@/lib/types";
+import { ChevronDown, RotateCcw, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
+/** Filter/sort bar + list for 견적 목록. Everything runs client-side over
+ * the full list the page already loads (quotes.json is read whole anyway),
+ * and the current filters are mirrored into the URL with replaceState, so
+ * going back from a quote's detail page lands on the same filtered view. */
+export function QuoteListView({
+  quotes,
+  portNameById,
+  regionCountryById,
+  initialFilters,
+}: {
+  quotes: Quote[];
+  portNameById: Record<string, string>;
+  regionCountryById: Record<string, string>;
+  initialFilters: QuoteListFilters;
+}) {
+  const [filters, setFilters] = useState(initialFilters);
+  const set = <K extends keyof QuoteListFilters>(key: K, value: QuoteListFilters[K]) =>
+    setFilters((f) => ({ ...f, [key]: value }));
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value && value !== DEFAULT_QUOTE_FILTERS[key as keyof QuoteListFilters]) params.set(key, value);
+    }
+    const qs = params.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, [filters]);
+
+  // 업체 dropdown options, with how many quotes each has - most-quoted first.
+  const customerOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const q of quotes) {
+      const name = q.input.customerName.trim();
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
+  }, [quotes]);
+
+  const visible = useMemo(() => {
+    const needle = filters.q.trim().toLowerCase();
+    const result = quotes.filter((q) => {
+      const { input } = q;
+      if (filters.customer && input.customerName.trim() !== filters.customer) return false;
+      const date = input.quoteDate.slice(0, 10);
+      if (filters.from && date < filters.from) return false;
+      if (filters.to && date > filters.to) return false;
+      if (needle) {
+        const haystack = [
+          q.quoteNumber,
+          input.customerName,
+          input.contactName,
+          input.preparedBy,
+          input.incoterms,
+          portNameById[input.originPortId] ?? input.originPortId,
+          portNameById[input.destinationPortId] ?? input.destinationPortId,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(needle)) return false;
+      }
+      return true;
+    });
+
+    const total = (q: Quote) => q.result.column.grandTotalKrw;
+    // Ties (same 견적일) fall back to creation time so the order is stable.
+    const byDate = (a: Quote, b: Quote) =>
+      a.input.quoteDate.localeCompare(b.input.quoteDate) || a.createdAt.localeCompare(b.createdAt);
+    const comparators: Record<QuoteSort, (a: Quote, b: Quote) => number> = {
+      newest: (a, b) => byDate(b, a),
+      oldest: byDate,
+      priceAsc: (a, b) => total(a) - total(b) || byDate(b, a),
+      priceDesc: (a, b) => total(b) - total(a) || byDate(b, a),
+    };
+    return result.sort(comparators[filters.sort]);
+  }, [quotes, filters, portNameById]);
+
+  const isFiltered =
+    filters.q !== "" || filters.customer !== "" || filters.from !== "" || filters.to !== "";
+
+  return (
+    <>
+      <div className="p-4 sm:px-6 border-b border-[var(--border-subtle)] flex flex-col gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto_auto] gap-3">
+          <div className="relative">
+            <Search
+              size={15}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+            />
+            <Input
+              value={filters.q}
+              onChange={(e) => set("q", e.target.value)}
+              placeholder="견적번호·고객명·항구 검색"
+              aria-label="검색"
+              className="pl-9"
+            />
+          </div>
+          <SelectWithChevron
+            value={filters.customer}
+            onChange={(v) => set("customer", v)}
+            aria-label="업체"
+          >
+            <option value="">전체 업체</option>
+            {customerOptions.map(([name, count]) => (
+              <option key={name} value={name}>
+                {name} ({count})
+              </option>
+            ))}
+          </SelectWithChevron>
+          <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
+            <Input
+              type="date"
+              value={filters.from}
+              max={filters.to || undefined}
+              onChange={(e) => set("from", e.target.value)}
+              aria-label="견적일 시작"
+              className="min-w-0"
+            />
+            <span className="text-[var(--muted)] text-[13px]">~</span>
+            <Input
+              type="date"
+              value={filters.to}
+              min={filters.from || undefined}
+              onChange={(e) => set("to", e.target.value)}
+              aria-label="견적일 종료"
+              className="min-w-0"
+            />
+          </div>
+          <SelectWithChevron
+            value={filters.sort}
+            onChange={(v) => set("sort", isQuoteSort(v) ? v : "newest")}
+            aria-label="정렬"
+            className="sm:col-span-2 lg:col-span-1 lg:w-[140px]"
+          >
+            {Object.entries(QUOTE_SORT_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SelectWithChevron>
+        </div>
+        <div className="flex items-center justify-between text-[12.5px] text-[var(--muted)]">
+          <span>
+            {isFiltered ? (
+              <>
+                전체 {quotes.length}건 중 <span className="font-medium text-[var(--foreground)]">{visible.length}건</span>
+              </>
+            ) : (
+              <>총 {quotes.length}건</>
+            )}
+          </span>
+          {isFiltered && (
+            <button
+              type="button"
+              onClick={() => setFilters((f) => ({ ...DEFAULT_QUOTE_FILTERS, sort: f.sort }))}
+              className="inline-flex items-center gap-1 hover:text-[var(--accent)] transition-colors"
+            >
+              <RotateCcw size={13} />
+              필터 초기화
+            </button>
+          )}
+        </div>
+      </div>
+
+      {visible.length === 0 ? (
+        <CardContent className="py-16 text-center">
+          <p className="text-[15px] font-medium">조건에 맞는 견적이 없습니다.</p>
+          <p className="text-[13px] text-[var(--muted)] mt-1 mb-6">검색어나 기간을 바꿔 보세요.</p>
+          <Button
+            variant="secondary"
+            icon={<RotateCcw size={15} />}
+            className="mx-auto"
+            onClick={() => setFilters((f) => ({ ...DEFAULT_QUOTE_FILTERS, sort: f.sort }))}
+          >
+            필터 초기화
+          </Button>
+        </CardContent>
+      ) : (
+        <>
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-left min-w-[840px]">
+              <thead>
+                <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--muted)] uppercase tracking-wide">
+                  <th className="px-6 py-3 font-medium whitespace-nowrap">견적번호</th>
+                  <th className="px-6 py-3 font-medium whitespace-nowrap">고객명</th>
+                  <th className="px-6 py-3 font-medium whitespace-nowrap">구간</th>
+                  <th className="px-6 py-3 font-medium whitespace-nowrap">인코텀즈</th>
+                  <th className="px-6 py-3 font-medium whitespace-nowrap">권역</th>
+                  <th className="px-6 py-3 font-medium whitespace-nowrap">견적일</th>
+                  <th className="px-6 py-3 font-medium text-right whitespace-nowrap">합계</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((q, i) => (
+                  <QuoteListRow
+                    key={q.id}
+                    quote={q}
+                    portNameById={portNameById}
+                    regionCountryById={regionCountryById}
+                    // Capped so a long list still settles quickly instead of
+                    // trickling in row by row for several seconds - only the
+                    // first screenful visibly cascades.
+                    animationDelayMs={220 + Math.min(i, 10) * 30}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="sm:hidden divide-y divide-[var(--border-subtle)]">
+            {visible.map((q, i) => (
+              <QuoteListCard
+                key={q.id}
+                quote={q}
+                portNameById={portNameById}
+                regionCountryById={regionCountryById}
+                animationDelayMs={220 + Math.min(i, 10) * 30}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function SelectWithChevron({
+  value,
+  onChange,
+  children,
+  className,
+  "aria-label": ariaLabel,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+  className?: string;
+  "aria-label": string;
+}) {
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      <Select value={value} onChange={(e) => onChange(e.target.value)} aria-label={ariaLabel}>
+        {children}
+      </Select>
+      <ChevronDown
+        size={15}
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+      />
+    </div>
+  );
+}
