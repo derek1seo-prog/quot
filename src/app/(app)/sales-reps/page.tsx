@@ -1,4 +1,3 @@
-import { AddSalesRepForm } from "@/components/sales-reps/AddSalesRepForm";
 import { SalesRepsTable } from "@/components/sales-reps/SalesRepsTable";
 import { getSalesReps } from "@/lib/data-store";
 
@@ -13,11 +12,7 @@ export default async function SalesRepsPage() {
         <p className="text-[13px] font-medium text-[var(--accent)] mb-2">관리</p>
         <h1 className="text-[28px] font-semibold tracking-tight">사원 관리</h1>
       </div>
-      <div className="mb-8 animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
-        <AddSalesRepForm />
-      </div>
-
-      <div className="animate-dashboard-fade-up" style={{ animationDelay: "160ms" }}>
+      <div className="animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
         <SalesRepsTable initialSalesReps={salesReps} />
       </div>
     </div>

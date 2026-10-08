@@ -1,68 +1,53 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { Input } from "@/components/ui/Field";
+import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
+import { cn } from "@/lib/cn";
 import type { SalesRep } from "@/lib/types";
-import { Check, Pencil, Trash2, X } from "lucide-react";
+import { Mail, Pencil, Phone, Plus, Trash2, UsersRound } from "lucide-react";
 import { useState } from "react";
+import { Avatar, SalesRepDialog, type SalesRepDraft } from "./SalesRepDialog";
 
-// Column widths as percentages of the table (name/email/phone sum to 100),
-// plus a fixed-px actions column - table-fixed makes these exact regardless
-// of content, so switching a cell between plain text and an <Input> never
-// resizes the column (which is what actually read as "jerky" - not the
-// transition, the layout shift underneath it).
-const nameColPct = 25;
-const emailColPct = 45;
-const phoneColPct = 30;
-const actionColWidth = 80; // px - fits the two same-sized icon buttons in either state
-
+/** 사원 관리 list: one row per rep (avatar, name, contact), with 수정 / 삭제
+ * always reachable (desktop and touch alike). Adding and editing both go
+ * through SalesRepDialog instead of inline table inputs. */
 export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRep[] }) {
   const [salesReps, setSalesReps] = useState(initialSalesReps);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<{ name: string; email: string; phone: string }>({
-    name: "",
-    email: "",
-    phone: "",
-  });
-  const [saving, setSaving] = useState(false);
+  const [dialog, setDialog] = useState<{ rep: SalesRep | null } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<SalesRep | null>(null);
+  const [flashId, setFlashId] = useState<string | null>(null);
 
   // initialSalesReps is a fresh array from the server component on every
-  // router.refresh() (e.g. after adding a rep) - without this, state above
-  // stays frozen at its first-mount value. Adjusting state during render
-  // per React's guidance for syncing state to a changed prop.
+  // router.refresh() - adjust state during render per React's guidance for
+  // syncing state to a changed prop.
   const [prevInitialSalesReps, setPrevInitialSalesReps] = useState(initialSalesReps);
   if (initialSalesReps !== prevInitialSalesReps) {
     setPrevInitialSalesReps(initialSalesReps);
     setSalesReps(initialSalesReps);
   }
 
-  function startEdit(rep: SalesRep) {
-    setEditingId(rep.id);
-    setDraft({ name: rep.name, email: rep.email ?? "", phone: rep.phone ?? "" });
+  function flash(id: string) {
+    setFlashId(id);
+    setTimeout(() => setFlashId((cur) => (cur === id ? null : cur)), 1600);
   }
 
-  function cancelEdit() {
-    setEditingId(null);
-  }
-
-  async function saveEdit(id: string) {
-    setSaving(true);
-    try {
-      const res = await fetch("/api/sales-reps", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, name: draft.name, email: draft.email, phone: draft.phone }),
-      });
-      if (!res.ok) throw new Error("save failed");
-      const updated = (await res.json()) as SalesRep;
-      setSalesReps((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
-      setEditingId(null);
-    } finally {
-      setSaving(false);
-    }
+  async function handleSubmit(draft: SalesRepDraft) {
+    const editing = dialog?.rep;
+    const res = await fetch("/api/sales-reps", {
+      method: editing ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editing ? { id: editing.id, ...draft } : draft),
+    });
+    if (!res.ok) throw new Error("save failed");
+    const saved = (await res.json()) as SalesRep;
+    setSalesReps((prev) =>
+      editing ? prev.map((r) => (r.id === saved.id ? saved : r)) : [...prev, saved],
+    );
+    setDialog(null);
+    flash(saved.id);
   }
 
   async function confirmDelete() {
@@ -78,116 +63,89 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
     }
   }
 
-  if (salesReps.length === 0) {
-    return (
-      <Card className="overflow-hidden">
-        <CardContent className="py-16 text-center text-[var(--muted)] text-[14px]">
-          등록된 사원이 없습니다.
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="overflow-hidden">
-      <table className="w-full table-fixed text-left">
-        <colgroup>
-          <col style={{ width: `${nameColPct}%` }} />
-          <col style={{ width: `${emailColPct}%` }} />
-          <col style={{ width: `${phoneColPct}%` }} />
-          <col style={{ width: `${actionColWidth}px` }} />
-        </colgroup>
-        <thead>
-          <tr className="text-[12px] text-[var(--muted)] uppercase tracking-wide border-b border-[var(--border-subtle)]">
-            <th className="px-4 py-3 font-medium">이름</th>
-            <th className="px-3 py-3 font-medium">이메일</th>
-            <th className="px-3 py-3 font-medium">전화번호</th>
-            <th className="px-2 py-3" />
-          </tr>
-        </thead>
-        <tbody>
-          {salesReps.map((r) => {
-            const editing = editingId === r.id;
-            return (
-              <tr key={r.id} className="border-b border-[var(--border-subtle)] last:border-0 group">
-                <td className="px-4 py-2.5 align-middle text-[13.5px] font-medium truncate">
-                  {editing ? (
-                    <Input
-                      value={draft.name}
-                      onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-                      className="h-8"
-                    />
-                  ) : (
-                    r.name
-                  )}
-                </td>
-                <td className="px-3 py-2.5 align-middle text-[13.5px] text-[var(--foreground)] truncate">
-                  {editing ? (
-                    <Input
-                      value={draft.email}
-                      onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-                      className="h-8"
-                    />
-                  ) : (
-                    r.email ?? "-"
-                  )}
-                </td>
-                <td className="px-3 py-2.5 align-middle text-[13.5px] text-[var(--foreground)] truncate">
-                  {editing ? (
-                    <Input
-                      value={draft.phone}
-                      onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
-                      className="h-8"
-                    />
-                  ) : (
-                    r.phone ?? "-"
-                  )}
-                </td>
-                <td className="px-2 align-middle text-right whitespace-nowrap">
-                  {editing ? (
-                    <>
-                      <button
-                        onClick={() => saveEdit(r.id)}
-                        disabled={saving || !draft.name}
-                        className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--success)] hover:bg-[var(--accent-soft)]"
-                        aria-label="저장"
+    <>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <p className="text-[13px] text-[var(--muted)]">
+          총 <span className="font-medium text-[var(--foreground)]">{salesReps.length}</span>명
+        </p>
+        <Button icon={<Plus size={16} />} onClick={() => setDialog({ rep: null })}>
+          사원 추가
+        </Button>
+      </div>
+
+      <Card className="overflow-hidden">
+        {salesReps.length === 0 ? (
+          <div className="py-16 text-center">
+            <span className="mx-auto mb-3 w-11 h-11 rounded-full bg-[var(--sidebar-bg)] flex items-center justify-center text-[var(--muted)]">
+              <UsersRound size={20} />
+            </span>
+            <p className="text-[14px] font-medium">등록된 사원이 없습니다.</p>
+            <p className="text-[13px] text-[var(--muted)] mt-1">견적서 발신 담당자로 쓸 사원을 추가해 보세요.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-[var(--border-subtle)]">
+            {salesReps.map((r) => (
+              <li
+                key={r.id}
+                className={cn(
+                  "group flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 transition-colors duration-700",
+                  flashId === r.id ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--sidebar-bg)]/50",
+                )}
+              >
+                <Avatar name={r.name} size="sm" />
+                <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,0.9fr)] sm:items-center sm:gap-4">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="text-[14px] font-semibold text-[var(--foreground)] truncate">{r.name}</p>
+                    {r.id === DEFAULT_SALES_REP_ID && (
+                      <span
+                        className="shrink-0 rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10.5px] font-semibold text-[var(--accent)]"
+                        title="화주 전용 링크로 만든 견적의 기본 발신 담당자"
                       >
-                        <Check size={15} />
-                      </button>
-                      <button
-                        onClick={cancelEdit}
-                        disabled={saving}
-                        className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-bg)]"
-                        aria-label="취소"
-                      >
-                        <X size={15} />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => startEdit(r)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]"
-                        aria-label="수정"
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        onClick={() => setPendingDelete(r)}
-                        disabled={deletingId === r.id}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50"
-                        aria-label="삭제"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                        기본
+                      </span>
+                    )}
+                  </div>
+                  <ContactLine icon={<Mail size={13} />} value={r.email} href={r.email ? `mailto:${r.email}` : undefined} />
+                  <ContactLine
+                    icon={<Phone size={13} />}
+                    value={r.phone}
+                    href={r.phone ? `tel:${r.phone.replace(/[^0-9+]/g, "")}` : undefined}
+                    tabular
+                  />
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setDialog({ rep: r })}
+                    className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] text-[12.5px] font-medium text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
+                    aria-label={`${r.name} 수정`}
+                  >
+                    <Pencil size={14} />
+                    <span className="hidden sm:inline">수정</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDelete(r)}
+                    disabled={deletingId === r.id}
+                    className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50 transition-colors sm:opacity-60 sm:group-hover:opacity-100 focus:opacity-100"
+                    aria-label={`${r.name} 삭제`}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <SalesRepDialog
+        open={dialog != null}
+        rep={dialog?.rep ?? null}
+        onClose={() => setDialog(null)}
+        onSubmit={handleSubmit}
+      />
 
       <ConfirmDialog
         open={pendingDelete != null}
@@ -199,6 +157,38 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
-    </Card>
+    </>
+  );
+}
+
+function ContactLine({
+  icon,
+  value,
+  href,
+  tabular,
+}: {
+  icon: React.ReactNode;
+  value?: string;
+  href?: string;
+  tabular?: boolean;
+}) {
+  if (!value) {
+    return (
+      <p className="hidden sm:flex items-center gap-1.5 text-[13px] text-[var(--muted)]/70">
+        <span className="text-[var(--muted)]/60">{icon}</span>-
+      </p>
+    );
+  }
+  return (
+    <a
+      href={href}
+      className={cn(
+        "mt-0.5 sm:mt-0 flex items-center gap-1.5 min-w-0 text-[12.5px] sm:text-[13px] text-[var(--muted)] sm:text-[var(--foreground)] hover:text-[var(--accent)] transition-colors",
+        tabular && "tabular-nums",
+      )}
+    >
+      <span className="shrink-0 text-[var(--muted)]">{icon}</span>
+      <span className="truncate">{value}</span>
+    </a>
   );
 }
