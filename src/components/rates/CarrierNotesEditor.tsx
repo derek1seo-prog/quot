@@ -138,26 +138,36 @@ export function CarrierNotesEditor({
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const dirty = useRef(false);
   const onSaveRef = useRef(onSave);
+  // The parent rebuilds `destinations` on every render (including the one a
+  // save itself triggers), so it must not be an effect dependency - doing so
+  // re-ran the save in an endless "저장 중 / 저장됨" loop.
+  const destinationsRef = useRef(destinations);
+  const lastSaved = useRef<string | null>(null);
   useEffect(() => {
     onSaveRef.current = onSave;
+    destinationsRef.current = destinations;
   });
 
   useEffect(() => {
     if (!dirty.current) return;
+    const entries: CarrierEntry[] = destinationsRef.current
+      .map((d) => ({ d, r: rows[d.portId] }))
+      .filter(({ r }) => r && (r.carrier.trim() || r.remark?.trim()))
+      .map(({ d, r }) => ({
+        id: d.portId,
+        destinationPortIds: [d.portId],
+        carrier: r.carrier.trim(),
+        date: r.date,
+        remark: r.remark?.trim() || undefined,
+      }));
+    const payload = JSON.stringify({ memo, entries });
+    // Nothing actually changed since the last save (e.g. typed and erased).
+    if (payload === lastSaved.current) return;
     const timer = setTimeout(async () => {
       setState("saving");
-      const entries: CarrierEntry[] = destinations
-        .map((d) => ({ d, r: rows[d.portId] }))
-        .filter(({ r }) => r && (r.carrier.trim() || r.remark?.trim()))
-        .map(({ d, r }) => ({
-          id: d.portId,
-          destinationPortIds: [d.portId],
-          carrier: r.carrier.trim(),
-          date: r.date,
-          remark: r.remark?.trim() || undefined,
-        }));
       try {
         await onSaveRef.current(memo, entries);
+        lastSaved.current = payload;
         setState("saved");
         setTimeout(() => setState((s) => (s === "saved" ? "idle" : s)), 1200);
       } catch {
@@ -165,7 +175,7 @@ export function CarrierNotesEditor({
       }
     }, 700);
     return () => clearTimeout(timer);
-  }, [rows, memo, destinations]);
+  }, [rows, memo]);
 
   function update(portId: string, patch: Partial<Row>) {
     dirty.current = true;
