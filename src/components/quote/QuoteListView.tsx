@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { CardContent } from "@/components/ui/Card";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { Input } from "@/components/ui/Field";
 import { QuoteListCard } from "@/components/quote/QuoteListCard";
 import { QuoteListRow } from "@/components/quote/QuoteListRow";
@@ -141,16 +142,14 @@ export function QuoteListView({
               className="pl-9"
             />
           </div>
-          <Dropdown
+          <FilterCombobox
             value={filters.customer}
             onChange={(v) => set("customer", v)}
             aria-label="업체"
+            placeholder="업체 검색 (전체)"
             icon={<Building2 size={15} />}
             className="lg:col-span-2"
-            options={[
-              { value: "", label: "전체 업체" },
-              ...customerOptions.map((name) => ({ value: name, label: name })),
-            ]}
+            options={customerOptions}
           />
           <Dropdown
             value={filters.rep}
