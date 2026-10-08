@@ -3,7 +3,7 @@
 import { RateCell } from "./RateCell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { CarrierNotesEditor, formatCarrierDate, parseLegacyNotes } from "./CarrierNotesEditor";
+import { CarrierNotesEditor } from "./CarrierNotesEditor";
 import { formatDate } from "@/lib/format";
 import type {
   CarrierEntry,
@@ -246,7 +246,6 @@ export function RegionRatesEditor({
                                   {formatDate(lastModified)} 수정
                                 </p>
                               )}
-                              {!expanded && <CarrierSummary note={note} destinations={DESTINATION_PORTS} />}
                             </div>
                             <button
                               type="button"
@@ -439,7 +438,6 @@ function MobilePortRateCard({
           {lastModified && (
             <p className="text-[10.5px] text-[var(--muted)] mt-0.5">{formatDate(lastModified)} 수정</p>
           )}
-          {!expanded && <CarrierSummary note={note} destinations={destinationPorts} />}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <Badge tone="neutral">USD</Badge>
@@ -500,43 +498,6 @@ function MobilePortRateCard({
 
 function hasCarrierInfo(note?: PortCarrierNote): boolean {
   return Boolean(note?.notes?.trim() || note?.entries?.length);
-}
-
-/** One-line peek at a port's 주요 선사 while its editor is collapsed, e.g.
- * "인천 PANOCEAN · 부산 BESCON" - hover shows every line in full. */
-function CarrierSummary({
-  note,
-  destinations,
-}: {
-  note?: PortCarrierNote;
-  destinations: { portId: string; label: string }[];
-}) {
-  const entries = note?.entries ?? parseLegacyNotes(note?.notes ?? "", destinations).entries;
-  if (entries.length === 0) return null;
-  const label = (e: CarrierEntry) =>
-    destinations
-      .filter((d) => e.destinationPortIds.includes(d.portId))
-      .map((d) => d.label)
-      .join("/");
-  const full = entries
-    .map(
-      (e) =>
-        `${label(e)} : ${e.carrier}${e.net ? " NET" : ""}${e.date ? ` (${formatCarrierDate(e.date)})` : ""}${
-          e.remark ? ` - ${e.remark}` : ""
-        }`,
-    )
-    .join("\n");
-  return (
-    <p className="mt-1 text-[11px] text-[var(--muted)] leading-snug line-clamp-2" title={full}>
-      {entries.map((e, i) => (
-        <span key={e.id}>
-          {i > 0 && " · "}
-          {label(e) && <span>{label(e)} </span>}
-          <span className="font-semibold text-[var(--foreground)]/80">{e.carrier}</span>
-        </span>
-      ))}
-    </p>
-  );
 }
 
 /** Mobile equivalent of the charges table: one card per charge type,

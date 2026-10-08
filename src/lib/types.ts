@@ -81,13 +81,13 @@ export interface OceanFreightRate {
   updatedAt: string;
 }
 
-/** One "주요 선사" line for an origin port, e.g.
- * "인천/부산 : KMTC NET (26.10.01) - 별도". */
+/** One "주요 선사" line for an origin port - in practice one per Korean
+ * destination (인천 / 부산 / 평택), e.g. "인천 : KMTC (26.10.01) - 별도".
+ * Rates are kept as NET, so there's no NET/non-NET flag. */
 export interface CarrierEntry {
   id: string;
   destinationPortIds: string[];
   carrier: string;
-  net: boolean;
   date?: string; // ISO date the rate applies from
   remark?: string;
 }

@@ -30,7 +30,6 @@ function sanitizeEntry(e: CarrierEntry): CarrierEntry {
     id: String(e.id ?? ""),
     destinationPortIds: Array.isArray(e.destinationPortIds) ? e.destinationPortIds.map(String) : [],
     carrier: String(e.carrier ?? "").trim(),
-    net: Boolean(e.net),
     date: typeof e.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.date) ? e.date : undefined,
     remark: typeof e.remark === "string" && e.remark.trim() ? e.remark.trim() : undefined,
   };

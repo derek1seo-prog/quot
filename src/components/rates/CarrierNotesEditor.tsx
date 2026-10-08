@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { useDismissable } from "@/lib/hooks";
 import type { CarrierEntry, PortCarrierNote } from "@/lib/types";
-import { Check, Loader2, Plus, Trash2 } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface DestinationOption {
@@ -27,20 +27,24 @@ const COMMON_CARRIERS = [
 ];
 const COMMON_REMARKS = ["ALL IN", "별도", "운임 미정"];
 
-function newId(): string {
-  return Math.random().toString(36).slice(2, 10);
+interface Row {
+  carrier: string;
+  date?: string;
+  remark?: string;
 }
 
-/** "2026-10-01" -> "26.10.01", the shorthand used in carrier notes. */
-export function formatCarrierDate(iso?: string): string {
-  if (!iso) return "";
-  const [y, m, d] = iso.split("-");
-  return `${y.slice(2)}.${m}.${d}`;
+/** Rates are tracked as NET, so a "NET" written into the carrier is noise. */
+function cleanCarrier(raw: string): string {
+  return raw.replace(/\bNET\b/gi, "").replace(/\s{2,}/g, " ").trim();
 }
 
-/** Best-effort parse of legacy free-text notes written as
- * "인천/부산 : KMTC NET (26.10.01) - 별도", one carrier per line. Lines
- * that don't fit stay as free text. */
+function kstToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
+}
+
+/** Best-effort parse of legacy free-text notes written like
+ * "인천/부산 : KMTC NET (26.10.01) - 별도" or "... (26.10.01) [별도]", one
+ * line each. Lines that don't fit stay as free text. */
 export function parseLegacyNotes(
   text: string,
   destinations: DestinationOption[],
@@ -65,22 +69,51 @@ function parseLine(destPart: string, body: string, destinations: DestinationOpti
     if (!dest) return null;
     destIds.push(dest.portId);
   }
-  const m = body.match(/^(.*?)(?:\s+(NET))?\s*(?:\((\d{2})\.(\d{1,2})\.(\d{1,2})\))?\s*(?:-\s*(.*))?$/i);
-  if (!m || !m[1].trim()) return null;
-  const date = m[3] ? `20${m[3]}-${m[4].padStart(2, "0")}-${m[5].padStart(2, "0")}` : undefined;
+  // carrier, then optional (yy.mm.dd), then anything left is the remark.
+  const dateMatch = body.match(/\((\d{2})\.(\d{1,2})\.(\d{1,2})\)/);
+  const before = dateMatch ? body.slice(0, dateMatch.index) : body;
+  const after = dateMatch ? body.slice((dateMatch.index ?? 0) + dateMatch[0].length) : "";
+  let carrier = before;
+  let remark = after;
+  if (!dateMatch) {
+    const dash = before.indexOf(" - ");
+    if (dash >= 0) {
+      carrier = before.slice(0, dash);
+      remark = before.slice(dash + 3);
+    }
+  }
+  carrier = cleanCarrier(carrier);
+  remark = remark.replace(/^[\s\-–:[\]()]+|[\s\]\)]+$/g, "").trim();
+  if (!carrier && !remark) return null;
   return {
-    id: newId(),
+    id: destIds.join("-"),
     destinationPortIds: destIds,
-    carrier: m[1].trim(),
-    net: Boolean(m[2]),
-    date,
-    remark: m[6]?.trim() || undefined,
+    carrier,
+    date: dateMatch
+      ? `20${dateMatch[1]}-${dateMatch[2].padStart(2, "0")}-${dateMatch[3].padStart(2, "0")}`
+      : undefined,
+    remark: remark || undefined,
   };
 }
 
-/** Structured editor for a port's 주요 선사: one row per carrier with
- * destination chips, carrier (autocompleted), NET, 기준일, and 비고, plus a
- * free-text memo for anything else. Autosaves shortly after each change. */
+/** One row per destination, taken from saved entries (or legacy text).
+ * An older entry covering several destinations fills each of them. */
+function rowsFromNote(note: PortCarrierNote | undefined, destinations: DestinationOption[]) {
+  const parsed = note?.entries ? null : parseLegacyNotes(note?.notes ?? "", destinations);
+  const source = note?.entries ?? parsed?.entries ?? [];
+  const rows: Record<string, Row> = {};
+  for (const d of destinations) {
+    const e = source.find((x) => x.destinationPortIds.includes(d.portId));
+    rows[d.portId] = e
+      ? { carrier: cleanCarrier(e.carrier), date: e.date, remark: e.remark }
+      : { carrier: "" };
+  }
+  return { rows, memo: note?.entries ? (note.notes ?? "") : (parsed?.rest ?? "") };
+}
+
+/** Editor for a port's 주요 선사: a fixed row per destination (인천 / 부산 /
+ * 평택), each with its own carrier (autocompleted), 기준일, and 비고, plus a
+ * free-text memo. Autosaves shortly after each change. */
 export function CarrierNotesEditor({
   note,
   destinations,
@@ -94,14 +127,14 @@ export function CarrierNotesEditor({
   knownRemarks: string[];
   onSave: (notes: string, entries: CarrierEntry[]) => Promise<void>;
 }) {
-  // Notes saved before `entries` existed are parsed once into rows here.
-  const initial = useMemo(() => {
-    if (note?.entries) return { entries: note.entries, rest: note.notes ?? "" };
-    return parseLegacyNotes(note?.notes ?? "", destinations);
+  const initial = useMemo(
+    () => rowsFromNote(note, destinations),
+    // Only on mount - afterwards local state is the source of truth.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const [entries, setEntries] = useState<CarrierEntry[]>(initial.entries);
-  const [memo, setMemo] = useState(initial.rest);
+    [],
+  );
+  const [rows, setRows] = useState<Record<string, Row>>(initial.rows);
+  const [memo, setMemo] = useState(initial.memo);
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const dirty = useRef(false);
   const onSaveRef = useRef(onSave);
@@ -113,9 +146,18 @@ export function CarrierNotesEditor({
     if (!dirty.current) return;
     const timer = setTimeout(async () => {
       setState("saving");
+      const entries: CarrierEntry[] = destinations
+        .map((d) => ({ d, r: rows[d.portId] }))
+        .filter(({ r }) => r && (r.carrier.trim() || r.remark?.trim()))
+        .map(({ d, r }) => ({
+          id: d.portId,
+          destinationPortIds: [d.portId],
+          carrier: r.carrier.trim(),
+          date: r.date,
+          remark: r.remark?.trim() || undefined,
+        }));
       try {
-        // Rows left without a carrier are drafts - don't persist them yet.
-        await onSaveRef.current(memo, entries.filter((e) => e.carrier.trim()));
+        await onSaveRef.current(memo, entries);
         setState("saved");
         setTimeout(() => setState((s) => (s === "saved" ? "idle" : s)), 1200);
       } catch {
@@ -123,143 +165,100 @@ export function CarrierNotesEditor({
       }
     }, 700);
     return () => clearTimeout(timer);
-  }, [entries, memo]);
+  }, [rows, memo, destinations]);
 
-  function update(id: string, patch: Partial<CarrierEntry>) {
+  function update(portId: string, patch: Partial<Row>) {
     dirty.current = true;
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+    setRows((prev) => {
+      const cur = prev[portId] ?? { carrier: "" };
+      const next = { ...cur, ...patch };
+      // Typing a carrier into an empty row stamps today's date as 기준일.
+      if (patch.carrier && !cur.carrier && !cur.date) next.date = kstToday();
+      return { ...prev, [portId]: next };
+    });
   }
 
-  function addEntry() {
+  function clearRow(portId: string) {
     dirty.current = true;
-    // Default to destinations no row covers yet, so the next line is usually ready to type.
-    const used = new Set(entries.flatMap((e) => e.destinationPortIds));
-    const free = destinations.filter((d) => !used.has(d.portId)).map((d) => d.portId);
-    setEntries((prev) => [
-      ...prev,
-      {
-        id: newId(),
-        destinationPortIds: free.length ? [free[0]] : [],
-        carrier: "",
-        net: true,
-        date: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date()),
-      },
-    ]);
-  }
-
-  function remove(id: string) {
-    dirty.current = true;
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    setRows((prev) => ({ ...prev, [portId]: { carrier: "" } }));
   }
 
   const carrierSuggestions = useMemo(
-    () => [...new Set([...knownCarriers, ...COMMON_CARRIERS])],
+    () => [...new Set([...knownCarriers.map(cleanCarrier).filter(Boolean), ...COMMON_CARRIERS])],
     [knownCarriers],
   );
   const remarkSuggestions = useMemo(() => [...new Set([...COMMON_REMARKS, ...knownRemarks])], [knownRemarks]);
 
   return (
     <div className="space-y-2">
-      {entries.length > 0 && (
-        <div className="space-y-2">
-          {entries.map((entry) => (
-            <div
-              key={entry.id}
-              className="group flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white px-3 py-2.5"
-            >
-              <div className="flex items-center gap-1" role="group" aria-label="도착항">
-                {destinations.map((d) => {
-                  const on = entry.destinationPortIds.includes(d.portId);
-                  return (
-                    <button
-                      key={d.portId}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() =>
-                        update(entry.id, {
-                          destinationPortIds: on
-                            ? entry.destinationPortIds.filter((x) => x !== d.portId)
-                            : destinations.map((x) => x.portId).filter((x) => x === d.portId || entry.destinationPortIds.includes(x)),
-                        })
-                      }
-                      className={cn(
-                        "h-7 px-2.5 rounded-full text-[12px] font-medium border transition-colors",
-                        on
-                          ? "bg-[var(--accent)] border-[var(--accent)] text-white"
-                          : "bg-white border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
-                      )}
-                    >
-                      {d.label}
-                    </button>
-                  );
-                })}
-              </div>
-
+      <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white divide-y divide-[var(--border-subtle)]">
+        {destinations.map((d) => {
+          const r = rows[d.portId] ?? { carrier: "" };
+          const filled = Boolean(r.carrier || r.date || r.remark);
+          return (
+            <div key={d.portId} className="group flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-2 px-3 py-2">
+              <span
+                className={cn(
+                  "shrink-0 w-12 text-[12.5px] font-semibold",
+                  r.carrier ? "text-[var(--accent)]" : "text-[var(--muted)]",
+                )}
+              >
+                {d.label}
+              </span>
               <SuggestInput
-                value={entry.carrier}
-                onChange={(v) => update(entry.id, { carrier: v.toUpperCase() })}
+                value={r.carrier}
+                onChange={(v) => update(d.portId, { carrier: v.toUpperCase() })}
                 suggestions={carrierSuggestions}
                 placeholder="선사"
-                ariaLabel="선사"
+                ariaLabel={`${d.label} 선사`}
                 className="w-[150px] font-semibold tracking-wide"
-                autoFocus={!entry.carrier}
               />
-
-              <button
-                type="button"
-                aria-pressed={entry.net}
-                onClick={() => update(entry.id, { net: !entry.net })}
-                className={cn(
-                  "h-7 px-2 rounded-[var(--radius-sm)] text-[11px] font-bold tracking-wide border transition-colors",
-                  entry.net
-                    ? "bg-[var(--accent-soft)] border-[var(--accent)]/30 text-[var(--accent)]"
-                    : "bg-white border-[var(--border)] text-[var(--muted)] line-through decoration-1",
-                )}
-                title="NET 운임 여부"
-              >
-                NET
-              </button>
-
               <input
                 type="date"
-                value={entry.date ?? ""}
-                onChange={(e) => update(entry.id, { date: e.target.value || undefined })}
-                aria-label="기준일"
-                className="h-8 px-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[13px] text-[var(--foreground)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+                value={r.date ?? ""}
+                onChange={(e) => update(d.portId, { date: e.target.value || undefined })}
+                aria-label={`${d.label} 기준일`}
+                className={cn(
+                  "h-8 px-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[13px] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]",
+                  r.date ? "text-[var(--foreground)]" : "text-[var(--muted)]",
+                )}
               />
-
               <SuggestInput
-                value={entry.remark ?? ""}
-                onChange={(v) => update(entry.id, { remark: v || undefined })}
+                value={r.remark ?? ""}
+                onChange={(v) => update(d.portId, { remark: v || undefined })}
                 suggestions={remarkSuggestions}
                 placeholder="비고 (예: ALL IN)"
-                ariaLabel="비고"
-                className="flex-1 min-w-[140px]"
+                ariaLabel={`${d.label} 비고`}
+                className="flex-1 min-w-[120px]"
               />
-
               <button
                 type="button"
-                onClick={() => remove(entry.id)}
-                aria-label="선사 삭제"
-                className="ml-auto w-7 h-7 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 transition-opacity"
+                onClick={() => clearRow(d.portId)}
+                aria-label={`${d.label} 선사 지우기`}
+                className={cn(
+                  "shrink-0 w-7 h-7 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50 transition-opacity",
+                  filled ? "sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100" : "invisible",
+                )}
               >
-                <Trash2 size={14} />
+                <X size={14} />
               </button>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={addEntry}
-          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[var(--radius-sm)] border border-dashed border-[var(--border)] text-[12.5px] font-medium text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
-        >
-          <Plus size={14} />
-          선사 추가
-        </button>
-        <span className="text-[11.5px] text-[var(--muted)] h-4 flex items-center gap-1">
+      <div className="flex items-start gap-3">
+        <textarea
+          value={memo}
+          onChange={(e) => {
+            dirty.current = true;
+            setMemo(e.target.value);
+          }}
+          placeholder="기타 메모 (선택)"
+          rows={memo ? 2 : 1}
+          className="flex-1 px-3 py-2 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-white text-[13px] text-[var(--foreground)] outline-none resize-y placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+        />
+        <span className="shrink-0 w-16 pt-2 text-[11.5px] text-[var(--muted)] flex items-center justify-end gap-1">
           {state === "saving" && (
             <>
               <Loader2 size={12} className="animate-spin" /> 저장 중
@@ -270,20 +269,9 @@ export function CarrierNotesEditor({
               <Check size={12} className="text-[var(--success)]" /> 저장됨
             </>
           )}
-          {state === "error" && <span className="text-[var(--danger)]">저장 실패 - 다시 수정해 주세요</span>}
+          {state === "error" && <span className="text-[var(--danger)]">저장 실패</span>}
         </span>
       </div>
-
-      <textarea
-        value={memo}
-        onChange={(e) => {
-          dirty.current = true;
-          setMemo(e.target.value);
-        }}
-        placeholder="기타 메모 (선택)"
-        rows={memo ? 2 : 1}
-        className="w-full px-3 py-2 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-white text-[13px] text-[var(--foreground)] outline-none resize-y placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
-      />
     </div>
   );
 }
@@ -296,7 +284,6 @@ function SuggestInput({
   placeholder,
   ariaLabel,
   className,
-  autoFocus,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -304,7 +291,6 @@ function SuggestInput({
   placeholder: string;
   ariaLabel: string;
   className?: string;
-  autoFocus?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
@@ -328,7 +314,6 @@ function SuggestInput({
     <div ref={wrapperRef} className={cn("relative", className)}>
       <input
         value={value}
-        autoFocus={autoFocus}
         onChange={(e) => {
           onChange(e.target.value);
           setOpen(true);
