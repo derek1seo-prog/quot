@@ -391,6 +391,103 @@ input[type="number"] {
   transform-origin: left;
 }
 
+/* 실시간 상담 chat (ChatWidget / InquiryInbox). The panel grows out of the
+ * launcher's corner and shrinks back into it on close; messages ease up as
+ * they arrive; an unread reply gets a soft pulse ring on the launcher. */
+@keyframes chat-launcher-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes chat-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes chat-panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+}
+
+@keyframes chat-msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes chat-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
+@keyframes chat-nudge-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-chat-launcher-in {
+  animation: chat-launcher-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+}
+
+.animate-chat-panel-in {
+  animation: chat-panel-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: bottom right;
+}
+
+.animate-chat-panel-out {
+  animation: chat-panel-out 0.18s ease-in both;
+  transform-origin: bottom right;
+}
+
+.animate-chat-msg-in {
+  animation: chat-msg-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-chat-pulse {
+  animation: chat-pulse 2s ease-out infinite;
+}
+
+.animate-chat-nudge-in {
+  animation: chat-nudge-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: bottom right;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-item,
   .animate-step-in-forward,
@@ -406,7 +503,13 @@ input[type="number"] {
   .animate-success-text-in,
   .animate-success-ring,
   .animate-success-check,
-  .animate-success-progress {
+  .animate-success-progress,
+  .animate-chat-launcher-in,
+  .animate-chat-panel-in,
+  .animate-chat-panel-out,
+  .animate-chat-msg-in,
+  .animate-chat-pulse,
+  .animate-chat-nudge-in {
     animation: none;
   }
 

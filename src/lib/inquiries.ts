@@ -36,11 +36,13 @@ export function clientIp(req: NextRequest): string | undefined {
 
 /** What the visitor's own widget may see - never IP / user agent. */
 export function visitorView(t: InquiryThread | undefined) {
-  if (!t) return { messages: [], profile: null, unread: 0 };
+  if (!t) return { messages: [], profile: null, unread: 0, seenByAdmin: false };
   return {
     messages: t.messages.map(({ id, from, text, at, authorName }) => ({ id, from, text, at, authorName })),
     profile: t.company || t.contactName || t.contact ? { company: t.company, contactName: t.contactName, contact: t.contact } : null,
     unread: t.unreadForVisitor,
+    // The admin has opened the thread since the visitor's last message ("읽음").
+    seenByAdmin: t.unreadForAdmin === 0,
   };
 }
 

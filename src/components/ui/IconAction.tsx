@@ -13,6 +13,7 @@ export function IconAction({
   disabled,
   hoverClass = "hover:text-[var(--foreground)] hover:bg-[var(--sidebar-bg)]",
   reveal,
+  side = "top",
   className,
   children,
 }: {
@@ -22,6 +23,9 @@ export function IconAction({
   disabled?: boolean;
   hoverClass?: string;
   reveal?: boolean;
+  /** Where the bubble opens - "bottom" for buttons near the top edge of an
+   * overflow-hidden container, which would otherwise clip it. */
+  side?: "top" | "bottom";
   className?: string;
   children: ReactNode;
 }) {
@@ -44,7 +48,8 @@ export function IconAction({
       <span
         className={cn(
           TOOLTIP_BUBBLE_CLASS,
-          "pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-30 opacity-0 translate-y-1 transition-all duration-150 group-hover/act:opacity-100 group-hover/act:translate-y-0",
+          "pointer-events-none absolute left-1/2 -translate-x-1/2 z-30 opacity-0 transition-all duration-150 group-hover/act:opacity-100 group-hover/act:translate-y-0",
+          side === "top" ? "bottom-full mb-1.5 translate-y-1" : "top-full mt-1.5 -translate-y-1",
         )}
       >
         {tooltip ?? label}

@@ -1,5 +1,6 @@
 "use client";
 
+import { DayDivider, dayLabel } from "@/components/inquiry/ChatWidget";
 import { MonoAvatar } from "@/components/ui/Avatar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconAction } from "@/components/ui/IconAction";
@@ -9,7 +10,7 @@ import { matchesSearch } from "@/lib/hangul";
 import type { InquirySummary } from "@/lib/inquiries";
 import type { InquiryThread } from "@/lib/types";
 import { ArrowLeft, Building2, Globe, Inbox, Loader2, Phone, Search, SendHorizontal, Trash2, UserRound } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 const POLL_MS = 4000;
 const LAST_SALES_REP_KEY = "quot:lastSalesRepId";
@@ -33,6 +34,10 @@ function stamp(iso: string) {
   return `${d.getMonth() + 1}/${d.getDate()} ${d.toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" })}`;
 }
 
+function timeOnly(iso: string) {
+  return new Date(iso).toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" });
+}
+
 function notifyChanged() {
   window.dispatchEvent(new Event("inquiries:changed"));
 }
@@ -51,6 +56,10 @@ export function InquiryInbox() {
   const [deleting, setDeleting] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const replyRef = useRef<HTMLTextAreaElement>(null);
+  // A thread's existing history appears without the pop-in; messages that
+  // arrive afterwards animate (on mount only, so polling never replays it).
+  const [quietIds, setQuietIds] = useState<Set<string>>(new Set());
+  const lastLoadedId = useRef<string | null>(null);
 
   const loadList = useCallback(async () => {
     try {
@@ -66,6 +75,11 @@ export function InquiryInbox() {
       const res = await fetch(`/api/inquiries/${id}`, { cache: "no-store" });
       if (!res.ok) return;
       const t = (await res.json()) as InquiryThread;
+      // First load of a thread: its history appears without animation.
+      if (lastLoadedId.current !== id) {
+        setQuietIds(new Set(t.messages.map((m) => m.id)));
+        lastLoadedId.current = id;
+      }
       setThread((cur) => (cur?.id === id || !cur ? t : cur));
       // Opening marks it read on the server - reflect that in the list + nav badge.
       setThreads((list) => list?.map((x) => (x.id === id ? { ...x, unreadForAdmin: 0 } : x)) ?? list);
@@ -275,7 +289,7 @@ export function InquiryInbox() {
                   )}
                 </div>
               </div>
-              <IconAction label="대화 삭제" tooltip="삭제" onClick={() => setPendingDelete(true)} hoverClass="hover:text-[var(--danger)] hover:bg-red-50">
+              <IconAction label="대화 삭제" tooltip="삭제" side="bottom" onClick={() => setPendingDelete(true)} hoverClass="hover:text-[var(--danger)] hover:bg-red-50">
                 <Trash2 size={15} />
               </IconAction>
             </header>
@@ -288,27 +302,32 @@ export function InquiryInbox() {
               ) : (
                 thread.messages.map((m, i) => {
                   const prev = thread.messages[i - 1];
-                  const showTime = !prev || prev.from !== m.from || Date.parse(m.at) - Date.parse(prev.at) > 5 * 60_000;
+                  const newDay = !prev || dayLabel(prev.at) !== dayLabel(m.at);
+                  const showTime = newDay || prev.from !== m.from || Date.parse(m.at) - Date.parse(prev.at) > 5 * 60_000;
                   const mine = m.from === "admin";
+                  const fresh = !quietIds.has(m.id);
                   return (
-                    <div key={m.id} className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
+                    <Fragment key={m.id}>
+                    {newDay && <DayDivider label={dayLabel(m.at)} />}
+                    <div className={cn("flex flex-col", mine ? "items-end" : "items-start", fresh && "animate-chat-msg-in")}>
                       {showTime && (
                         <p className="mb-1 px-1 text-[11px] text-[var(--muted)]">
                           {mine && m.authorName && <span className="font-medium text-[#475569]">{m.authorName} · </span>}
-                          {stamp(m.at)}
+                          {timeOnly(m.at)}
                         </p>
                       )}
                       <div
                         className={cn(
                           "max-w-[75%] px-3.5 py-2.5 text-[13.5px] leading-[1.55] whitespace-pre-wrap break-words",
                           mine
-                            ? "rounded-[16px] rounded-br-[6px] bg-[var(--accent)] text-white"
-                            : "rounded-[16px] rounded-bl-[6px] bg-white border border-[var(--border-subtle)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+                            ? "rounded-[18px] rounded-br-[6px] bg-gradient-to-br from-[var(--accent)] to-[#3b5bdb] text-white shadow-[0_4px_12px_-6px_rgba(37,99,235,0.6)]"
+                            : "rounded-[18px] rounded-bl-[6px] bg-white border border-black/[0.05] shadow-[0_1px_3px_rgba(15,23,42,0.06)]",
                         )}
                       >
                         {m.text}
                       </div>
                     </div>
+                    </Fragment>
                   );
                 })
               )}
