@@ -25,7 +25,7 @@ function rankOrder(rank: string | null) {
   return i < 0 ? RANKS.length : i;
 }
 
-/** 사원 관리 list: a summary strip (headcount by 직급), then one row per rep
+/** 사원 관리 list: headcount, then one row per rep
  * ordered by seniority. 수정 / 삭제 / 기본 지정 are quiet icon actions;
  * email and phone can be copied in one click. */
 export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRep[] }) {
@@ -55,11 +55,6 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
         .sort((a, b) => rankOrder(a.rank) - rankOrder(b.rank) || a.name.localeCompare(b.name, "ko")),
     [salesReps],
   );
-  const rankCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const r of rows) if (r.rank) counts.set(r.rank, (counts.get(r.rank) ?? 0) + 1);
-    return RANKS.filter((k) => counts.has(k)).map((k) => [k, counts.get(k)!] as const);
-  }, [rows]);
 
   function flash(id: string) {
     setFlashId(id);
@@ -95,29 +90,13 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
 
   return (
     <>
-      {/* Summary strip */}
       <div className="flex items-end justify-between gap-4 mb-5">
-        <div className="flex items-end gap-5">
-          <div>
-            <p className="text-[11.5px] font-medium tracking-wide text-[var(--muted)]">구성원</p>
-            <p className="mt-0.5 text-[26px] leading-none font-semibold tracking-tight text-[var(--foreground)] tabular-nums">
-              {salesReps.length}
-              <span className="ml-1 text-[14px] font-medium text-[var(--muted)]">명</span>
-            </p>
-          </div>
-          {rankCounts.length > 0 && (
-            <div className="hidden sm:flex items-center gap-1.5 pb-0.5">
-              {rankCounts.map(([rank, n]) => (
-                <span
-                  key={rank}
-                  className="inline-flex items-center gap-1 rounded-full border border-[var(--border-subtle)] bg-white px-2.5 py-1 text-[11.5px] text-[var(--muted)]"
-                >
-                  {rank}
-                  <span className="font-semibold text-[var(--foreground)] tabular-nums">{n}</span>
-                </span>
-              ))}
-            </div>
-          )}
+        <div>
+          <p className="text-[11.5px] font-medium tracking-wide text-[var(--muted)]">구성원</p>
+          <p className="mt-0.5 text-[26px] leading-none font-semibold tracking-tight text-[var(--foreground)] tabular-nums">
+            {salesReps.length}
+            <span className="ml-1 text-[14px] font-medium text-[var(--muted)]">명</span>
+          </p>
         </div>
         <Button icon={<Plus size={16} />} onClick={() => setDialog({ rep: null })} className="shrink-0">
           사원 추가
@@ -166,10 +145,9 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
                           )}
                           {isDefault && (
                             <span
-                              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2 py-[1px] text-[11px] font-semibold text-[var(--accent)]"
+                              className="shrink-0 rounded-full bg-[var(--accent-soft)] px-2 py-[1px] text-[11px] font-semibold text-[var(--accent)]"
                               title="이 브라우저에서 견적 작성 시 기본으로 선택되는 담당자"
                             >
-                              <Star size={10} className="fill-current" />
                               기본
                             </span>
                           )}
