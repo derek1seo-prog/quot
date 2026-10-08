@@ -26,7 +26,7 @@ export function QuoteListCard({
 
   return (
     <div
-      className="px-6 py-4 animate-dashboard-fade-up"
+      className={`px-6 py-4${animationDelayMs != null ? " animate-dashboard-fade-up" : ""}`}
       style={animationDelayMs != null ? { animationDelay: `${animationDelayMs}ms` } : undefined}
     >
       <div className="flex items-center justify-between gap-3">

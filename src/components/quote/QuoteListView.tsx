@@ -35,14 +35,21 @@ export function QuoteListView({
 }) {
   const [filters, setFilters] = useState(initialFilters);
   const [page, setPage] = useState(initialPage);
+  // Rows fade in only on the initial page load. Once the user filters,
+  // sorts, or pages, results swap in instantly - replaying the fade (rows
+  // start invisible, then appear after a delay) on every keystroke read
+  // as a loading flash.
+  const [interacted, setInteracted] = useState(false);
   // Any filter/sort change starts over from page 1.
   const set = <K extends keyof QuoteListFilters>(key: K, value: QuoteListFilters[K]) => {
     setFilters((f) => ({ ...f, [key]: value }));
     setPage(1);
+    setInteracted(true);
   };
   const resetFilters = () => {
     setFilters((f) => ({ ...DEFAULT_QUOTE_FILTERS, sort: f.sort }));
     setPage(1);
+    setInteracted(true);
   };
 
   useEffect(() => {
@@ -106,6 +113,7 @@ export function QuoteListView({
 
   function goToPage(next: number) {
     setPage(next);
+    setInteracted(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -244,7 +252,7 @@ export function QuoteListView({
                     // Capped so a long list still settles quickly instead of
                     // trickling in row by row for several seconds - only the
                     // first screenful visibly cascades.
-                    animationDelayMs={220 + Math.min(i, 10) * 30}
+                    animationDelayMs={interacted ? undefined : 220 + Math.min(i, 10) * 30}
                   />
                 ))}
               </tbody>
@@ -257,7 +265,7 @@ export function QuoteListView({
                 key={q.id}
                 quote={q}
                 portNameById={portNameById}
-                animationDelayMs={220 + Math.min(i, 10) * 30}
+                animationDelayMs={interacted ? undefined : 220 + Math.min(i, 10) * 30}
               />
             ))}
           </div>
