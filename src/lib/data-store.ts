@@ -27,6 +27,7 @@ import type {
   Customer,
   ExchangeRate,
   ExchangeRateHistoryEntry,
+  InquiryThread,
   OceanFreightRate,
   Port,
   PortCarrierNote,
@@ -391,4 +392,14 @@ export async function addQuote(quote: Quote): Promise<void> {
 export async function deleteQuote(id: string): Promise<void> {
   const quotes = (await getQuotes()).filter((q) => q.id !== id);
   await writeMutable("quotes.json", quotes);
+}
+
+// ---------- 문의 (visitor chat) ----------
+
+export async function getInquiries(): Promise<InquiryThread[]> {
+  return readMutable<InquiryThread[]>("inquiries.json");
+}
+
+export async function saveInquiries(threads: InquiryThread[]): Promise<void> {
+  await writeMutable("inquiries.json", threads);
 }

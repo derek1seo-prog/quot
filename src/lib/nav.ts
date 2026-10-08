@@ -10,7 +10,8 @@ export interface NavItemDef {
     | "customers"
     | "sales-reps"
     | "settings"
-    | "rates";
+    | "rates"
+    | "inquiries";
   /** ISO-ish country code (Country.id, e.g. "CN") for icon: "region" items -
    * rendered as that country's flag instead of a generic icon, since 요율
    * 관리 already groups regions by country and more countries keep getting
@@ -22,6 +23,8 @@ export interface NavItemDef {
    * itself) - a loud permanent nav marker was tried earlier this session
    * and reverted for feeling too "selected." */
   legacy?: boolean;
+  /** Shows the admin's unread 문의 count next to the label. */
+  unreadBadge?: boolean;
 }
 
 export interface NavSectionDef {
@@ -56,6 +59,7 @@ export const navSections: NavSectionDef[] = [
   {
     title: "관리",
     items: [
+      { href: "/inquiries", label: "문의함", icon: "inquiries", unreadBadge: true },
       { href: "/customers", label: "화주 관리", icon: "customers" },
       { href: "/sales-reps", label: "사원 관리", icon: "sales-reps" },
       { href: "/settings", label: "설정", icon: "settings" },

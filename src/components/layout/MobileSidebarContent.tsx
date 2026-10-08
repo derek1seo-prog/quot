@@ -6,6 +6,7 @@ import { getActiveHref, getNavSections, type Role } from "@/lib/nav";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavIcon } from "./nav-icons";
+import { useInquiryUnread } from "@/lib/useInquiryUnread";
 
 export function MobileSidebarContent({
   role,
@@ -16,6 +17,7 @@ export function MobileSidebarContent({
 }) {
   const pathname = usePathname();
   const navSections = getNavSections(role);
+  const unread = useInquiryUnread(role === "admin");
   const activeHref = getActiveHref(pathname, navSections);
   let itemIndex = 0;
 
@@ -61,6 +63,11 @@ export function MobileSidebarContent({
                       <Badge tone="neutral" className="px-1.5 py-0 text-[10px] font-normal">
                         구버전
                       </Badge>
+                    )}
+                    {item.unreadBadge && unread > 0 && (
+                      <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[10.5px] font-bold leading-[18px] text-center">
+                        {unread > 99 ? "99+" : unread}
+                      </span>
                     )}
                   </span>
                 </Link>

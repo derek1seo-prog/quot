@@ -281,3 +281,36 @@ export interface Quote {
   input: QuoteInput;
   result: QuoteResult;
 }
+
+/** One message in a 문의 (chat) thread. */
+export interface InquiryMessage {
+  id: string;
+  from: "visitor" | "admin";
+  text: string;
+  at: string; // ISO timestamp
+  /** Admin replies: who answered (sales rep name, if known). */
+  authorName?: string;
+}
+
+/** A visitor's 문의 thread. One per visitor browser (identified by the
+ * quot_vid cookie - IPs are shared inside offices and change on mobile, so
+ * the IP is recorded for reference but isn't the identity). */
+export interface InquiryThread {
+  id: string;
+  visitorId: string;
+  ip?: string;
+  userAgent?: string;
+  /** Optional details the visitor gave (or, for a 화주 link session, the
+   * registered customer's). */
+  company?: string;
+  contactName?: string;
+  contact?: string;
+  customerId?: string;
+  messages: InquiryMessage[];
+  createdAt: string;
+  updatedAt: string;
+  /** Visitor messages the admin hasn't opened yet. */
+  unreadForAdmin: number;
+  /** Admin replies the visitor hasn't seen yet. */
+  unreadForVisitor: number;
+}

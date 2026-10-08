@@ -9,8 +9,17 @@ import { Sidebar } from "./Sidebar";
 import { MobileSidebarContent } from "./MobileSidebarContent";
 import { MenuToggleIcon } from "./MenuToggleIcon";
 import { RoleSwitchButton } from "./RoleSwitchButton";
+import { ChatWidget } from "@/components/inquiry/ChatWidget";
 
-export function AppShell({ children, role }: { children: React.ReactNode; role: Role }) {
+export function AppShell({
+  children,
+  role,
+  companyName,
+}: {
+  children: React.ReactNode;
+  role: Role;
+  companyName: string;
+}) {
   const [open, setOpen] = useState(false);
   // Bumped every time the drawer opens so its content remounts and replays
   // the stagger-in animation instead of just being toggled visible again.
@@ -107,6 +116,9 @@ export function AppShell({ children, role }: { children: React.ReactNode; role: 
       </div>
 
       <main className="flex-1 min-w-0 pt-14 lg:pt-0">{children}</main>
+
+      {/* Visitors (guest / 화주) can message the team; admins answer in 문의함. */}
+      {role !== "admin" && <ChatWidget companyName={companyName} />}
     </div>
   );
 }

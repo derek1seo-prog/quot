@@ -1,6 +1,7 @@
 import {
   Contact,
   FilePlus2,
+  Inbox,
   LayoutDashboard,
   ListChecks,
   Settings,
@@ -49,5 +50,7 @@ export function NavIcon({
       return <Settings size={size} />;
     case "rates":
       return <Table2 size={size} />;
+    case "inquiries":
+      return <Inbox size={size} />;
   }
 }
