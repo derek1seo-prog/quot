@@ -13,6 +13,13 @@ export default async function SettingsPage() {
   const trendLast = trend[trend.length - 1];
   const trendChange = trend.length >= 2 ? trendLast.rate - trendFirst.rate : 0;
   const hasEcbBackfill = trend.some((t) => t.source === "ecb");
+  // "2주 전 대비" reads faster than a bare date like "09/25 대비".
+  const trendSpanDays =
+    trend.length >= 2
+      ? Math.round((Date.parse(trendLast.date) - Date.parse(trendFirst.date)) / 86_400_000)
+      : 0;
+  const trendSpanLabel =
+    trendSpanDays >= 13 ? "2주 전" : trendSpanDays >= 6 && trendSpanDays <= 8 ? "1주 전" : trendSpanDays === 1 ? "어제" : `${trendSpanDays}일 전`;
 
   return (
     <div className="max-w-[900px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16 space-y-8">
@@ -42,8 +49,8 @@ export default async function SettingsPage() {
                 최근 {EXCHANGE_TREND_DAYS}일 환율 추이
               </p>
               {trend.length >= 2 && (
-                <p className="text-[12px] text-[var(--muted)]">
-                  {trendFirst.date.slice(5).replace("-", "/")} 대비{" "}
+                <p className="text-[12px] text-[var(--muted)]" title={`${trendFirst.date.slice(5).replace("-", "/")} 대비`}>
+                  {trendSpanLabel} 대비{" "}
                   <span
                     className={
                       trendChange > 0
