@@ -2,7 +2,9 @@
 
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { cn, TOOLTIP_BUBBLE_CLASS } from "@/lib/cn";
+import { MonoAvatar } from "@/components/ui/Avatar";
+import { IconAction } from "@/components/ui/IconAction";
+import { cn } from "@/lib/cn";
 import { useRememberedSalesRepId } from "@/lib/hooks";
 import type { SalesRep } from "@/lib/types";
 import { Check, Copy, Mail, Pencil, Phone, Plus, Star, Trash2, UsersRound } from "lucide-react";
@@ -132,7 +134,7 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
                     )}
                   >
                     <div className="flex items-center gap-3.5 min-w-0 sm:col-auto">
-                      <RepAvatar name={name} highlighted={isDefault} />
+                      <MonoAvatar name={name} highlighted={isDefault} />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
                           <p className="text-[14.5px] font-semibold tracking-[-0.01em] text-[var(--foreground)] truncate">
@@ -219,68 +221,6 @@ export function SalesRepsTable({ initialSalesReps }: { initialSalesReps: SalesRe
         onCancel={() => setPendingDelete(null)}
       />
     </>
-  );
-}
-
-/** Monochrome initial avatar with a soft ring; the 기본 담당자 gets the
- * accent treatment instead of a random colour per person. */
-function RepAvatar({ name, highlighted }: { name: string; highlighted: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "shrink-0 w-10 h-10 rounded-full inline-flex items-center justify-center text-[14.5px] font-semibold ring-1",
-        highlighted
-          ? "bg-gradient-to-br from-[var(--accent)] to-[#3b5bdb] text-white ring-[var(--accent)]/20 shadow-[0_4px_12px_-4px_rgba(37,99,235,0.5)]"
-          : "bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0] text-[#334155] ring-black/[0.04]",
-      )}
-    >
-      {name.charAt(0) || "?"}
-    </span>
-  );
-}
-
-/** Icon-only action with a hover bubble. `reveal` hides it until the row is
- * hovered on desktop (always shown on touch). */
-function IconAction({
-  label,
-  onClick,
-  disabled,
-  hoverClass,
-  reveal,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  hoverClass: string;
-  reveal?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <span className="relative inline-flex group/act">
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        aria-label={label}
-        className={cn(
-          "w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[#94a3b8] transition-all disabled:opacity-40",
-          hoverClass,
-          reveal && "sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100",
-        )}
-      >
-        {children}
-      </button>
-      <span
-        className={cn(
-          TOOLTIP_BUBBLE_CLASS,
-          "pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-30 opacity-0 translate-y-1 transition-all duration-150 group-hover/act:opacity-100 group-hover/act:translate-y-0",
-        )}
-      >
-        {label}
-      </span>
-    </span>
   );
 }
 

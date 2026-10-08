@@ -1,20 +1,21 @@
 "use client";
 
-import { Avatar } from "@/components/ui/Avatar";
+import { MonoAvatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { IconAction } from "@/components/ui/IconAction";
 import { Input } from "@/components/ui/Field";
-import { cn, TOOLTIP_BUBBLE_CLASS } from "@/lib/cn";
+import { cn } from "@/lib/cn";
 import { formatNumber } from "@/lib/format";
 import type { Customer, SalesRep } from "@/lib/types";
-import { Building2, Check, Contact, Link2, Pencil, Phone, Plus, Search, Trash2 } from "lucide-react";
+import { Building2, Check, Link2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CustomerDialog, TRUCKING_PORTS, type CustomerDraft } from "./CustomerDialog";
 
-/** 화주 관리 list: one row per customer (name, 담당자, 견적 담당자, 내륙운송료
- * at a glance) with link copy / 수정 / 삭제 always reachable. Adding and
- * editing go through CustomerDialog. */
+/** 화주 관리 list (same look as 사원 관리): headcount + search, then a
+ * table-like list - 화주 (담당자 · 연락처), 견적 담당자, and 내륙운송료 per
+ * port - with quiet icon actions. Adding and editing go through
+ * CustomerDialog. */
 export function CustomersTable({
   initialCustomers,
   salesReps,
@@ -103,175 +104,166 @@ export function CustomersTable({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-        <div className="relative flex-1 sm:max-w-[320px]">
-          <Search
-            size={15}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
-          />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="화주명·담당자 검색"
-            aria-label="화주 검색"
-            className="pl-9"
-          />
-        </div>
-        <div className="flex items-center justify-between sm:justify-end gap-3 sm:ml-auto">
-          <p className="text-[13px] text-[var(--muted)]">
-            {query.trim() ? (
-              <>
-                {customers.length}곳 중 <span className="font-medium text-[var(--foreground)]">{visible.length}</span>곳
-              </>
-            ) : (
-              <>
-                총 <span className="font-medium text-[var(--foreground)]">{customers.length}</span>곳
-              </>
-            )}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-5">
+        <div>
+          <p className="text-[11.5px] font-medium tracking-wide text-[var(--muted)]">등록 화주</p>
+          <p className="mt-0.5 text-[26px] leading-none font-semibold tracking-tight text-[var(--foreground)] tabular-nums">
+            {query.trim() ? visible.length : customers.length}
+            <span className="ml-1 text-[14px] font-medium text-[var(--muted)]">
+              곳{query.trim() ? ` / ${customers.length}곳` : ""}
+            </span>
           </p>
-          <Button icon={<Plus size={16} />} onClick={() => setDialog({ customer: null })}>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 sm:w-[260px]">
+            <Search
+              size={15}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+            />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="화주명·담당자 검색"
+              aria-label="화주 검색"
+              className="pl-9"
+            />
+          </div>
+          <Button icon={<Plus size={16} />} onClick={() => setDialog({ customer: null })} className="shrink-0">
             화주 추가
           </Button>
         </div>
       </div>
 
-      <Card className="overflow-hidden">
+      <div className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
         {customers.length === 0 ? (
           <EmptyState title="등록된 화주가 없습니다." description="화주를 추가하면 견적 작성 시 정보가 자동으로 연동됩니다." />
         ) : visible.length === 0 ? (
           <EmptyState title="검색 결과가 없습니다." description="화주명이나 담당자 이름으로 다시 검색해 보세요." />
         ) : (
-          <ul className="divide-y divide-[var(--border-subtle)]">
-            {visible.map((c) => {
-              const rep = c.salesRepId ? repName.get(c.salesRepId) : undefined;
-              const portRates = TRUCKING_PORTS.map((p) => ({
-                label: p.label.replace("항", ""),
-                values: p.fields.map((f) => c[f.field]),
-              })).filter((p) => p.values.some((v) => v != null));
-              return (
-                <li
-                  key={c.id}
-                  className={cn(
-                    "group flex items-start sm:items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 transition-colors duration-700",
-                    flashId === c.id ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--sidebar-bg)]/50",
-                  )}
-                >
-                  <Avatar name={c.name} size="sm" />
-
-                  <div className="min-w-0 flex-1 grid gap-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.75fr)_minmax(0,1.4fr)] lg:items-center lg:gap-5">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <p className="text-[14px] font-semibold text-[var(--foreground)] truncate">{c.name}</p>
-                        {c.incotermsDefault && (
-                          <span className="shrink-0 rounded-full bg-[var(--sidebar-bg)] px-2 py-0.5 text-[10.5px] font-semibold text-[var(--muted)]">
-                            {c.incotermsDefault}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12.5px] text-[var(--muted)]">
-                        <span>{c.contactName || "담당자 미등록"}</span>
-                        {c.phone && (
-                          <a
-                            href={`tel:${c.phone.replace(/[^0-9+]/g, "")}`}
-                            className="inline-flex items-center gap-1 tabular-nums hover:text-[var(--accent)]"
-                          >
-                            <Phone size={11} />
-                            {c.phone}
-                          </a>
-                        )}
-                      </p>
-                    </div>
-
-                    <div>
-                      {rep ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[12px] font-medium text-[var(--accent)]">
-                          <Contact size={12} />
-                          {rep}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[var(--border)] px-2.5 py-1 text-[12px] text-[var(--muted)]">
-                          <Contact size={12} />
-                          견적 담당자 미지정
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5">
-                      {portRates.length === 0 ? (
-                        <span className="text-[12px] text-[var(--muted)]">내륙운송료 미등록</span>
-                      ) : (
-                        portRates.map((p) => (
-                          <span
-                            key={p.label}
-                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-white px-2 py-1 text-[11.5px]"
-                            title="20FT / 40HQ (KRW)"
-                          >
-                            <span className="font-medium text-[var(--muted)]">{p.label}</span>
-                            <span className="tabular-nums text-[var(--foreground)]">
-                              {p.values.map((v) => (v != null ? formatNumber(v) : "-")).join(" / ")}
+          <>
+            <div className="hidden sm:grid sm:grid-cols-[minmax(0,2fr)_minmax(0,0.95fr)_repeat(3,minmax(0,0.5fr))_112px] gap-4 px-6 py-3 border-b border-[var(--border-subtle)] text-[11px] font-medium tracking-wide text-[var(--muted)]">
+              <span>화주</span>
+              <span>견적 담당자</span>
+              {TRUCKING_PORTS.map((p) => (
+                <span key={p.label} className="text-right">
+                  {p.label.replace("항", "")}
+                  <span className="block whitespace-nowrap tracking-normal text-[10px] font-normal text-[#94a3b8]">20FT·40HQ</span>
+                </span>
+              ))}
+              <span />
+            </div>
+            <ul className="divide-y divide-[var(--border-subtle)]">
+              {visible.map((c) => {
+                const rep = c.salesRepId ? repName.get(c.salesRepId) : undefined;
+                const hasRates = TRUCKING_PORTS.some((p) => p.fields.some((f) => c[f.field] != null));
+                return (
+                  <li
+                    key={c.id}
+                    className={cn(
+                      "group grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,2fr)_minmax(0,0.95fr)_repeat(3,minmax(0,0.5fr))_112px] items-center gap-x-4 gap-y-2 px-4 sm:px-6 py-4 transition-colors duration-700 first:rounded-t-[var(--radius-lg)] last:rounded-b-[var(--radius-lg)]",
+                      flashId === c.id ? "bg-[var(--accent-soft)]" : "hover:bg-[#f8fafc]",
+                    )}
+                  >
+                    {/* 화주 */}
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <MonoAvatar name={c.name} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p className="text-[14.5px] font-semibold tracking-[-0.01em] text-[var(--foreground)] truncate">
+                            {c.name}
+                          </p>
+                          {c.incotermsDefault && (
+                            <span className="shrink-0 rounded-[6px] bg-[var(--sidebar-bg)] px-1.5 py-[1px] text-[11px] font-medium text-[var(--muted)]">
+                              {c.incotermsDefault}
                             </span>
-                          </span>
-                        ))
+                          )}
+                        </div>
+                        <p className="mt-0.5 flex items-center gap-2 min-w-0 text-[12.5px] text-[var(--muted)]">
+                          <span className="truncate">{c.contactName || "담당자 미등록"}</span>
+                          {c.phone && (
+                            <>
+                              <span className="text-[#cbd5e1]">·</span>
+                              <a
+                                href={`tel:${c.phone.replace(/[^0-9+]/g, "")}`}
+                                className="shrink-0 tabular-nums hover:text-[var(--accent)]"
+                              >
+                                {c.phone}
+                              </a>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 견적 담당자 */}
+                    <div className="col-span-2 sm:col-span-1 row-start-2 sm:row-start-auto pl-[54px] sm:pl-0 min-w-0">
+                      {rep ? (
+                        <span className="inline-flex items-center gap-2 min-w-0 text-[13px] text-[#334155]">
+                          <MonoAvatar name={rep} size="xs" />
+                          <span className="truncate">{rep}</span>
+                        </span>
+                      ) : (
+                        <span className="text-[12.5px] text-[#94a3b8]">미지정</span>
                       )}
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    {/* TEMPORARY: 화주 전용 링크 is still being finished - same
-                        "업데이트 중" hover bubble as PDF 다운로드 (QuoteActions), shown to the
-                        left since the overflow-hidden card would clip one above the first row. */}
-                    <span className="relative inline-flex group/link">
-                      <button
-                        type="button"
+                    {/* 내륙운송료 - one column per port on desktop */}
+                    {TRUCKING_PORTS.map((p) => (
+                      <div key={p.label} className="hidden sm:block text-right tabular-nums text-[12.5px] leading-[1.45]">
+                        {p.fields.map((f) => (
+                          <p key={f.field} className={c[f.field] != null ? "text-[#334155]" : "text-[#cbd5e1]"}>
+                            {c[f.field] != null ? formatNumber(c[f.field] as number) : "—"}
+                          </p>
+                        ))}
+                      </div>
+                    ))}
+                    {/* ...and a compact summary line on mobile */}
+                    <p className="sm:hidden col-span-2 pl-[54px] text-[12px] text-[var(--muted)] tabular-nums">
+                      {hasRates
+                        ? TRUCKING_PORTS.filter((p) => p.fields.some((f) => c[f.field] != null))
+                            .map(
+                              (p) =>
+                                `${p.label.replace("항", "")} ${p.fields
+                                  .map((f) => (c[f.field] != null ? formatNumber(c[f.field] as number) : "-"))
+                                  .join("/")}`,
+                            )
+                            .join(" · ")
+                        : "내륙운송료 미등록"}
+                    </p>
+
+                    {/* actions */}
+                    <div className="flex items-center justify-end gap-0.5 col-start-2 sm:col-start-auto row-start-1 sm:row-start-auto">
+                      <IconAction
+                        label={`${c.name} 전용 링크 복사`}
+                        tooltip={copiedId === c.id ? "복사됨" : "업데이트 중"}
                         onClick={() => copyAccessLink(c)}
                         disabled={!c.accessToken}
-                        aria-label={`${c.name} 전용 링크 복사`}
-                        className={cn(
-                          "h-8 px-2 inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] text-[12.5px] font-medium transition-colors disabled:opacity-30",
-                          copiedId === c.id
-                            ? "text-[var(--success)]"
-                            : "text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]",
-                        )}
+                        hoverClass="hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+                        className={copiedId === c.id ? "text-[var(--success)]" : undefined}
                       >
-                        {copiedId === c.id ? <Check size={14} /> : <Link2 size={14} />}
-                        <span className="hidden md:inline">{copiedId === c.id ? "복사됨" : "링크"}</span>
-                      </button>
-                      {copiedId !== c.id && (
-                        <span
-                          className={cn(
-                            TOOLTIP_BUBBLE_CLASS,
-                            "pointer-events-none absolute right-full top-1/2 -translate-y-1/2 translate-x-1 mr-1.5 z-50 opacity-0 transition-all duration-200 group-hover/link:opacity-100 group-hover/link:translate-x-0 motion-reduce:transition-none",
-                          )}
-                        >
-                          업데이트 중
-                        </span>
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setDialog({ customer: c })}
-                      aria-label={`${c.name} 수정`}
-                      className="h-8 px-2 inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] text-[12.5px] font-medium text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
-                    >
-                      <Pencil size={14} />
-                      <span className="hidden md:inline">수정</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPendingDelete(c)}
-                      disabled={deletingId === c.id}
-                      aria-label={`${c.name} 삭제`}
-                      className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--danger)] hover:bg-red-50 transition-colors sm:opacity-60 sm:group-hover:opacity-100 focus:opacity-100"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                        {copiedId === c.id ? <Check size={15} /> : <Link2 size={15} />}
+                      </IconAction>
+                      <IconAction label={`${c.name} 수정`} tooltip="수정" onClick={() => setDialog({ customer: c })}>
+                        <Pencil size={15} />
+                      </IconAction>
+                      <IconAction
+                        label={`${c.name} 삭제`}
+                        tooltip="삭제"
+                        onClick={() => setPendingDelete(c)}
+                        disabled={deletingId === c.id}
+                        hoverClass="hover:text-[var(--danger)] hover:bg-red-50"
+                        reveal
+                      >
+                        <Trash2 size={15} />
+                      </IconAction>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
-      </Card>
+      </div>
 
       <CustomerDialog
         open={dialog != null}

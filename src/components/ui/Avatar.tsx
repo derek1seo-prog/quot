@@ -18,3 +18,30 @@ export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md"
     </span>
   );
 }
+
+/** Calm monochrome initial avatar with a soft ring - used by the 사원 / 화주
+ * lists. `highlighted` gives it the accent treatment (e.g. 기본 담당자). */
+export function MonoAvatar({
+  name,
+  highlighted = false,
+  size = "md",
+}: {
+  name: string;
+  highlighted?: boolean;
+  size?: "xs" | "md";
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "shrink-0 rounded-full inline-flex items-center justify-center font-semibold ring-1",
+        size === "md" ? "w-10 h-10 text-[14.5px]" : "w-6 h-6 text-[11px]",
+        highlighted
+          ? "bg-gradient-to-br from-[var(--accent)] to-[#3b5bdb] text-white ring-[var(--accent)]/20 shadow-[0_4px_12px_-4px_rgba(37,99,235,0.5)]"
+          : "bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0] text-[#334155] ring-black/[0.04]",
+      )}
+    >
+      {name.trim().charAt(0) || "?"}
+    </span>
+  );
+}
