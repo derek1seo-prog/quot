@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { CardContent } from "@/components/ui/Card";
-import { Input, Select } from "@/components/ui/Field";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { Input } from "@/components/ui/Field";
 import { QuoteListCard } from "@/components/quote/QuoteListCard";
 import { QuoteListRow } from "@/components/quote/QuoteListRow";
 import {
@@ -14,7 +15,7 @@ import {
   type QuoteSort,
 } from "@/lib/quote-list-filters";
 import type { Quote } from "@/lib/types";
-import { ChevronDown, ChevronLeft, ChevronRight, RotateCcw, Search } from "lucide-react";
+import { ArrowUpDown, Building2, ChevronLeft, ChevronRight, Contact, RotateCcw, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 /** Filter/sort bar + list for 견적 목록. Everything runs client-side over
@@ -132,32 +133,28 @@ export function QuoteListView({
               className="pl-9"
             />
           </div>
-          <SelectWithChevron
+          <Dropdown
             value={filters.customer}
             onChange={(v) => set("customer", v)}
             aria-label="업체"
+            icon={<Building2 size={15} />}
             className="lg:col-span-2"
-          >
-            <option value="">전체 업체</option>
-            {customerOptions.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </SelectWithChevron>
-          <SelectWithChevron
+            options={[
+              { value: "", label: "전체 업체" },
+              ...customerOptions.map((name) => ({ value: name, label: name })),
+            ]}
+          />
+          <Dropdown
             value={filters.rep}
             onChange={(v) => set("rep", v)}
             aria-label="담당자"
+            icon={<Contact size={15} />}
             className="lg:col-span-2"
-          >
-            <option value="">전체 담당자</option>
-            {repOptions.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </SelectWithChevron>
+            options={[
+              { value: "", label: "전체 담당자" },
+              ...repOptions.map((name) => ({ value: name, label: name })),
+            ]}
+          />
           <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-4">
             <Input
               type="date"
@@ -177,18 +174,14 @@ export function QuoteListView({
               className="min-w-0"
             />
           </div>
-          <SelectWithChevron
+          <Dropdown
             value={filters.sort}
             onChange={(v) => set("sort", isQuoteSort(v) ? v : "newest")}
             aria-label="정렬"
+            icon={<ArrowUpDown size={15} />}
             className="sm:col-span-2 lg:col-span-2"
-          >
-            {Object.entries(QUOTE_SORT_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </SelectWithChevron>
+            options={Object.entries(QUOTE_SORT_LABELS).map(([value, label]) => ({ value, label }))}
+          />
         </div>
         <div className="flex items-center justify-between text-[12.5px] text-[var(--muted)]">
           <span>
@@ -357,32 +350,6 @@ function Pagination({
         </button>
       </div>
     </nav>
-  );
-}
-
-function SelectWithChevron({
-  value,
-  onChange,
-  children,
-  className,
-  "aria-label": ariaLabel,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  children: React.ReactNode;
-  className?: string;
-  "aria-label": string;
-}) {
-  return (
-    <div className={`relative ${className ?? ""}`}>
-      <Select value={value} onChange={(e) => onChange(e.target.value)} aria-label={ariaLabel}>
-        {children}
-      </Select>
-      <ChevronDown
-        size={15}
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
-      />
-    </div>
   );
 }
 
