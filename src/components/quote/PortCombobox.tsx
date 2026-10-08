@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/Field";
 import { useDebouncedValue, useDismissable } from "@/lib/hooks";
+import { matchesSearch } from "@/lib/hangul";
 import type { Port } from "@/lib/types";
 import { Ship } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
@@ -43,7 +44,7 @@ export function PortCombobox({
     if (!q) return options;
     return options.filter(
       ({ port }) =>
-        port.nameKo.toLowerCase().includes(q) ||
+        matchesSearch(port.nameKo, q) ||
         port.name.toLowerCase().includes(q) ||
         port.code.toLowerCase().includes(q),
     );

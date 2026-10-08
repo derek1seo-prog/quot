@@ -3,6 +3,7 @@
 import { cn } from "@/lib/cn";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { useDismissable } from "@/lib/hooks";
+import { matchesSearch, startsWithSearch } from "@/lib/hangul";
 import type { CarrierEntry, PortCarrierNote } from "@/lib/types";
 import { Check, Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -309,8 +310,8 @@ function SuggestInput({
 
   const q = value.trim().toLowerCase();
   const filtered = suggestions
-    .filter((s) => s.toLowerCase() !== q && (!q || s.toLowerCase().includes(q)))
-    .sort((a, b) => Number(!a.toLowerCase().startsWith(q)) - Number(!b.toLowerCase().startsWith(q)))
+    .filter((s) => s.toLowerCase() !== q && matchesSearch(s, q))
+    .sort((a, b) => Number(!startsWithSearch(a, q)) - Number(!startsWithSearch(b, q)))
     .slice(0, 8);
   const show = open && filtered.length > 0;
   const hi = Math.min(highlighted, filtered.length - 1);

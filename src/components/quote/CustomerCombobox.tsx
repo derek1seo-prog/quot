@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/Field";
 import { useDismissable } from "@/lib/hooks";
+import { matchesSearch } from "@/lib/hangul";
 import type { Customer } from "@/lib/types";
 import { Users } from "lucide-react";
 import { useRef, useState } from "react";
@@ -30,7 +31,7 @@ export function CustomerCombobox({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const q = value.trim().toLowerCase();
-  const filtered = q ? customers.filter((c) => c.name.toLowerCase().includes(q)) : customers;
+  const filtered = q ? customers.filter((c) => matchesSearch(c.name, q)) : customers;
   const clampedHighlightedIndex = Math.min(highlightedIndex, Math.max(filtered.length - 1, 0));
 
   useDismissable(wrapperRef, open, () => setOpen(false));

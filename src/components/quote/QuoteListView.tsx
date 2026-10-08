@@ -17,6 +17,7 @@ import {
   type QuoteSort,
 } from "@/lib/quote-list-filters";
 import type { Quote } from "@/lib/types";
+import { matchesSearch } from "@/lib/hangul";
 import { ArrowUpDown, Building2, ChevronLeft, ChevronRight, Contact, RotateCcw, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -88,9 +89,8 @@ export function QuoteListView({
           portNameById[input.destinationPortId] ?? input.destinationPortId,
         ]
           .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(needle)) return false;
+          .join(" ");
+        if (!matchesSearch(haystack, needle)) return false;
       }
       return true;
     });

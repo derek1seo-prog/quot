@@ -7,6 +7,7 @@ import { IconAction } from "@/components/ui/IconAction";
 import { Input } from "@/components/ui/Field";
 import { cn } from "@/lib/cn";
 import { formatNumber } from "@/lib/format";
+import { matchesSearch } from "@/lib/hangul";
 import type { Customer, SalesRep } from "@/lib/types";
 import { Building2, Check, Link2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -45,11 +46,10 @@ export function CustomersTable({
     const q = query.trim().toLowerCase();
     if (!q) return customers;
     return customers.filter((c) =>
-      [c.name, c.contactName, c.phone, c.salesRepId ? repName.get(c.salesRepId) : ""]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q),
+      matchesSearch(
+        [c.name, c.contactName, c.phone, c.salesRepId ? repName.get(c.salesRepId) : ""].filter(Boolean).join(" "),
+        q,
+      ),
     );
   }, [customers, query, repName]);
 

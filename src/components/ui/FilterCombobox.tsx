@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useDismissable } from "@/lib/hooks";
+import { matchesSearch, startsWithSearch } from "@/lib/hangul";
 import { Check, X } from "lucide-react";
 import { useId, useRef, useState, type ReactNode } from "react";
 
@@ -35,9 +36,9 @@ export function FilterCombobox({
   useDismissable(wrapperRef, open, () => setOpen(false));
 
   const q = query.trim().toLowerCase();
-  const filtered = (q ? options.filter((o) => o.toLowerCase().includes(q)) : options)
+  const filtered = (q ? options.filter((o) => matchesSearch(o, q)) : options)
     .slice()
-    .sort((a, b) => (q ? Number(!a.toLowerCase().startsWith(q)) - Number(!b.toLowerCase().startsWith(q)) : 0));
+    .sort((a, b) => (q ? Number(!startsWithSearch(a, q)) - Number(!startsWithSearch(b, q)) : 0));
   const hi = Math.min(highlighted, Math.max(filtered.length - 1, 0));
 
   function pick(v: string) {

@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/Field";
 import { useDismissable } from "@/lib/hooks";
+import { matchesSearch } from "@/lib/hangul";
 import type { SalesRep } from "@/lib/types";
 import { Contact } from "lucide-react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -58,7 +59,7 @@ export function SalesRepCombobox({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
-    return options.filter((r) => r.name.toLowerCase().includes(q));
+    return options.filter((r) => matchesSearch(r.name, q));
   }, [options, query]);
 
   const clampedHighlightedIndex = Math.min(highlightedIndex, Math.max(filtered.length - 1, 0));
