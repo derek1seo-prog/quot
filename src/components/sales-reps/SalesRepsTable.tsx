@@ -8,7 +8,8 @@ import { cn } from "@/lib/cn";
 import type { SalesRep } from "@/lib/types";
 import { Mail, Pencil, Phone, Plus, Trash2, UsersRound } from "lucide-react";
 import { useState } from "react";
-import { Avatar, SalesRepDialog, type SalesRepDraft } from "./SalesRepDialog";
+import { Avatar } from "@/components/ui/Avatar";
+import { SalesRepDialog, type SalesRepDraft } from "./SalesRepDialog";
 
 /** 사원 관리 list: one row per rep (avatar, name, contact), with 수정 / 삭제
  * always reachable (desktop and touch alike). Adding and editing both go

@@ -23,23 +23,24 @@ export async function POST(req: NextRequest) {
   const forbidden = requireAdmin(req);
   if (forbidden) return forbidden;
 
-  const body = (await req.json()) as Partial<Customer>;
-  if (!body.name) {
+  const body = (await req.json()) as { [K in keyof Customer]?: Customer[K] | null };
+  const name = body.name?.trim();
+  if (!name) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
   const customer: Customer = {
     id: generateId("cust"),
-    name: body.name,
-    contactName: body.contactName,
-    phone: body.phone,
+    name,
+    contactName: body.contactName || undefined,
+    phone: body.phone || undefined,
     salesRepId: body.salesRepId || undefined,
-    incotermsDefault: body.incotermsDefault,
-    incheonTruckingRate20ft: body.incheonTruckingRate20ft,
-    incheonTruckingRate40hq: body.incheonTruckingRate40hq,
-    busanTruckingRate20ft: body.busanTruckingRate20ft,
-    busanTruckingRate40hq: body.busanTruckingRate40hq,
-    pyeongtaekTruckingRate20ft: body.pyeongtaekTruckingRate20ft,
-    pyeongtaekTruckingRate40hq: body.pyeongtaekTruckingRate40hq,
+    incotermsDefault: body.incotermsDefault || undefined,
+    incheonTruckingRate20ft: body.incheonTruckingRate20ft ?? undefined,
+    incheonTruckingRate40hq: body.incheonTruckingRate40hq ?? undefined,
+    busanTruckingRate20ft: body.busanTruckingRate20ft ?? undefined,
+    busanTruckingRate40hq: body.busanTruckingRate40hq ?? undefined,
+    pyeongtaekTruckingRate20ft: body.pyeongtaekTruckingRate20ft ?? undefined,
+    pyeongtaekTruckingRate40hq: body.pyeongtaekTruckingRate40hq ?? undefined,
     createdAt: new Date().toISOString(),
     accessToken: generateAccessToken(),
   };
@@ -51,7 +52,7 @@ export async function PUT(req: NextRequest) {
   const forbidden = requireAdmin(req);
   if (forbidden) return forbidden;
 
-  const body = (await req.json()) as Partial<Customer> & { id: string };
+  const body = (await req.json()) as { [K in keyof Customer]?: Customer[K] | null } & { id: string };
   if (!body.id) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
@@ -59,20 +60,23 @@ export async function PUT(req: NextRequest) {
   if (!existing) {
     return NextResponse.json({ error: "customer not found" }, { status: 404 });
   }
+  // A field present in the body (even as null / "") replaces the stored
+  // value, so the edit dialog can clear it; absent fields are left as is.
+  const pick = <K extends keyof Customer>(key: K): Customer[K] =>
+    key in body ? ((body[key] ?? undefined) as Customer[K]) : existing[key];
   const updated: Customer = {
     ...existing,
-    name: body.name ?? existing.name,
-    contactName: body.contactName ?? existing.contactName,
-    phone: body.phone ?? existing.phone,
-    // "" clears the assignment, so check presence rather than ??.
-    salesRepId: "salesRepId" in body ? body.salesRepId || undefined : existing.salesRepId,
-    incotermsDefault: body.incotermsDefault ?? existing.incotermsDefault,
-    incheonTruckingRate20ft: body.incheonTruckingRate20ft ?? existing.incheonTruckingRate20ft,
-    incheonTruckingRate40hq: body.incheonTruckingRate40hq ?? existing.incheonTruckingRate40hq,
-    busanTruckingRate20ft: body.busanTruckingRate20ft ?? existing.busanTruckingRate20ft,
-    busanTruckingRate40hq: body.busanTruckingRate40hq ?? existing.busanTruckingRate40hq,
-    pyeongtaekTruckingRate20ft: body.pyeongtaekTruckingRate20ft ?? existing.pyeongtaekTruckingRate20ft,
-    pyeongtaekTruckingRate40hq: body.pyeongtaekTruckingRate40hq ?? existing.pyeongtaekTruckingRate40hq,
+    name: body.name?.trim() || existing.name,
+    contactName: pick("contactName") || undefined,
+    phone: pick("phone") || undefined,
+    salesRepId: pick("salesRepId") || undefined,
+    incotermsDefault: pick("incotermsDefault") || undefined,
+    incheonTruckingRate20ft: pick("incheonTruckingRate20ft"),
+    incheonTruckingRate40hq: pick("incheonTruckingRate40hq"),
+    busanTruckingRate20ft: pick("busanTruckingRate20ft"),
+    busanTruckingRate40hq: pick("busanTruckingRate40hq"),
+    pyeongtaekTruckingRate20ft: pick("pyeongtaekTruckingRate20ft"),
+    pyeongtaekTruckingRate40hq: pick("pyeongtaekTruckingRate40hq"),
     // Backfills a token for any customer created before this feature -
     // every customer ends up with one the next time an admin touches them.
     accessToken: existing.accessToken ?? generateAccessToken(),
