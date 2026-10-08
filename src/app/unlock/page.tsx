@@ -11,5 +11,8 @@ export default async function UnlockPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  return <UnlockForm next={next && next.startsWith("/") && !next.startsWith("//") ? next : "/"} />;
+  // Admins land on 빠른 견적 by default rather than the dashboard ("/");
+  // an explicit next (e.g. a protected page that bounced here) still wins.
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") && next !== "/" ? next : null;
+  return <UnlockForm next={safeNext ?? "/quick-quote"} />;
 }
