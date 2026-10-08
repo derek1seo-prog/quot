@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { RateCell } from "@/components/rates/RateCell";
-import type { Customer } from "@/lib/types";
+import { SalesRepSelect } from "@/components/customers/SalesRepSelect";
+import type { Customer, SalesRep } from "@/lib/types";
 import { Check, Link2, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -20,9 +21,10 @@ type NumberField =
 // makes these exact regardless of content, so the three ports' columns stay
 // identical width instead of the browser's auto layout redistributing
 // space unevenly between them.
-const nameColPct = 18;
-const contactColPct = 12;
-const rateColPct = 11.5; // x6 port/size columns = 69
+const nameColPct = 19;
+const contactColPct = 13;
+const repColPct = 14;
+const rateColPct = 9; // x6 port/size columns = 54
 const actionColWidth = 76; // px - fixed so the hover-actions column never grows past its two buttons
 
 /** Rate fields grouped by port - one heading per port instead of repeating
@@ -55,11 +57,27 @@ const PORT_GROUPS: { label: string; fields: { field: NumberField; sub: string }[
   },
 ];
 
-export function CustomersTable({ initialCustomers }: { initialCustomers: Customer[] }) {
+export function CustomersTable({
+  initialCustomers,
+  salesReps,
+}: {
+  initialCustomers: Customer[];
+  salesReps: SalesRep[];
+}) {
   const [customers, setCustomers] = useState(initialCustomers);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Customer | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [savingRepId, setSavingRepId] = useState<string | null>(null);
+
+  async function saveSalesRep(id: string, salesRepId: string) {
+    setSavingRepId(id);
+    try {
+      await saveField(id, { salesRepId });
+    } finally {
+      setSavingRepId(null);
+    }
+  }
 
   // initialCustomers is a fresh array from the server component on every
   // router.refresh() (e.g. after adding a customer) - without this, the
@@ -143,10 +161,11 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     <Card className="overflow-hidden">
       <div className="hidden sm:block relative">
         <div ref={scrollRef} className="overflow-x-auto">
-          <table className="w-full table-fixed text-left min-w-[820px]">
+          <table className="w-full table-fixed text-left min-w-[920px]">
             <colgroup>
               <col style={{ width: `${nameColPct}%` }} />
               <col style={{ width: `${contactColPct}%` }} />
+              <col style={{ width: `${repColPct}%` }} />
               {PORT_GROUPS.flatMap((group) => group.fields.map((f) => <col key={f.field} style={{ width: `${rateColPct}%` }} />))}
               <col style={{ width: `${actionColWidth}px` }} />
             </colgroup>
@@ -157,6 +176,9 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 </th>
                 <th rowSpan={2} className="px-3 py-3 font-medium align-bottom">
                   담당자
+                </th>
+                <th rowSpan={2} className="px-3 py-3 font-medium align-bottom">
+                  견적 담당자
                 </th>
                 {PORT_GROUPS.map((group) => (
                   <th
@@ -198,6 +220,15 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                   </td>
                   <td className="px-3 py-3 text-[13.5px] text-[var(--foreground)] align-middle truncate">
                     {c.contactName ?? "-"}
+                  </td>
+                  <td className="px-2 py-2 align-middle">
+                    <SalesRepSelect
+                      compact
+                      value={c.salesRepId ?? ""}
+                      onChange={(v) => saveSalesRep(c.id, v)}
+                      salesReps={salesReps}
+                      disabled={savingRepId === c.id}
+                    />
                   </td>
                   {PORT_GROUPS.flatMap((group) =>
                     group.fields.map((f, i) => (
@@ -273,6 +304,17 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
               </div>
             </div>
             <p className="text-[12px] text-[var(--muted)] mt-1">{c.contactName ?? "-"}</p>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-[11px] text-[var(--muted)] shrink-0">견적 담당자</span>
+              <SalesRepSelect
+                compact
+                className="flex-1"
+                value={c.salesRepId ?? ""}
+                onChange={(v) => saveSalesRep(c.id, v)}
+                salesReps={salesReps}
+                disabled={savingRepId === c.id}
+              />
+            </div>
 
             <div className="mt-3 space-y-2.5">
               {PORT_GROUPS.map((group) => (

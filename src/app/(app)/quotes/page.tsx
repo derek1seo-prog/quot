@@ -26,7 +26,7 @@ export default async function QuotesListPage({
           <h1 className="text-[28px] font-semibold tracking-tight">견적 목록</h1>
         </div>
         <LinkButton
-          href="/quotes/new"
+          href="/quick-quote"
           icon={<FilePlus2 size={16} />}
           className="animate-dashboard-fade-up"
           style={{ animationDelay: "80ms" }}
@@ -40,7 +40,7 @@ export default async function QuotesListPage({
           <CardContent className="py-16 text-center">
             <p className="text-[15px] font-medium">아직 생성된 견적이 없습니다.</p>
             <p className="text-[13px] text-[var(--muted)] mt-1 mb-6">첫 번째 견적을 만들어 보세요.</p>
-            <LinkButton href="/quotes/new" icon={<FilePlus2 size={16} />} className="mx-auto">
+            <LinkButton href="/quick-quote" icon={<FilePlus2 size={16} />} className="mx-auto">
               새 견적 만들기
             </LinkButton>
           </CardContent>

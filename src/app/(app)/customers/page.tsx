@@ -1,11 +1,11 @@
 import { AddCustomerForm } from "@/components/customers/AddCustomerForm";
 import { CustomersTable } from "@/components/customers/CustomersTable";
-import { getCustomers } from "@/lib/data-store";
+import { getCustomers, getSalesReps } from "@/lib/data-store";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomersPage() {
-  const customers = await getCustomers();
+  const [customers, salesReps] = await Promise.all([getCustomers(), getSalesReps()]);
 
   return (
     <div className="max-w-[1100px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
@@ -14,11 +14,11 @@ export default async function CustomersPage() {
         <h1 className="text-[28px] font-semibold tracking-tight">화주 관리</h1>
       </div>
       <div className="mb-8 animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
-        <AddCustomerForm />
+        <AddCustomerForm salesReps={salesReps} />
       </div>
 
       <div className="animate-dashboard-fade-up" style={{ animationDelay: "160ms" }}>
-        <CustomersTable initialCustomers={customers} />
+        <CustomersTable initialCustomers={customers} salesReps={salesReps} />
       </div>
     </div>
   );

@@ -77,5 +77,7 @@ export function useRememberedSalesRepId(reps: { id: string }[] | undefined) {
     }
   }, []);
 
-  return [salesRepId, setSalesRepId] as const;
+  // For automatic fills (e.g. a 화주's assigned rep) - changes the picker
+  // without overwriting the remembered "last picked by hand" default.
+  return [salesRepId, setSalesRepId, setSalesRepIdState] as const;
 }

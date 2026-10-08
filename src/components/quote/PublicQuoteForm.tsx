@@ -86,7 +86,7 @@ export function PublicQuoteForm({
   const [containerQuantity, setContainerQuantity] = useState(1);
   const [quickCustomerName, setQuickCustomerName] = useState("");
   const [quickContactName, setQuickContactName] = useState(DEFAULT_QUICK_CONTACT_NAME);
-  const [quickSalesRepId, setQuickSalesRepId] = useRememberedSalesRepId(salesReps);
+  const [quickSalesRepId, setQuickSalesRepId, autoFillQuickSalesRepId] = useRememberedSalesRepId(salesReps);
   const [quickValidUntil, setQuickValidUntil] = useState(endOfMonthIso(TODAY));
   // Admin sessions can actually use this editor (auto-fill + rate
   // resolution), so it starts already open for them rather than making
@@ -353,6 +353,9 @@ export function PublicQuoteForm({
                               setQuickCustomerName(name);
                               const matched = customers.find((c) => c.name === name);
                               if (matched?.contactName) setQuickContactName(matched.contactName);
+                              if (matched?.salesRepId && salesReps.some((r) => r.id === matched.salesRepId)) {
+                                autoFillQuickSalesRepId(matched.salesRepId);
+                              }
                             }}
                             customers={customers}
                             placeholder="예: 지더블유파트너스"

@@ -2,8 +2,10 @@
 
 import { Button } from "@/components/ui/Button";
 import { CollapsiblePanel } from "@/components/ui/CollapsiblePanel";
+import { SalesRepSelect } from "@/components/customers/SalesRepSelect";
 import { FieldGroup, FieldLabel, Input } from "@/components/ui/Field";
 import { formatNumber } from "@/lib/format";
+import type { SalesRep } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -44,12 +46,13 @@ function TruckingRateField({
   );
 }
 
-export function AddCustomerForm() {
+export function AddCustomerForm({ salesReps }: { salesReps: SalesRep[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [contactName, setContactName] = useState("");
   const [phone, setPhone] = useState("");
+  const [salesRepId, setSalesRepId] = useState("");
   const [incheon20ft, setIncheon20ft] = useState("");
   const [incheon40hq, setIncheon40hq] = useState("");
   const [busan20ft, setBusan20ft] = useState("");
@@ -62,6 +65,7 @@ export function AddCustomerForm() {
     setName("");
     setContactName("");
     setPhone("");
+    setSalesRepId("");
     setIncheon20ft("");
     setIncheon40hq("");
     setBusan20ft("");
@@ -86,6 +90,7 @@ export function AddCustomerForm() {
           name,
           contactName,
           phone,
+          salesRepId,
           incheonTruckingRate20ft: incheon20ft === "" ? undefined : Number(incheon20ft),
           incheonTruckingRate40hq: incheon40hq === "" ? undefined : Number(incheon40hq),
           busanTruckingRate20ft: busan20ft === "" ? undefined : Number(busan20ft),
@@ -104,7 +109,7 @@ export function AddCustomerForm() {
 
   return (
     <CollapsiblePanel open={open} onTrigger={() => setOpen(true)} triggerLabel="화주 추가">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <FieldGroup>
           <FieldLabel>화주</FieldLabel>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -112,6 +117,10 @@ export function AddCustomerForm() {
         <FieldGroup>
           <FieldLabel hint="선택">담당자</FieldLabel>
           <Input value={contactName} onChange={(e) => setContactName(e.target.value)} />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel hint="선택">견적 담당자</FieldLabel>
+          <SalesRepSelect value={salesRepId} onChange={setSalesRepId} salesReps={salesReps} />
         </FieldGroup>
       </div>
 

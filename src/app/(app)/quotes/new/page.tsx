@@ -73,7 +73,7 @@ export default function NewQuotePage() {
   // Step 3 - basic info
   const [customerName, setCustomerName] = useState("");
   const [contactName, setContactName] = useState("");
-  const [salesRepId, setSalesRepId] = useRememberedSalesRepId(meta?.salesReps);
+  const [salesRepId, setSalesRepId, autoFillSalesRepId] = useRememberedSalesRepId(meta?.salesReps);
   const [quoteDate, setQuoteDate] = useState(todayIso());
   const [validUntil, setValidUntil] = useState(endOfMonthIso(todayIso()));
   const [hsCode, setHsCode] = useState("");
@@ -414,6 +414,9 @@ export default function NewQuotePage() {
                   setCustomerName(name);
                   const matched = meta.customers.find((c) => c.name === name);
                   if (matched?.contactName) setContactName(matched.contactName);
+                  if (matched?.salesRepId && meta.salesReps.some((r) => r.id === matched.salesRepId)) {
+                    autoFillSalesRepId(matched.salesRepId);
+                  }
                 }}
                 customers={meta.customers}
                 placeholder="예: 지더블유파트너스"

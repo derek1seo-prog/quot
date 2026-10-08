@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     name: body.name,
     contactName: body.contactName,
     phone: body.phone,
+    salesRepId: body.salesRepId || undefined,
     incotermsDefault: body.incotermsDefault,
     incheonTruckingRate20ft: body.incheonTruckingRate20ft,
     incheonTruckingRate40hq: body.incheonTruckingRate40hq,
@@ -63,6 +64,8 @@ export async function PUT(req: NextRequest) {
     name: body.name ?? existing.name,
     contactName: body.contactName ?? existing.contactName,
     phone: body.phone ?? existing.phone,
+    // "" clears the assignment, so check presence rather than ??.
+    salesRepId: "salesRepId" in body ? body.salesRepId || undefined : existing.salesRepId,
     incotermsDefault: body.incotermsDefault ?? existing.incotermsDefault,
     incheonTruckingRate20ft: body.incheonTruckingRate20ft ?? existing.incheonTruckingRate20ft,
     incheonTruckingRate40hq: body.incheonTruckingRate40hq ?? existing.incheonTruckingRate40hq,

@@ -54,9 +54,9 @@ export function QuoteListView({
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
   }, [filters, page]);
 
-  // 업체 / 담당자 dropdown options, with how many quotes each has - most-quoted first.
-  const customerOptions = useMemo(() => countByName(quotes, (q) => q.input.customerName), [quotes]);
-  const repOptions = useMemo(() => countByName(quotes, (q) => q.input.preparedBy), [quotes]);
+  // 업체 / 담당자 dropdown options - names that appear on at least one quote.
+  const customerOptions = useMemo(() => uniqueNames(quotes, (q) => q.input.customerName), [quotes]);
+  const repOptions = useMemo(() => uniqueNames(quotes, (q) => q.input.preparedBy), [quotes]);
 
   const visible = useMemo(() => {
     const needle = filters.q.trim().toLowerCase();
@@ -139,9 +139,9 @@ export function QuoteListView({
             className="lg:col-span-2"
           >
             <option value="">전체 업체</option>
-            {customerOptions.map(([name, count]) => (
+            {customerOptions.map((name) => (
               <option key={name} value={name}>
-                {name} ({count})
+                {name}
               </option>
             ))}
           </SelectWithChevron>
@@ -152,9 +152,9 @@ export function QuoteListView({
             className="lg:col-span-2"
           >
             <option value="">전체 담당자</option>
-            {repOptions.map(([name, count]) => (
+            {repOptions.map((name) => (
               <option key={name} value={name}>
-                {name} ({count})
+                {name}
               </option>
             ))}
           </SelectWithChevron>
@@ -386,11 +386,11 @@ function SelectWithChevron({
   );
 }
 
-function countByName(quotes: Quote[], pick: (q: Quote) => string | undefined): [string, number][] {
-  const counts = new Map<string, number>();
+function uniqueNames(quotes: Quote[], pick: (q: Quote) => string | undefined): string[] {
+  const names = new Set<string>();
   for (const q of quotes) {
     const name = (pick(q) ?? "").trim();
-    if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+    if (name) names.add(name);
   }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
+  return [...names].sort((a, b) => a.localeCompare(b, "ko"));
 }

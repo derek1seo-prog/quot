@@ -136,6 +136,9 @@ export interface Customer {
   name: string;
   contactName?: string;
   phone?: string;
+  /** 견적 담당자 (발신) normally assigned to this 화주 - auto-filled into the
+   * quote forms' rep picker when this customer is selected. */
+  salesRepId?: string;
   incotermsDefault?: string;
   incheonTruckingRate20ft?: number; // KRW
   incheonTruckingRate40hq?: number; // KRW
