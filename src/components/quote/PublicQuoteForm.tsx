@@ -10,9 +10,8 @@ import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
 import { QuoteResultSkeleton } from "./QuoteResultSkeleton";
 import { SalesRepCombobox } from "./SalesRepCombobox";
-import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
 import { endOfMonthIso, todayIso } from "@/lib/format";
-import { useDebouncedValue } from "@/lib/hooks";
+import { useDebouncedValue, useRememberedSalesRepId } from "@/lib/hooks";
 import type {
   CompanyInfo,
   ContainerType,
@@ -87,7 +86,7 @@ export function PublicQuoteForm({
   const [containerQuantity, setContainerQuantity] = useState(1);
   const [quickCustomerName, setQuickCustomerName] = useState("");
   const [quickContactName, setQuickContactName] = useState(DEFAULT_QUICK_CONTACT_NAME);
-  const [quickSalesRepId, setQuickSalesRepId] = useState(DEFAULT_SALES_REP_ID);
+  const [quickSalesRepId, setQuickSalesRepId] = useRememberedSalesRepId(salesReps);
   const [quickValidUntil, setQuickValidUntil] = useState(endOfMonthIso(TODAY));
   // Admin sessions can actually use this editor (auto-fill + rate
   // resolution), so it starts already open for them rather than making

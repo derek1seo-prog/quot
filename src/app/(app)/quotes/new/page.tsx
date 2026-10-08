@@ -10,8 +10,8 @@ import { QuoteDocument } from "@/components/quote/QuoteDocument";
 import { QuoteResultSkeleton } from "@/components/quote/QuoteResultSkeleton";
 import { SalesRepCombobox } from "@/components/quote/SalesRepCombobox";
 import { Step, StepIndicator } from "@/components/quote/StepIndicator";
-import { DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
 import { endOfMonthIso, todayIso } from "@/lib/format";
+import { useRememberedSalesRepId } from "@/lib/hooks";
 import type {
   ChargeRate,
   CompanyInfo,
@@ -73,7 +73,7 @@ export default function NewQuotePage() {
   // Step 3 - basic info
   const [customerName, setCustomerName] = useState("");
   const [contactName, setContactName] = useState("");
-  const [salesRepId, setSalesRepId] = useState(DEFAULT_SALES_REP_ID);
+  const [salesRepId, setSalesRepId] = useRememberedSalesRepId(meta?.salesReps);
   const [quoteDate, setQuoteDate] = useState(todayIso());
   const [validUntil, setValidUntil] = useState(endOfMonthIso(todayIso()));
   const [hsCode, setHsCode] = useState("");
