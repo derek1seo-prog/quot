@@ -71,7 +71,7 @@ export function Sidebar({ role }: { role: Role }) {
                         active ? "text-[var(--accent)]" : "group-hover:scale-110 group-hover:text-[var(--accent)]"
                       }`}
                     >
-                      <NavIcon icon={item.icon} countryId={item.countryId} />
+                      <NavIcon icon={item.icon} countryId={item.countryId} active={active} />
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       {item.label}

@@ -10,16 +10,19 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { countryFlag } from "@/lib/format";
+import { CountryFlag } from "@/components/ui/CountryFlag";
+import { cn } from "@/lib/cn";
 import type { NavItemDef } from "@/lib/nav";
 
 export function NavIcon({
   icon,
   countryId,
+  active = false,
   size = 17,
 }: {
   icon: NavItemDef["icon"];
   countryId?: string;
+  active?: boolean;
   size?: number;
 }) {
   switch (icon) {
@@ -32,13 +35,17 @@ export function NavIcon({
     case "quick-quote":
       return <Zap size={size} />;
     case "region":
-      // A country's flag reads at a glance which region a rate page covers,
-      // and scales to more countries automatically - no icon to pick or
-      // maintain as Vietnam/Thailand's neighbors are added later.
+      // Muted at rest, full color on row hover or when active - the flag's
+      // version of the gray->accent shift the line icons get (rows are `group`).
       return countryId ? (
-        <span style={{ fontSize: size }} role="img" aria-label={countryId}>
-          {countryFlag(countryId)}
-        </span>
+        <CountryFlag
+          countryId={countryId}
+          size={size - 1}
+          className={cn(
+            "transition-[filter,opacity] duration-200",
+            !active && "opacity-85 saturate-[.85] group-hover:opacity-100 group-hover:saturate-100",
+          )}
+        />
       ) : (
         <Ship size={size} />
       );
