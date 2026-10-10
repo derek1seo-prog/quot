@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "문의함 | I.S. Sea & Air" };
 
 export default function InquiriesPage() {
   return (
-    <div className="max-w-[1200px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-14">
+    <div className="max-w-[1200px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-14">
       <div className="mb-6 animate-dashboard-fade-up">
         <p className="text-[13px] font-medium text-[var(--accent)] mb-2">관리</p>
         <h1 className="text-[28px] font-semibold tracking-tight">문의함</h1>

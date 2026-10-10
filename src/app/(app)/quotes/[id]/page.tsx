@@ -28,7 +28,7 @@ export default async function QuoteDetailPage({
   const destinationPort = getPortById(quote.input.destinationPortId);
 
   return (
-    <div className="max-w-[1000px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
+    <div className="max-w-[1000px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
       <div className="animate-dashboard-fade-up">
         <QuoteActions quoteId={quote.id} quoteNumber={quote.quoteNumber} />
       </div>

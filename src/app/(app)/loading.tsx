@@ -3,13 +3,16 @@ import { Skeleton, SkeletonPageHeader, SkeletonTable } from "@/components/ui/Ske
 
 export default function DashboardLoading() {
   return (
-    <div className="max-w-[1200px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10 lg:mb-14">
+    <div className="max-w-[1200px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-10 lg:mb-14">
         <SkeletonPageHeader titleWidth="w-72" />
-        <Skeleton className="h-12 w-40 rounded-[var(--radius-md)]" />
+        <div className="flex gap-2">
+          <Skeleton className="h-12 w-44 rounded-[var(--radius-md)]" />
+          <Skeleton className="h-12 w-40 rounded-[var(--radius-md)]" />
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="p-5">
             <Skeleton className="w-9 h-9 rounded-full mb-6" />

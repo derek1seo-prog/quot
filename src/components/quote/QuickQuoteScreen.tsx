@@ -21,7 +21,7 @@ export async function QuickQuoteScreen({ isAdmin }: { isAdmin: boolean }) {
   ]);
 
   return (
-    <div className="max-w-[1000px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16 print:py-0 print:px-0">
+    <div className="max-w-[1000px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16 print:py-0 print:px-0">
       <div className="no-print">
         <p className="text-[13px] font-medium text-[var(--accent)] mb-2">빠른 견적 만들기</p>
         <h1 className="text-[28px] font-semibold tracking-tight mb-1">견적 조회</h1>

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function QuoteDetailLoading() {
   return (
-    <div className="max-w-[1000px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
+    <div className="max-w-[1000px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
       <div className="flex items-center justify-between gap-3 mb-6">
         <Skeleton className="h-8 w-28 rounded-[var(--radius-sm)]" />
         <div className="flex items-center gap-2">

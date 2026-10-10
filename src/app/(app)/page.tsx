@@ -1,10 +1,13 @@
 import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/lib/cn";
 import { Card, CardContent } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
+import { CardBackdropTrend } from "@/components/dashboard/CardBackdropTrend";
 import { CountUpStat } from "@/components/dashboard/CountUpStat";
 import { QuoteTrendSparkline, type TrendPoint } from "@/components/dashboard/QuoteTrendSparkline";
 import { QuickQuoteScreen } from "@/components/quote/QuickQuoteScreen";
 import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
+import { kstToday, getUsdKrwTrend, shiftIsoDate } from "@/lib/exchange-rate-history";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { decodeSessionCookie } from "@/lib/session";
 import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck, Zap } from "lucide-react";
@@ -20,7 +23,11 @@ export default async function DashboardPage() {
     return <QuickQuoteScreen isAdmin={false} />;
   }
 
-  const [quotes, exchangeRate] = await Promise.all([getQuotes(), getCurrentExchangeRate("USD")]);
+  const [quotes, exchangeRate, usdTrend] = await Promise.all([
+    getQuotes(),
+    getCurrentExchangeRate("USD"),
+    getUsdKrwTrend(),
+  ]);
   const allPorts = getPorts();
   const portNameById = new Map(allPorts.map((p) => [p.id, p.nameKo]));
 
@@ -43,6 +50,19 @@ export default async function DashboardPage() {
     return { date: iso, count };
   });
 
+  // Last 7 days, drawn faintly behind the two stat cards.
+  const quotesWeek = trendData.slice(-7).map((d) => d.count);
+  const quotesWeekTotal = quotesWeek.reduce((sum, n) => sum + n, 0);
+  const usdWeek = usdTrend.filter((t) => t.date >= shiftIsoDate(kstToday(), -6)).map((t) => t.rate);
+  const usdWeekChange = usdWeek.length >= 2 ? usdWeek[usdWeek.length - 1] - usdWeek[0] : null;
+
+  const todayLabel = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  }).format(new Date());
+
   // Grouped rather than interleaved: the two data stats first, then the
   // two outbound quick links - stats/links reads as two clear halves
   // instead of alternating, and on the 2-column mobile grid it also means
@@ -55,6 +75,9 @@ export default async function DashboardPage() {
         countUp?: { value: number; prefix?: string; suffix?: string };
         sublabel?: string;
         icon: ReactNode;
+        trend?: number[];
+        chip?: { text: string; tone: "up" | "down" | "neutral"; title?: string };
+        href: string;
       }
     | { kind: "link"; label: string; sublabel: string; href: string; icon: ReactNode }
   )[] = [
@@ -64,6 +87,9 @@ export default async function DashboardPage() {
       value: `${quotes.length}건`,
       countUp: { value: quotes.length, suffix: "건" },
       icon: <FilePlus2 size={18} />,
+      trend: quotesWeek,
+      chip: { text: `최근 7일 ${quotesWeekTotal}건`, tone: "neutral" },
+      href: "/quotes",
     },
     {
       kind: "stat",
@@ -72,6 +98,16 @@ export default async function DashboardPage() {
       countUp: exchangeRate ? { value: exchangeRate.rate, prefix: "₩" } : undefined,
       sublabel: exchangeRate ? `${formatDate(exchangeRate.asOf)} 기준` : undefined,
       icon: <DollarSign size={18} />,
+      trend: usdWeek,
+      chip:
+        usdWeekChange === null
+          ? undefined
+          : {
+              text: `7일 ${usdWeekChange > 0 ? "▲" : usdWeekChange < 0 ? "▼" : ""}${Math.abs(usdWeekChange).toLocaleString("ko-KR")}원`,
+              tone: usdWeekChange > 0 ? "up" : usdWeekChange < 0 ? "down" : "neutral",
+              title: "최근 7일 USD/KRW 변동",
+            },
+      href: "/settings",
     },
     {
       kind: "link",
@@ -90,10 +126,12 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10 lg:mb-14">
+    <div className="max-w-[1200px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-10 lg:mb-14">
         <div className="animate-dashboard-fade-up">
-          <p className="text-[13px] font-medium text-[var(--accent)] mb-2">Dashboard</p>
+          <p className="text-[13px] font-medium text-[var(--accent)] mb-2">
+            Dashboard <span className="text-[var(--muted)] font-normal">· {todayLabel}</span>
+          </p>
           <h1 className="text-[32px] lg:text-[36px] font-semibold tracking-tight text-[var(--foreground)]">
             수출입 포워딩 견적
           </h1>
@@ -117,31 +155,50 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
         {dashboardCards.map((c, i) =>
           c.kind === "stat" ? (
-            <Card
+            <Link
               key={c.label}
-              className="p-5 animate-dashboard-fade-up"
+              href={c.href}
+              className="animate-dashboard-fade-up"
               style={{ animationDelay: `${140 + i * 50}ms` }}
             >
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
-                  {c.icon}
+              <Card className="relative overflow-hidden p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                {c.trend && <CardBackdropTrend values={c.trend} />}
+                <div className="relative">
+                  <div className="flex items-center justify-between gap-2 mb-6">
+                    <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
+                      {c.icon}
+                    </div>
+                    {c.chip && (
+                      <span
+                        title={c.chip.title}
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[11.5px] font-medium whitespace-nowrap",
+                          c.chip.tone === "up" && "bg-[var(--danger)]/[0.08] text-[var(--danger)]",
+                          c.chip.tone === "down" && "bg-[var(--accent-soft)] text-[var(--accent)]",
+                          c.chip.tone === "neutral" && "bg-[var(--sidebar-bg)] text-[var(--muted)]",
+                        )}
+                      >
+                        {c.chip.text}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
+                    {c.countUp ? (
+                      <CountUpStat value={c.countUp.value} prefix={c.countUp.prefix} suffix={c.countUp.suffix} />
+                    ) : (
+                      c.value
+                    )}
+                  </p>
+                  <p className="text-[13px] text-[var(--muted)] mt-0.5">{c.label}</p>
+                  {c.sublabel && (
+                    <p className="text-[12px] text-[var(--muted)]/70 mt-0.5">{c.sublabel}</p>
+                  )}
                 </div>
-              </div>
-              <p className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
-                {c.countUp ? (
-                  <CountUpStat value={c.countUp.value} prefix={c.countUp.prefix} suffix={c.countUp.suffix} />
-                ) : (
-                  c.value
-                )}
-              </p>
-              <p className="text-[13px] text-[var(--muted)] mt-0.5">{c.label}</p>
-              {c.sublabel && (
-                <p className="text-[12px] text-[var(--muted)]/70 mt-0.5">{c.sublabel}</p>
-              )}
-            </Card>
+              </Card>
+            </Link>
           ) : (
             <a
               key={c.label}
@@ -150,10 +207,10 @@ export default async function DashboardPage() {
               rel="noopener noreferrer"
               // A seam between the stat and link groups so the grouping
               // reads as intentional, not just array order - only makes
-              // sense on the desktop single-row (4-col) layout, where this
+              // sense on the wide single-row (4-col) layout, where this
               // is the first link right after the last stat; on the
-              // 2-column mobile grid it starts its own row already.
-              className={`animate-dashboard-fade-up ${i === 2 ? "lg:border-l lg:border-[var(--border-subtle)] lg:pl-4 xl:pl-5" : ""}`}
+              // 2-column grid (phones, tablets) it starts its own row.
+              className={`animate-dashboard-fade-up ${i === 2 ? "xl:border-l xl:border-[var(--border-subtle)] xl:pl-5" : ""}`}
               style={{ animationDelay: `${140 + i * 50}ms` }}
             >
               <Card className="p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0">

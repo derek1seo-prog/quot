@@ -24,7 +24,7 @@ function SkeletonSettingsCard({ fields }: { fields: number }) {
 
 export default function SettingsLoading() {
   return (
-    <div className="max-w-[900px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16 space-y-8">
+    <div className="max-w-[900px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16 space-y-8">
       <SkeletonPageHeader titleWidth="w-20" />
       <SkeletonSettingsCard fields={2} />
       <SkeletonSettingsCard fields={5} />

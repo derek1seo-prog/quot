@@ -6,7 +6,7 @@ import { Skeleton, SkeletonPageHeader, SkeletonTable } from "@/components/ui/Ske
  * 부대비용 table card. */
 export function RatesPageSkeleton() {
   return (
-    <div className="max-w-[1100px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
+    <div className="max-w-[1100px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
       <SkeletonPageHeader titleWidth="w-24" />
       <Skeleton className="h-3 w-56 mt-3 mb-8" />
 

@@ -20,6 +20,10 @@
   --radius-sm: 8px;
 }
 
+/* Short viewports - e.g. an iPad in landscape once Safari's toolbars are
+ * subtracted - where the sidebar needs a denser layout to fit unscrolled. */
+@custom-variant short (@media (max-height: 860px));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -488,7 +492,19 @@ input[type="number"] {
   transform-origin: bottom right;
 }
 
+/* Dashboard card backdrop trend (CardBackdropTrend.tsx) - sweeps in left to
+ * right once. A clip reveal rather than a stroke-dash draw, since dash
+ * lengths don't behave with vector-effect: non-scaling-stroke. */
+@keyframes trend-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+.animate-trend-reveal {
+  animation: trend-reveal 1.2s cubic-bezier(0.65, 0, 0.35, 1) 0.35s both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .animate-trend-reveal,
   .animate-menu-item,
   .animate-step-in-forward,
   .animate-step-in-backward,

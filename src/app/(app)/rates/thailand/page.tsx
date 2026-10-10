@@ -31,7 +31,7 @@ export default async function ThailandRatesPage() {
   const portNotes = allPortNotes.filter((n) => ports.some((p) => p.id === n.portId));
 
   return (
-    <div className="max-w-[1100px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
+    <div className="max-w-[1100px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
       <div className="animate-dashboard-fade-up">
         <p className="text-[13px] font-medium text-[var(--accent)] mb-2">요율 관리</p>
         <h1 className="text-[28px] font-semibold tracking-tight mb-1">{region?.nameKo ?? "태국"}</h1>

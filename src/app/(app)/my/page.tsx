@@ -38,7 +38,7 @@ export default async function MyQuotesPage() {
   const defaultRep = await getSalesRepById(DEFAULT_SALES_REP_ID);
 
   return (
-    <div className="max-w-[1000px] mx-auto px-6 lg:px-12 xl:px-20 py-10 lg:py-16">
+    <div className="max-w-[1000px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
       <p className="text-[13px] font-medium text-[var(--accent)] mb-2">{customer.name}</p>
       <h1 className="text-[28px] font-semibold tracking-tight mb-1">견적 조회</h1>
       <p className="text-[13px] text-[var(--muted)] mb-8">
