@@ -14,6 +14,20 @@ export function shiftIsoDate(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Change across a drawn chart: its last point minus its first point, so the
+ * number shown next to a trend line always matches that line's endpoints. */
+export function rateChange(points: ExchangeRateHistoryEntry[]) {
+  if (points.length < 2) return null;
+  const first = points[0];
+  const last = points[points.length - 1];
+  return { first, last, change: last.rate - first.rate };
+}
+
+/** "10/12" - short month/day for change labels and tooltips. */
+export function shortDate(iso: string): string {
+  return iso.slice(5).replace("-", "/");
+}
+
 /** Free, no-key ECB reference rates (business days only) - used once to
  * fill the trend for days before this app started keeping history. */
 async function fetchEcbUsdKrw(start: string, end: string): Promise<Record<string, number>> {

@@ -2,26 +2,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { QuoteTrendSparkline } from "@/components/dashboard/QuoteTrendSparkline";
 import { ExchangeRateEditor } from "@/components/rates/ExchangeRateEditor";
 import { getCompany, getCurrentExchangeRate } from "@/lib/data-store";
-import { EXCHANGE_TREND_DAYS, getUsdKrwTrend } from "@/lib/exchange-rate-history";
+import { EXCHANGE_TREND_DAYS, getUsdKrwTrend, rateChange, shortDate } from "@/lib/exchange-rate-history";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const company = getCompany();
   const [exchangeRate, trend] = await Promise.all([getCurrentExchangeRate("USD"), getUsdKrwTrend()]);
-  const trendLast = trend[trend.length - 1];
   const hasEcbBackfill = trend.some((t) => t.source === "ecb");
-  // Week-over-week change: compare against the latest recorded day on or
-  // before 7 days ago (weekends/gaps fall back to the closest earlier day,
-  // else the oldest point in the chart).
-  const DAY = 86_400_000;
-  const weekAgo = trendLast ? new Date(Date.parse(trendLast.date) - 7 * DAY).toISOString().slice(0, 10) : "";
-  const trendBase =
-    trend.length >= 2 ? ([...trend].reverse().find((t) => t.date <= weekAgo) ?? trend[0]) : undefined;
-  const trendChange = trendBase ? trendLast.rate - trendBase.rate : 0;
-  const baseDays = trendBase ? Math.round((Date.parse(trendLast.date) - Date.parse(trendBase.date)) / DAY) : 0;
-  const trendSpanLabel =
-    baseDays >= 6 && baseDays <= 9 ? "1주 전" : baseDays >= 13 ? "2주 전" : baseDays === 1 ? "어제" : `${baseDays}일 전`;
+  // Change vs the chart's first point, so the figure matches the line below it.
+  const delta = rateChange(trend);
+  const spanDays = delta ? Math.round((Date.parse(delta.last.date) - Date.parse(delta.first.date)) / 86_400_000) : 0;
+  const deltaBaseLabel = delta
+    ? spanDays >= 12
+      ? `2주 전(${shortDate(delta.first.date)})`
+      : shortDate(delta.first.date)
+    : "";
 
   return (
     <div className="max-w-[900px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16 space-y-8">
@@ -50,20 +46,23 @@ export default async function SettingsPage() {
               <p className="text-[13px] font-medium text-[var(--muted)]">
                 최근 {EXCHANGE_TREND_DAYS}일 환율 추이
               </p>
-              {trendBase && (
-                <p className="text-[12px] text-[var(--muted)]" title={`${trendBase.date.slice(5).replace("-", "/")} 대비`}>
-                  {trendSpanLabel} 대비{" "}
+              {delta && (
+                <p
+                  className="text-[12px] text-[var(--muted)]"
+                  title={`${shortDate(delta.first.date)} ₩${delta.first.rate.toLocaleString("ko-KR")} → ${shortDate(delta.last.date)} ₩${delta.last.rate.toLocaleString("ko-KR")}`}
+                >
+                  {deltaBaseLabel} 대비{" "}
                   <span
                     className={
-                      trendChange > 0
+                      delta.change > 0
                         ? "font-medium text-[var(--danger)]"
-                        : trendChange < 0
+                        : delta.change < 0
                           ? "font-medium text-[var(--accent)]"
                           : "font-medium text-[var(--foreground)]"
                     }
                   >
-                    {trendChange > 0 ? "▲" : trendChange < 0 ? "▼" : ""}
-                    {Math.abs(trendChange).toLocaleString("ko-KR")}원
+                    {delta.change > 0 ? "▲" : delta.change < 0 ? "▼" : ""}
+                    {Math.abs(delta.change).toLocaleString("ko-KR")}원
                   </span>
                 </p>
               )}

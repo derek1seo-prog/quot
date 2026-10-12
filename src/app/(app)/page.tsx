@@ -7,7 +7,7 @@ import { CountUpStat } from "@/components/dashboard/CountUpStat";
 import { QuoteTrendSparkline, type TrendPoint } from "@/components/dashboard/QuoteTrendSparkline";
 import { QuickQuoteScreen } from "@/components/quote/QuickQuoteScreen";
 import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
-import { kstToday, getUsdKrwTrend, shiftIsoDate } from "@/lib/exchange-rate-history";
+import { getUsdKrwTrend, rateChange, shiftIsoDate, shortDate } from "@/lib/exchange-rate-history";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { decodeSessionCookie } from "@/lib/session";
 import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck, Zap } from "lucide-react";
@@ -53,8 +53,12 @@ export default async function DashboardPage() {
   // Last 7 days, drawn faintly behind the two stat cards.
   const quotesWeek = trendData.slice(-7).map((d) => d.count);
   const quotesWeekTotal = quotesWeek.reduce((sum, n) => sum + n, 0);
-  const usdWeek = usdTrend.filter((t) => t.date >= shiftIsoDate(kstToday(), -6)).map((t) => t.rate);
-  const usdWeekChange = usdWeek.length >= 2 ? usdWeek[usdWeek.length - 1] - usdWeek[0] : null;
+  // The right-hand 7 days of the same series 설정 charts, and the change is
+  // measured across exactly the points drawn - so both pages agree.
+  const usdLast = usdTrend[usdTrend.length - 1];
+  const usdWeekPoints = usdLast ? usdTrend.filter((t) => t.date >= shiftIsoDate(usdLast.date, -6)) : [];
+  const usdWeek = usdWeekPoints.map((t) => t.rate);
+  const usdWeekDelta = rateChange(usdWeekPoints);
 
   const todayLabel = new Intl.DateTimeFormat("ko-KR", {
     timeZone: "Asia/Seoul",
@@ -99,14 +103,13 @@ export default async function DashboardPage() {
       sublabel: exchangeRate ? `${formatDate(exchangeRate.asOf)} 기준` : undefined,
       icon: <DollarSign size={18} />,
       trend: usdWeek,
-      chip:
-        usdWeekChange === null
-          ? undefined
-          : {
-              text: `7일 ${usdWeekChange > 0 ? "▲" : usdWeekChange < 0 ? "▼" : ""}${Math.abs(usdWeekChange).toLocaleString("ko-KR")}원`,
-              tone: usdWeekChange > 0 ? "up" : usdWeekChange < 0 ? "down" : "neutral",
-              title: "최근 7일 USD/KRW 변동",
-            },
+      chip: usdWeekDelta
+        ? {
+            text: `7일 ${usdWeekDelta.change > 0 ? "▲" : usdWeekDelta.change < 0 ? "▼" : ""}${Math.abs(usdWeekDelta.change).toLocaleString("ko-KR")}원`,
+            tone: usdWeekDelta.change > 0 ? "up" : usdWeekDelta.change < 0 ? "down" : "neutral",
+            title: `${shortDate(usdWeekDelta.first.date)} ₩${usdWeekDelta.first.rate.toLocaleString("ko-KR")} → ${shortDate(usdWeekDelta.last.date)} ₩${usdWeekDelta.last.rate.toLocaleString("ko-KR")}`,
+          }
+        : undefined,
       href: "/settings",
     },
     {
