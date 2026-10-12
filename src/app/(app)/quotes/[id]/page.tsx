@@ -1,5 +1,6 @@
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
 import { QuoteActions } from "@/components/quote/QuoteActions";
+import { QuotePairSheet } from "@/components/quote/QuotePairSheet";
 import { getCompany, getPortById, getQuoteById } from "@/lib/data-store";
 import { decodeSessionCookie } from "@/lib/session";
 import { cookies } from "next/headers";
@@ -26,6 +27,10 @@ export default async function QuoteDetailPage({
   const company = getCompany();
   const originPort = getPortById(quote.input.originPortId);
   const destinationPort = getPortById(quote.input.destinationPortId);
+  const originLabel = originPort ? `${originPort.nameKo} (${originPort.name})` : quote.input.originPortId;
+  const destinationLabel = destinationPort
+    ? `${destinationPort.nameKo} (${destinationPort.name})`
+    : quote.input.destinationPortId;
 
   return (
     <div className="max-w-[1000px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
@@ -33,18 +38,27 @@ export default async function QuoteDetailPage({
         <QuoteActions quoteId={quote.id} quoteNumber={quote.quoteNumber} />
       </div>
       <div id="quote-document-root" className="animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
-        <QuoteDocument
-          company={company}
-          quoteNumber={quote.quoteNumber}
-          input={quote.input}
-          result={quote.result}
-          originLabel={originPort ? `${originPort.nameKo} (${originPort.name})` : quote.input.originPortId}
-          destinationLabel={
-            destinationPort
-              ? `${destinationPort.nameKo} (${destinationPort.name})`
-              : quote.input.destinationPortId
-          }
-        />
+        {quote.pairedResult ? (
+          <QuotePairSheet
+            company={company}
+            quoteNumber={quote.quoteNumber}
+            input={quote.input}
+            result={quote.result}
+            pairedResult={quote.pairedResult}
+            originLabel={originLabel}
+            destinationLabel={destinationLabel}
+            fitToWidth
+          />
+        ) : (
+          <QuoteDocument
+            company={company}
+            quoteNumber={quote.quoteNumber}
+            input={quote.input}
+            result={quote.result}
+            originLabel={originLabel}
+            destinationLabel={destinationLabel}
+          />
+        )}
       </div>
       {/* Off-screen, laid-out-but-invisible copy of the formal print
           layout, captured by the "PDF 다운로드" button instead of the
@@ -71,15 +85,32 @@ export default async function QuoteDetailPage({
           quoteNumber={quote.quoteNumber}
           input={quote.input}
           result={quote.result}
-          originLabel={originPort ? `${originPort.nameKo} (${originPort.name})` : quote.input.originPortId}
-          destinationLabel={
-            destinationPort
-              ? `${destinationPort.nameKo} (${destinationPort.name})`
-              : quote.input.destinationPortId
-          }
+          originLabel={originLabel}
+          destinationLabel={destinationLabel}
           forceTable
         />
       </div>
+      {/* 20FT+40HQ quotes: the second sheet, captured separately and placed
+          beside the first on a landscape page by QuoteActions (rather than
+          capturing QuotePairSheet itself, whose CSS zoom html2canvas
+          doesn't render reliably). */}
+      {quote.pairedResult && quote.input.pairedContainer && (
+        <div
+          id="quote-print-capture-paired"
+          className="fixed -left-[10000px] top-0 w-[210mm] tracking-normal"
+          aria-hidden
+        >
+          <QuoteDocument
+            company={company}
+            quoteNumber={quote.quoteNumber}
+            input={{ ...quote.input, container: quote.input.pairedContainer }}
+            result={quote.pairedResult}
+            originLabel={originLabel}
+            destinationLabel={destinationLabel}
+            forceTable
+          />
+        </div>
+      )}
     </div>
   );
 }

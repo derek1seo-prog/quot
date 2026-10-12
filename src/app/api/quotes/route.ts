@@ -47,15 +47,26 @@ export async function POST(req: NextRequest) {
     input.preparedByPhone = defaultRep?.phone;
     input.rateOverrides = undefined;
   }
+  if (input.pairedContainer) {
+    input.container = { ...input.container, quantity: 1 };
+    input.pairedContainer = { ...input.pairedContainer, quantity: 1 };
+    input.rateOverrides = undefined;
+  }
 
   try {
-    const [result, existingQuotes] = await Promise.all([calculateQuote(input), getQuotes()]);
+    const { pairedContainer } = input;
+    const [result, pairedResult, existingQuotes] = await Promise.all([
+      calculateQuote(input),
+      pairedContainer ? calculateQuote({ ...input, container: pairedContainer }) : undefined,
+      getQuotes(),
+    ]);
     const quote: Quote = {
       id: generateId("q"),
       quoteNumber: generateQuoteNumber(existingQuotes.length, new Date(input.quoteDate)),
       createdAt: new Date().toISOString(),
       input,
       result,
+      ...(pairedResult && { pairedResult }),
     };
     await addQuote(quote);
     return NextResponse.json(quote, { status: 201 });

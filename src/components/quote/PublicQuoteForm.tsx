@@ -9,6 +9,7 @@ import { DatePicker } from "@/components/ui/DatePicker";
 import { IncotermsSelect } from "./IncotermsSelect";
 import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
+import { QuotePairSheet } from "./QuotePairSheet";
 import { QuoteResultSkeleton } from "./QuoteResultSkeleton";
 import { SalesRepCombobox } from "./SalesRepCombobox";
 import { endOfMonthIso, todayIso } from "@/lib/format";
@@ -37,6 +38,10 @@ const TODAY = todayIso();
 // below) for anyone who wants their own name/company to show on a
 // printed/PDF'd sample quote.
 const DEFAULT_QUICK_CONTACT_NAME = "수입 담당자님";
+
+// Container-type button value for "20FT+40HQ": the first two container
+// types, one of each, side by side on one sheet (see QuotePairSheet).
+const PAIR_CONTAINER_ID = "__pair__";
 
 /** Shared by /quick-quote (and "/" for a non-admin visitor) and /my - a
  * single-screen (not the admin wizard's multi-step) rate-lookup form.
@@ -122,6 +127,7 @@ export function PublicQuoteForm({
   const debouncedQuickCustomerName = useDebouncedValue(quickCustomerName, 400);
 
   const [result, setResult] = useState<QuoteResult | null>(null);
+  const [pairedResult, setPairedResult] = useState<QuoteResult | null>(null);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -145,8 +151,14 @@ export function PublicQuoteForm({
     [destinationPorts],
   );
 
+  // Quick mode only - the customer portal keeps its single-container form.
+  const pairTypes = mode === "quick" && containerTypes.length >= 2 ? containerTypes.slice(0, 2) : null;
+  const pairMode = pairTypes !== null && containerTypeId === PAIR_CONTAINER_ID;
+
   const originPort = originPorts.find((p) => p.id === originPortId);
   const destinationPort = destinationPorts.find((p) => p.id === destinationPortId);
+  const originLabel = originPort ? `${originPort.nameKo} (${originPort.name})` : "";
+  const destinationLabel = destinationPort ? `${destinationPort.nameKo} (${destinationPort.name})` : "";
 
   function buildInput(overrides: Record<string, number> = rateOverrides): QuoteInput {
     return {
@@ -165,8 +177,12 @@ export function PublicQuoteForm({
       destinationCountryId: destinationPort?.countryId ?? "",
       destinationPortId,
       incoterms,
-      container: { containerTypeId, quantity: containerQuantity },
-      rateOverrides: overrides,
+      ...(pairMode
+        ? {
+            container: { containerTypeId: pairTypes[0].id, quantity: 1 },
+            pairedContainer: { containerTypeId: pairTypes[1].id, quantity: 1 },
+          }
+        : { container: { containerTypeId, quantity: containerQuantity }, rateOverrides: overrides }),
     };
   }
 
@@ -177,7 +193,10 @@ export function PublicQuoteForm({
   // as adjusting a live quote rather than submitting a new query each time.
   useEffect(() => {
     if (!ready) {
-      requestAnimationFrame(() => setResult(null));
+      requestAnimationFrame(() => {
+        setResult(null);
+        setPairedResult(null);
+      });
       return;
     }
     let cancelled = false;
@@ -187,16 +206,25 @@ export function PublicQuoteForm({
         setError(null);
       }
     });
-    fetch("/api/calculate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildInput()),
-    })
-      .then(async (res) => {
-        const data = await res.json();
+    const input = buildInput();
+    const calculate = async (body: QuoteInput) => {
+      const res = await fetch("/api/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "계산에 실패했습니다.");
+      return data as QuoteResult;
+    };
+    Promise.all([
+      calculate(input),
+      input.pairedContainer ? calculate({ ...input, container: input.pairedContainer }) : null,
+    ])
+      .then(([main, paired]) => {
         if (cancelled) return;
-        if (!res.ok) throw new Error(data.error ?? "계산에 실패했습니다.");
-        setResult(data as QuoteResult);
+        setResult(main);
+        setPairedResult(paired);
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : "계산에 실패했습니다.");
@@ -424,14 +452,18 @@ export function PublicQuoteForm({
             <FieldLabel>컨테이너 타입</FieldLabel>
             <div className="flex gap-2">
               <div className="flex-1 flex gap-2">
-                {containerTypes.map((ct) => {
+                {[
+                  ...containerTypes,
+                  ...(pairTypes ? [{ id: PAIR_CONTAINER_ID, label: `${pairTypes[0].label}+${pairTypes[1].label}` }] : []),
+                ].map((ct) => {
                   const selected = ct.id === containerTypeId;
                   return (
                     <button
                       key={ct.id}
                       type="button"
                       onClick={() => setContainerTypeId(ct.id)}
-                      className={`flex-1 h-10 rounded-[var(--radius-sm)] border-2 text-[13.5px] font-semibold transition-toggle-select ${
+                      title={ct.id === PAIR_CONTAINER_ID ? "컨테이너 1개 기준, 두 타입을 한 장에 나란히" : undefined}
+                      className={`${ct.id === PAIR_CONTAINER_ID ? "flex-[1.5] whitespace-nowrap px-2" : "flex-1"} h-10 rounded-[var(--radius-sm)] border-2 text-[13.5px] font-semibold transition-toggle-select ${
                         selected
                           ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
                           : "border-[var(--border)] text-[var(--foreground)] hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40"
@@ -445,7 +477,9 @@ export function PublicQuoteForm({
               <Input
                 type="number"
                 min={1}
-                value={containerQuantity}
+                value={pairMode ? 1 : containerQuantity}
+                disabled={pairMode}
+                title={pairMode ? "20FT+40HQ는 컨테이너 1개 기준입니다" : undefined}
                 onFocus={(e) => e.target.select()}
                 onChange={(e) => setContainerQuantity(Math.max(1, Number(e.target.value) || 1))}
                 className="w-20 text-center"
@@ -492,16 +526,33 @@ export function PublicQuoteForm({
               </Button>
             </div>
           )}
-          <QuoteDocument
-            company={company}
-            quoteNumber={null}
-            input={buildInput()}
-            result={result}
-            originLabel={originPort ? `${originPort.nameKo} (${originPort.name})` : ""}
-            destinationLabel={destinationPort ? `${destinationPort.nameKo} (${destinationPort.name})` : ""}
-            onRateChange={isAdmin ? handleRateOverride : undefined}
-          />
-          {isAdmin && mode === "quick" && (
+          {pairMode ? (
+            pairedResult && (
+              <div className="max-w-[900px] mx-auto">
+                <QuotePairSheet
+                  company={company}
+                  quoteNumber={null}
+                  input={buildInput()}
+                  result={result}
+                  pairedResult={pairedResult}
+                  originLabel={originLabel}
+                  destinationLabel={destinationLabel}
+                  fitToWidth
+                />
+              </div>
+            )
+          ) : (
+            <QuoteDocument
+              company={company}
+              quoteNumber={null}
+              input={buildInput()}
+              result={result}
+              originLabel={originLabel}
+              destinationLabel={destinationLabel}
+              onRateChange={isAdmin ? handleRateOverride : undefined}
+            />
+          )}
+          {isAdmin && mode === "quick" && !pairMode && (
             <p className="text-[12px] text-[var(--muted)] mt-3 text-center max-w-[900px] mx-auto">
               단가를 클릭하면 이 견적만 다른 운임으로 수정할 수 있습니다. 견적가는 자동으로 다시 계산됩니다.
             </p>
@@ -533,15 +584,29 @@ export function PublicQuoteForm({
         export already use. */}
     {mode === "quick" && !calculating && !error && result && (
       <div className="print-only">
-        <QuoteDocument
-          company={company}
-          quoteNumber={null}
-          input={buildInput()}
-          result={result}
-          originLabel={originPort ? `${originPort.nameKo} (${originPort.name})` : ""}
-          destinationLabel={destinationPort ? `${destinationPort.nameKo} (${destinationPort.name})` : ""}
-          forceTable
-        />
+        {pairMode ? (
+          pairedResult && (
+            <QuotePairSheet
+              company={company}
+              quoteNumber={null}
+              input={buildInput()}
+              result={result}
+              pairedResult={pairedResult}
+              originLabel={originLabel}
+              destinationLabel={destinationLabel}
+            />
+          )
+        ) : (
+          <QuoteDocument
+            company={company}
+            quoteNumber={null}
+            input={buildInput()}
+            result={result}
+            originLabel={originLabel}
+            destinationLabel={destinationLabel}
+            forceTable
+          />
+        )}
       </div>
     )}
     </>

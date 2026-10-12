@@ -59,7 +59,14 @@ export function QuoteListRow({
         {quote.input.preparedBy?.trim() || "-"}
       </td>
       <td className={`${QUOTE_CELL_X} py-4 ${TEXT} text-[var(--muted)] whitespace-nowrap`}>{formatDate(quote.input.quoteDate)}</td>
-      <td className={`${QUOTE_CELL_X} py-4 ${TEXT} font-medium text-right text-[var(--foreground)] whitespace-nowrap`}>
+      <td
+        className={`${QUOTE_CELL_X} py-4 ${TEXT} font-medium text-right text-[var(--foreground)] whitespace-nowrap`}
+        title={
+          quote.pairedResult
+            ? `${quote.result.column.containerLabel} ${formatCurrency(quote.result.column.grandTotalKrw, "KRW")} / ${quote.pairedResult.column.containerLabel} ${formatCurrency(quote.pairedResult.column.grandTotalKrw, "KRW")}`
+            : undefined
+        }
+      >
         {formatCurrency(quote.result.column.grandTotalKrw, "KRW")}
       </td>
       <td className="px-1.5 @min-[880px]:px-3 @min-[1000px]:px-4 py-4 text-right">

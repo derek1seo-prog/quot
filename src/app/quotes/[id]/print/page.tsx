@@ -1,5 +1,6 @@
 import { AutoPrint } from "@/components/quote/AutoPrint";
 import { QuoteDocument } from "@/components/quote/QuoteDocument";
+import { QuotePairSheet } from "@/components/quote/QuotePairSheet";
 import { getCompany, getPortById, getQuoteById } from "@/lib/data-store";
 import { decodeSessionCookie } from "@/lib/session";
 import type { Metadata } from "next";
@@ -39,26 +40,40 @@ export default async function QuotePrintPage({
   const company = getCompany();
   const originPort = getPortById(quote.input.originPortId);
   const destinationPort = getPortById(quote.input.destinationPortId);
+  const originLabel = originPort ? `${originPort.nameKo} (${originPort.name})` : quote.input.originPortId;
+  const destinationLabel = destinationPort
+    ? `${destinationPort.nameKo} (${destinationPort.name})`
+    : quote.input.destinationPortId;
 
   return (
     <div className="bg-[#f5f5f7] min-h-screen py-10 px-4 print:bg-white print:py-0 print:px-0">
       <AutoPrint enabled={autoprint === "1"} />
-      <p className="no-print max-w-[900px] mx-auto mb-4 text-[12px] text-[var(--muted)] bg-[var(--accent-soft)] text-[var(--accent)] rounded-[var(--radius-md)] px-4 py-3">
+      <p className={`no-print ${quote.pairedResult ? "max-w-[297mm]" : "max-w-[900px]"} mx-auto mb-4 text-[12px] text-[var(--muted)] bg-[var(--accent-soft)] text-[var(--accent)] rounded-[var(--radius-md)] px-4 py-3`}>
         인쇄 시 상단/하단에 날짜나 주소가 함께 출력된다면, 인쇄 대화상자의 &ldquo;추가 설정&rdquo;에서 &ldquo;머리글과 바닥글&rdquo;을 꺼주세요. 브라우저가 자체적으로 추가하는 항목이라 이 페이지에서는 없앨 수 없습니다.
       </p>
-      <QuoteDocument
-        company={company}
-        quoteNumber={quote.quoteNumber}
-        input={quote.input}
-        result={quote.result}
-        originLabel={originPort ? `${originPort.nameKo} (${originPort.name})` : quote.input.originPortId}
-        destinationLabel={
-          destinationPort
-            ? `${destinationPort.nameKo} (${destinationPort.name})`
-            : quote.input.destinationPortId
-        }
-        forceTable
-      />
+      {quote.pairedResult ? (
+        <div className="w-fit mx-auto">
+          <QuotePairSheet
+            company={company}
+            quoteNumber={quote.quoteNumber}
+            input={quote.input}
+            result={quote.result}
+            pairedResult={quote.pairedResult}
+            originLabel={originLabel}
+            destinationLabel={destinationLabel}
+          />
+        </div>
+      ) : (
+        <QuoteDocument
+          company={company}
+          quoteNumber={quote.quoteNumber}
+          input={quote.input}
+          result={quote.result}
+          originLabel={originLabel}
+          destinationLabel={destinationLabel}
+          forceTable
+        />
+      )}
     </div>
   );
 }

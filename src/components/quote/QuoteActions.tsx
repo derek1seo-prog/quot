@@ -35,6 +35,29 @@ export function QuoteActions({
         await document.fonts.ready;
       }
 
+      // 20FT+40HQ: both sheets side by side on one landscape page, each
+      // scaled to half its width (same layout as the print route).
+      const pairedNode = document.getElementById("quote-print-capture-paired");
+      if (pairedNode) {
+        const options = { scale: 3, backgroundColor: "#ffffff", useCORS: true, imageSmoothingQuality: "high" as const };
+        const canvases = await Promise.all([html2canvas(node, options), html2canvas(pairedNode, options)]);
+        const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape", compress: true });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const halfW = pageW / 2;
+        const tallest = Math.max(...canvases.map((c) => (c.height / c.width) * halfW));
+        const fit = Math.min(1, pageH / tallest);
+        canvases.forEach((c, i) => {
+          const w = halfW * fit;
+          pdf.addImage(c.toDataURL("image/png"), "PNG", i * halfW + (halfW - w) / 2, 0, w, (c.height / c.width) * w);
+        });
+        pdf.setDrawColor(210, 210, 215);
+        pdf.setLineDashPattern([1.5, 1.5], 0);
+        pdf.line(halfW, 6, halfW, pageH - 6);
+        pdf.save(`${quoteNumber}.pdf`);
+        return;
+      }
+
       const nodeWidthCss = node.getBoundingClientRect().width;
       const canvas = await html2canvas(node, {
         scale: 3,

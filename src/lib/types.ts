@@ -222,6 +222,12 @@ export interface QuoteInput {
   incoterms: string;
   hsCode?: string;
   container: ContainerSelection;
+  /** Quick quote's "20FT+40HQ" option: a second container quoted on the
+   * same record and printed beside the first on one landscape page. Both
+   * are always quantity 1, and rateOverrides never apply in this mode
+   * (they're keyed by chargeTypeId only, so a 20FT rate would leak into
+   * the 40HQ side). */
+  pairedContainer?: ContainerSelection;
   exchangeRateOverride?: number; // if omitted, use current stored exchange rate
   /** Per-quote rate overrides, keyed by chargeTypeId (including "OCEAN_FREIGHT").
    * Lets a quote negotiate a one-off rate without touching the shared rate
@@ -280,6 +286,8 @@ export interface Quote {
   createdAt: string;
   input: QuoteInput;
   result: QuoteResult;
+  /** Result for input.pairedContainer, when set. */
+  pairedResult?: QuoteResult;
 }
 
 /** One message in a 문의 (chat) thread. */
