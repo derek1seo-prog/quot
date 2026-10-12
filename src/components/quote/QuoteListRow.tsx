@@ -7,6 +7,12 @@ import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
 
+// Density follows the table's own width (its wrapper is an @container), so
+// the one-line table fits next to the sidebar or on a tablet without
+// sideways scroll; at full desktop width it's the original px-6 / 13.5px.
+export const QUOTE_CELL_X = "px-2.5 @min-[880px]:px-4 @min-[1000px]:px-6";
+const TEXT = "text-[12.5px] @min-[880px]:text-[13.5px]";
+
 export function QuoteListRow({
   quote,
   portNameById,
@@ -18,34 +24,45 @@ export function QuoteListRow({
 }) {
   const { deleting, confirmOpen, quoteNumber, requestDelete, cancelDelete, confirmDelete } =
     useDeleteQuote(quote.id, quote.quoteNumber);
+  const route = `${portNameById[quote.input.originPortId] ?? quote.input.originPortId} → ${
+    portNameById[quote.input.destinationPortId] ?? quote.input.destinationPortId
+  }`;
 
   return (
     <tr
       className={`border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--sidebar-bg)]/50 transition-colors group${animationDelayMs != null ? " animate-dashboard-fade-up" : ""}`}
       style={animationDelayMs != null ? { animationDelay: `${animationDelayMs}ms` } : undefined}
     >
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className={`${QUOTE_CELL_X} py-4 whitespace-nowrap`}>
         <Link
           href={`/quotes/${quote.id}`}
-          className="text-[13.5px] font-medium text-[var(--accent)] hover:underline"
+          className={`${TEXT} font-medium text-[var(--accent)] hover:underline`}
         >
           {quote.quoteNumber}
         </Link>
       </td>
-      <td className="px-6 py-4 text-[13.5px] text-[var(--foreground)] whitespace-nowrap">{quote.input.customerName}</td>
-      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
-        {portNameById[quote.input.originPortId] ?? quote.input.originPortId} →{" "}
-        {portNameById[quote.input.destinationPortId] ?? quote.input.destinationPortId}
+      {/* Below full desktop width, 고객명 / 구간 take a fixed share (set on their
+          <th>) and end in "…" if longer - full text on hover. Wider, they're
+          plain one-line cells as before. */}
+      <td className={`${QUOTE_CELL_X} py-4 ${TEXT} text-[var(--foreground)] max-w-0 @min-[1000px]:max-w-none`}>
+        <span className="block truncate" title={quote.input.customerName}>
+          {quote.input.customerName}
+        </span>
       </td>
-      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">{quote.input.incoterms}</td>
-      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
+      <td className={`${QUOTE_CELL_X} py-4 ${TEXT} text-[var(--muted)] max-w-0 @min-[1000px]:max-w-none`}>
+        <span className="block truncate" title={route}>
+          {route}
+        </span>
+      </td>
+      <td className={`${QUOTE_CELL_X} py-4 ${TEXT} text-[var(--muted)] whitespace-nowrap`}>{quote.input.incoterms}</td>
+      <td className={`${QUOTE_CELL_X} py-4 ${TEXT} text-[var(--muted)] whitespace-nowrap`}>
         {quote.input.preparedBy?.trim() || "-"}
       </td>
-      <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">{formatDate(quote.input.quoteDate)}</td>
-      <td className="px-6 py-4 text-[13.5px] font-medium text-right text-[var(--foreground)] whitespace-nowrap">
+      <td className={`${QUOTE_CELL_X} py-4 ${TEXT} text-[var(--muted)] whitespace-nowrap`}>{formatDate(quote.input.quoteDate)}</td>
+      <td className={`${QUOTE_CELL_X} py-4 ${TEXT} font-medium text-right text-[var(--foreground)] whitespace-nowrap`}>
         {formatCurrency(quote.result.column.grandTotalKrw, "KRW")}
       </td>
-      <td className="px-4 py-4 text-right">
+      <td className="px-1.5 @min-[880px]:px-3 @min-[1000px]:px-4 py-4 text-right">
         <button
           onClick={requestDelete}
           disabled={deleting}

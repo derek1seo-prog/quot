@@ -6,7 +6,7 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { FilterCombobox } from "@/components/ui/FilterCombobox";
 import { QuoteListCard } from "@/components/quote/QuoteListCard";
-import { QuoteListRow } from "@/components/quote/QuoteListRow";
+import { QUOTE_CELL_X, QuoteListRow } from "@/components/quote/QuoteListRow";
 import {
   DEFAULT_QUOTE_FILTERS,
   QUOTE_PAGE_SIZE,
@@ -274,18 +274,18 @@ export function QuoteListView({
           </CardContent>
         ) : (
           <>
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left min-w-[840px]">
+            <div className="hidden sm:block overflow-x-auto @container">
+              <table className="w-full text-left">
                 <thead>
                   <tr className="bg-[#f8fafc] border-b border-[var(--border-subtle)] text-[12px] text-[var(--muted)] uppercase tracking-wide">
-                    <th className="px-6 py-3 font-medium whitespace-nowrap">견적번호</th>
-                    <th className="px-6 py-3 font-medium whitespace-nowrap">고객명</th>
-                    <th className="px-6 py-3 font-medium whitespace-nowrap">구간</th>
-                    <th className="px-6 py-3 font-medium whitespace-nowrap">인코텀즈</th>
-                    <th className="px-6 py-3 font-medium whitespace-nowrap">담당자</th>
-                    <th className="px-6 py-3 font-medium whitespace-nowrap">견적일</th>
-                    <th className="px-6 py-3 font-medium text-right whitespace-nowrap">합계</th>
-                    <th className="px-4 py-3" />
+                    <th className={`${QUOTE_CELL_X} py-3 font-medium whitespace-nowrap`}>견적번호</th>
+                    <th className={`${QUOTE_CELL_X} py-3 font-medium whitespace-nowrap w-[18%] @min-[1000px]:w-auto`}>고객명</th>
+                    <th className={`${QUOTE_CELL_X} py-3 font-medium whitespace-nowrap w-[20%] @min-[1000px]:w-auto`}>구간</th>
+                    <th className={`${QUOTE_CELL_X} py-3 font-medium whitespace-nowrap`}>인코텀즈</th>
+                    <th className={`${QUOTE_CELL_X} py-3 font-medium whitespace-nowrap`}>담당자</th>
+                    <th className={`${QUOTE_CELL_X} py-3 font-medium whitespace-nowrap`}>견적일</th>
+                    <th className={`${QUOTE_CELL_X} py-3 font-medium text-right whitespace-nowrap`}>합계</th>
+                    <th className="px-1.5 @min-[880px]:px-3 @min-[1000px]:px-4 py-3" />
                   </tr>
                 </thead>
                 <tbody>
