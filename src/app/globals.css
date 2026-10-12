@@ -503,8 +503,29 @@ input[type="number"] {
   animation: trend-reveal 1.2s cubic-bezier(0.65, 0, 0.35, 1) 0.35s both;
 }
 
+/* Dashboard bar charts grow from their baseline once on load (bars up,
+ * route bars rightward); per-bar stagger via inline animation-delay. */
+@keyframes bar-grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes bar-grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.animate-bar-grow-y {
+  transform-origin: bottom;
+  animation: bar-grow-y 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-bar-grow-x {
+  transform-origin: left;
+  animation: bar-grow-x 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-trend-reveal,
+  .animate-bar-grow-y,
+  .animate-bar-grow-x,
   .animate-menu-item,
   .animate-step-in-forward,
   .animate-step-in-backward,

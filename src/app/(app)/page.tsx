@@ -4,10 +4,12 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { CardBackdropTrend } from "@/components/dashboard/CardBackdropTrend";
 import { CountUpStat } from "@/components/dashboard/CountUpStat";
-import { QuoteTrendSparkline, type TrendPoint } from "@/components/dashboard/QuoteTrendSparkline";
+import { QuoteTrendBars } from "@/components/dashboard/QuoteTrendBars";
+import type { TrendPoint } from "@/components/dashboard/QuoteTrendSparkline";
+import { TopRoutes, type RouteStat } from "@/components/dashboard/TopRoutes";
 import { QuickQuoteScreen } from "@/components/quote/QuickQuoteScreen";
 import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
-import { getUsdKrwTrend, rateChange, shiftIsoDate, shortDate } from "@/lib/exchange-rate-history";
+import { getUsdKrwTrend, kstToday, rateChange, shiftIsoDate, shortDate } from "@/lib/exchange-rate-history";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { decodeSessionCookie } from "@/lib/session";
 import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck, Zap } from "lucide-react";
@@ -39,16 +41,49 @@ export default async function DashboardPage() {
 
   // 최근 견적 추이: real activity (createdAt), not the user-editable
   // quoteDate field - zero-filled so gaps show as a real flat stretch
-  // rather than being silently skipped.
+  // rather than being silently skipped. Twice the shown span is built so
+  // the chart can compare against the 14 days before it.
   const TREND_DAYS = 14;
-  const trendData: TrendPoint[] = Array.from({ length: TREND_DAYS }).map((_, i) => {
+  const trendSpan: TrendPoint[] = Array.from({ length: TREND_DAYS * 2 }).map((_, i) => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - (TREND_DAYS - 1 - i));
+    d.setDate(d.getDate() - (TREND_DAYS * 2 - 1 - i));
     const iso = d.toISOString().slice(0, 10);
     const count = quotes.filter((q) => q.createdAt.slice(0, 10) === iso).length;
     return { date: iso, count };
   });
+  const trendData = trendSpan.slice(TREND_DAYS);
+  const trendPreviousTotal = trendSpan.slice(0, TREND_DAYS).reduce((sum, d) => sum + d.count, 0);
+
+  // 많이 견적한 구간: by 견적일 over the last 30 days, so each row's link
+  // (search "출발 도착" + from=) opens a 견적 목록 showing exactly the
+  // quotes counted here - the list's search text ends "...출발 도착".
+  const routeFrom = shiftIsoDate(kstToday(), -29);
+  const periodQuotes = quotes.filter((q) => q.input.quoteDate.slice(0, 10) >= routeFrom);
+  const routeMap = new Map<string, RouteStat>();
+  for (const q of periodQuotes) {
+    const { originPortId, destinationPortId, originCountryId } = q.input;
+    const key = `${originPortId}>${destinationPortId}`;
+    const existing = routeMap.get(key);
+    if (existing) {
+      existing.count += 1;
+      existing.totalKrw += q.result.column.grandTotalKrw;
+      continue;
+    }
+    const origin = portNameById.get(originPortId) ?? originPortId;
+    const destination = portNameById.get(destinationPortId) ?? destinationPortId;
+    routeMap.set(key, {
+      key,
+      label: `${origin} → ${destination}`,
+      originCountryId,
+      count: 1,
+      totalKrw: q.result.column.grandTotalKrw,
+      href: `/quotes?${new URLSearchParams({ q: `${origin} ${destination}`, from: routeFrom })}`,
+    });
+  }
+  const topRoutes = [...routeMap.values()]
+    .sort((a, b) => b.count - a.count || b.totalKrw - a.totalKrw)
+    .slice(0, 5);
 
   // Last 7 days, drawn faintly behind the two stat cards.
   const quotesWeek = trendData.slice(-7).map((d) => d.count);
@@ -233,13 +268,20 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      <Card
-        className="p-5 mb-10 lg:mb-14 animate-dashboard-fade-up"
-        style={{ animationDelay: "300ms" }}
-      >
-        <p className="text-[13px] font-medium text-[var(--muted)] mb-3">최근 14일 견적 추이</p>
-        <QuoteTrendSparkline data={trendData} />
-      </Card>
+      <div className="grid lg:grid-cols-2 gap-4 lg:gap-5 mb-10 lg:mb-14">
+        <Card className="p-5 flex flex-col animate-dashboard-fade-up" style={{ animationDelay: "300ms" }}>
+          <p className="text-[13px] font-medium text-[var(--muted)] mb-3">
+            견적 추이 <span className="font-normal">· 최근 14일</span>
+          </p>
+          <QuoteTrendBars data={trendData} previousTotal={trendPreviousTotal} />
+        </Card>
+        <Card className="p-5 animate-dashboard-fade-up" style={{ animationDelay: "330ms" }}>
+          <p className="text-[13px] font-medium text-[var(--muted)] mb-3">
+            많이 견적한 구간 <span className="font-normal">· 최근 30일</span>
+          </p>
+          <TopRoutes routes={topRoutes} periodTotal={periodQuotes.length} routeCount={routeMap.size} />
+        </Card>
+      </div>
 
       <div
         className="flex items-center justify-between mb-4 animate-dashboard-fade-up"
