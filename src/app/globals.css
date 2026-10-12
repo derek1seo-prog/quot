@@ -96,6 +96,22 @@ body {
     size: A4;
     margin: 0;
   }
+  /* Vertically center a printed quote on its sheet (the content is
+     usually shorter than the page). min-height, not height, so a longer
+     quote still flows onto a second page; 1mm short of the paper so
+     rounding never spills an empty extra page. */
+  .print-center-portrait,
+  .print-center-landscape {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .print-center-portrait {
+    min-height: 296mm;
+  }
+  .print-center-landscape {
+    min-height: 209mm;
+  }
 }
 
 .print-only {

@@ -115,7 +115,7 @@ export function AppShell({
         </div>
       </div>
 
-      <main className="flex-1 min-w-0 pt-14 lg:pt-0">{children}</main>
+      <main className="flex-1 min-w-0 pt-14 lg:pt-0 print:pt-0">{children}</main>
 
       {/* Visitors (guest / 화주) can message the team; admins answer in 문의함. */}
       {role !== "admin" && <ChatWidget companyName={companyName} />}

@@ -597,15 +597,17 @@ export function PublicQuoteForm({
             />
           )
         ) : (
-          <QuoteDocument
-            company={company}
-            quoteNumber={null}
-            input={buildInput()}
-            result={result}
-            originLabel={originLabel}
-            destinationLabel={destinationLabel}
-            forceTable
-          />
+          <div className="print-center-portrait">
+            <QuoteDocument
+              company={company}
+              quoteNumber={null}
+              input={buildInput()}
+              result={result}
+              originLabel={originLabel}
+              destinationLabel={destinationLabel}
+              forceTable
+            />
+          </div>
         )}
       </div>
     )}

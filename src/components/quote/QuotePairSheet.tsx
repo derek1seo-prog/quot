@@ -66,7 +66,11 @@ export function QuotePairSheet({
   return (
     <>
       <style>{"@media print { @page { size: A4 landscape; margin: 0; } }"}</style>
-      {fitToWidth ? <FitToWidth naturalWidthPx={SHEET_W_MM * MM_TO_PX}>{sheet}</FitToWidth> : sheet}
+      {fitToWidth ? (
+        <FitToWidth naturalWidthPx={SHEET_W_MM * MM_TO_PX}>{sheet}</FitToWidth>
+      ) : (
+        <div className="print-center-landscape">{sheet}</div>
+      )}
     </>
   );
 }

@@ -64,15 +64,17 @@ export default async function QuotePrintPage({
           />
         </div>
       ) : (
-        <QuoteDocument
-          company={company}
-          quoteNumber={quote.quoteNumber}
-          input={quote.input}
-          result={quote.result}
-          originLabel={originLabel}
-          destinationLabel={destinationLabel}
-          forceTable
-        />
+        <div className="print-center-portrait">
+          <QuoteDocument
+            company={company}
+            quoteNumber={quote.quoteNumber}
+            input={quote.input}
+            result={quote.result}
+            originLabel={originLabel}
+            destinationLabel={destinationLabel}
+            forceTable
+          />
+        </div>
       )}
     </div>
   );

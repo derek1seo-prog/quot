@@ -47,9 +47,11 @@ export function QuoteActions({
         const halfW = pageW / 2;
         const tallest = Math.max(...canvases.map((c) => (c.height / c.width) * halfW));
         const fit = Math.min(1, pageH / tallest);
+        // Vertically centered as one block (tops aligned), like printing.
+        const top = (pageH - tallest * fit) / 2;
         canvases.forEach((c, i) => {
           const w = halfW * fit;
-          pdf.addImage(c.toDataURL("image/png"), "PNG", i * halfW + (halfW - w) / 2, 0, w, (c.height / c.width) * w);
+          pdf.addImage(c.toDataURL("image/png"), "PNG", i * halfW + (halfW - w) / 2, top, w, (c.height / c.width) * w);
         });
         pdf.setDrawColor(210, 210, 215);
         pdf.setLineDashPattern([1.5, 1.5], 0);
@@ -126,14 +128,11 @@ export function QuoteActions({
         );
 
         if (!firstPage) pdf.addPage();
-        pdf.addImage(
-          slice.toDataURL("image/png"),
-          "PNG",
-          0,
-          0,
-          pageWidthMm,
-          sliceHeightPx / canvasPxPerMm,
-        );
+        // A quote that fits on one page is vertically centered on it, like
+        // printing (.print-center-portrait); longer ones start at the top.
+        const sliceHeightMm = sliceHeightPx / canvasPxPerMm;
+        const top = canvas.height <= pageHeightPx ? (pageHeightMm - sliceHeightMm) / 2 : 0;
+        pdf.addImage(slice.toDataURL("image/png"), "PNG", 0, top, pageWidthMm, sliceHeightMm);
 
         cursorPx += sliceHeightPx;
         firstPage = false;
