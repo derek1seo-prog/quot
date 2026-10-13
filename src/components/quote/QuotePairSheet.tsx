@@ -75,8 +75,7 @@ export function QuotePairSheet({
   );
 }
 
-const LENS_W = 440;
-const LENS_H = 280;
+const LENS_SIZE = 200; // circle diameter, px
 // Sheet zoom inside the lens: a fixed, readable size (the sheet's own text
 // is ~7px at zoom 1), whatever the fitted preview's size happens to be.
 const LENS_ZOOM = 1.35;
@@ -123,8 +122,8 @@ function FitToWidth({ naturalWidthPx, children }: { naturalWidthPx: number; chil
       const x = clientX - rect.left;
       const y = clientY - rect.top;
       // Kept inside the sheet's box so it never causes sideways scroll.
-      const left = Math.min(Math.max(x - LENS_W / 2, 0), Math.max(rect.width - LENS_W, 0));
-      const top = Math.min(Math.max(y - LENS_H / 2, 0), Math.max(rect.height - LENS_H, 0));
+      const left = Math.min(Math.max(x - LENS_SIZE / 2, 0), Math.max(rect.width - LENS_SIZE, 0));
+      const top = Math.min(Math.max(y - LENS_SIZE / 2, 0), Math.max(rect.height - LENS_SIZE, 0));
       const magnified = Math.max(LENS_ZOOM, zoom * 1.4);
       if (lensRef.current) lensRef.current.style.transform = `translate(${left}px, ${top}px)`;
       // The point under the cursor sits at the same spot inside the lens.
@@ -166,10 +165,10 @@ function FitToWidth({ naturalWidthPx, children }: { naturalWidthPx: number; chil
           ref={lensRef}
           data-quote-lens
           aria-hidden
-          className={`pointer-events-none absolute left-0 top-0 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] transition-opacity duration-150 ${
+          className={`pointer-events-none absolute left-0 top-0 overflow-hidden rounded-full border-2 border-[var(--border)] bg-white shadow-[0_8px_28px_rgba(0,0,0,0.22)] transition-opacity duration-150 ${
             lensOn ? "opacity-100" : "opacity-0"
           }`}
-          style={{ width: LENS_W, height: LENS_H }}
+          style={{ width: LENS_SIZE, height: LENS_SIZE }}
         >
           <div ref={lensContentRef} className="absolute left-0 top-0">
             <div style={{ zoom: Math.max(LENS_ZOOM, zoom * 1.4) }}>{children}</div>
