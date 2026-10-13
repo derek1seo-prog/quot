@@ -1,3 +1,5 @@
+import type { Quote } from "./types";
+
 export function formatCurrency(amount: number, currency: "KRW" | "USD" | "CNY" = "KRW"): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -55,4 +57,20 @@ export function formatDateTime(iso: string): string {
     hour12: false,
   }).format(d);
   return `${date} ${time}`;
+}
+
+/** A 20FT+40HQ quick quote has two different totals, so lists show this
+ * label (e.g. "20FT+40HQ") instead of one amount. null for normal quotes. */
+export function pairLabel(quote: Pick<Quote, "result" | "pairedResult">): string | null {
+  return quote.pairedResult
+    ? `${quote.result.column.containerLabel}+${quote.pairedResult.column.containerLabel}`
+    : null;
+}
+
+/** Hover text with both totals of a 20FT+40HQ quote. */
+export function pairTotalsTitle(quote: Pick<Quote, "result" | "pairedResult">): string | undefined {
+  if (!quote.pairedResult) return undefined;
+  return [quote.result, quote.pairedResult]
+    .map((r) => `${r.column.containerLabel} ${formatCurrency(r.column.grandTotalKrw, "KRW")}`)
+    .join(" / ");
 }

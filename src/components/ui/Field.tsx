@@ -17,7 +17,7 @@ export function FieldLabel({ children, hint }: { children: ReactNode; hint?: str
 // dodge that. Product call was to accept the zoom-on-focus tradeoff on
 // iPhone in exchange for less visually heavy mobile input fields.
 const controlClasses =
-  "w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[14px] text-[var(--foreground)] outline-none transition-shadow focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] placeholder:text-[var(--muted)]";
+  "w-full h-10 px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-[14px] text-[var(--foreground)] outline-none transition-shadow focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] placeholder:text-[var(--muted)] disabled:bg-[var(--sidebar-bg)] disabled:text-[var(--muted)] disabled:cursor-not-allowed";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   function Input({ className, ...props }, ref) {

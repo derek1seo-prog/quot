@@ -10,7 +10,7 @@ import {
   getSalesRepById,
 } from "@/lib/data-store";
 import { DEFAULT_SALES_REP_FALLBACK_NAME, DEFAULT_SALES_REP_ID } from "@/lib/customer-portal";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, pairLabel } from "@/lib/format";
 import { decodeSessionCookie } from "@/lib/session";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -88,7 +88,7 @@ export default async function MyQuotesPage() {
                   </p>
                 </div>
                 <p className="text-[13.5px] font-semibold text-[var(--foreground)] whitespace-nowrap">
-                  {formatCurrency(q.result.column.grandTotalKrw, "KRW")}
+                  {pairLabel(q) ?? formatCurrency(q.result.column.grandTotalKrw, "KRW")}
                 </p>
               </Link>
             ))}

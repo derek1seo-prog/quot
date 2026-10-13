@@ -10,7 +10,7 @@ import { TopRoutes, type RouteStat } from "@/components/dashboard/TopRoutes";
 import { QuickQuoteScreen } from "@/components/quote/QuickQuoteScreen";
 import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
 import { getUsdKrwTrend, kstToday, rateChange, shiftIsoDate, shortDate } from "@/lib/exchange-rate-history";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, pairLabel, pairTotalsTitle } from "@/lib/format";
 import { decodeSessionCookie } from "@/lib/session";
 import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
@@ -37,7 +37,9 @@ export default async function DashboardPage() {
     return `${portNameById.get(originPortId) ?? originPortId} → ${portNameById.get(destinationPortId) ?? destinationPortId}`;
   }
 
-  const totalValue = quotes.reduce((sum, q) => sum + q.result.column.grandTotalKrw, 0);
+  // 20FT+40HQ quotes carry two totals - neither alone is "the" amount, so
+  // money sums leave them out (they still count as quotes).
+  const totalValue = quotes.reduce((sum, q) => sum + (q.pairedResult ? 0 : q.result.column.grandTotalKrw), 0);
 
   // 최근 견적 추이: real activity (createdAt), not the user-editable
   // quoteDate field - zero-filled so gaps show as a real flat stretch
@@ -67,7 +69,7 @@ export default async function DashboardPage() {
     const existing = routeMap.get(key);
     if (existing) {
       existing.count += 1;
-      existing.totalKrw += q.result.column.grandTotalKrw;
+      if (!q.pairedResult) existing.totalKrw += q.result.column.grandTotalKrw;
       continue;
     }
     const origin = portNameById.get(originPortId) ?? originPortId;
@@ -77,7 +79,7 @@ export default async function DashboardPage() {
       label: `${origin} → ${destination}`,
       originCountryId,
       count: 1,
-      totalKrw: q.result.column.grandTotalKrw,
+      totalKrw: q.pairedResult ? 0 : q.result.column.grandTotalKrw,
       href: `/quotes?${new URLSearchParams({ q: `${origin} ${destination}`, from: routeFrom })}`,
     });
   }
@@ -352,8 +354,15 @@ export default async function DashboardPage() {
                   <td className="px-6 py-4 text-[13.5px] text-[var(--muted)] whitespace-nowrap">
                     {formatDate(q.input.quoteDate)}
                   </td>
-                  <td className="px-6 py-4 text-[13.5px] font-medium text-right text-[var(--foreground)] whitespace-nowrap">
-                    {formatCurrency(q.result.column.grandTotalKrw, "KRW")}
+                  <td
+                    className="px-6 py-4 text-[13.5px] font-medium text-right text-[var(--foreground)] whitespace-nowrap"
+                    title={pairTotalsTitle(q)}
+                  >
+                    {pairLabel(q) ? (
+                      <span className="font-normal text-[var(--muted)]">{pairLabel(q)}</span>
+                    ) : (
+                      formatCurrency(q.result.column.grandTotalKrw, "KRW")
+                    )}
                   </td>
                 </tr>
               ))}
@@ -385,9 +394,13 @@ export default async function DashboardPage() {
                   <span className="text-[12px] text-[var(--muted)]">
                     {formatDate(q.input.quoteDate)}
                   </span>
-                  <span className="text-[13.5px] font-semibold text-[var(--foreground)]">
-                    {formatCurrency(q.result.column.grandTotalKrw, "KRW")}
-                  </span>
+                  {pairLabel(q) ? (
+                    <span className="text-[12.5px] text-[var(--muted)]">{pairLabel(q)}</span>
+                  ) : (
+                    <span className="text-[13.5px] font-semibold text-[var(--foreground)]">
+                      {formatCurrency(q.result.column.grandTotalKrw, "KRW")}
+                    </span>
+                  )}
                 </div>
               </Link>
             ))}

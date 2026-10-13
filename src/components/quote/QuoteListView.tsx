@@ -94,15 +94,18 @@ export function QuoteListView({
       return true;
     });
 
-    const total = (q: Quote) => q.result.column.grandTotalKrw;
+    const total = (q: Quote) => (q.pairedResult ? 0 : q.result.column.grandTotalKrw);
+    const byPair = (a: Quote, b: Quote) => Number(Boolean(a.pairedResult)) - Number(Boolean(b.pairedResult));
     // Ties (same 견적일) fall back to creation time so the order is stable.
     const byDate = (a: Quote, b: Quote) =>
       a.input.quoteDate.localeCompare(b.input.quoteDate) || a.createdAt.localeCompare(b.createdAt);
     const comparators: Record<QuoteSort, (a: Quote, b: Quote) => number> = {
       newest: (a, b) => byDate(b, a),
       oldest: byDate,
-      priceAsc: (a, b) => total(a) - total(b) || byDate(b, a),
-      priceDesc: (a, b) => total(b) - total(a) || byDate(b, a),
+      // 20FT+40HQ quotes have no single amount - listed after the priced
+      // ones (newest first) rather than by one of their two totals.
+      priceAsc: (a, b) => byPair(a, b) || total(a) - total(b) || byDate(b, a),
+      priceDesc: (a, b) => byPair(a, b) || total(b) - total(a) || byDate(b, a),
     };
     return result.sort(comparators[filters.sort]);
   }, [quotes, filters, portNameById]);

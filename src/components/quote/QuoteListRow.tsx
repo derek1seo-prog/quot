@@ -2,7 +2,7 @@
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, pairLabel, pairTotalsTitle } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -61,13 +61,13 @@ export function QuoteListRow({
       <td className={`${QUOTE_CELL_X} py-4 ${TEXT} text-[var(--muted)] whitespace-nowrap`}>{formatDate(quote.input.quoteDate)}</td>
       <td
         className={`${QUOTE_CELL_X} py-4 ${TEXT} font-medium text-right text-[var(--foreground)] whitespace-nowrap`}
-        title={
-          quote.pairedResult
-            ? `${quote.result.column.containerLabel} ${formatCurrency(quote.result.column.grandTotalKrw, "KRW")} / ${quote.pairedResult.column.containerLabel} ${formatCurrency(quote.pairedResult.column.grandTotalKrw, "KRW")}`
-            : undefined
-        }
+        title={pairTotalsTitle(quote)}
       >
-        {formatCurrency(quote.result.column.grandTotalKrw, "KRW")}
+        {pairLabel(quote) ? (
+          <span className="font-normal text-[var(--muted)]">{pairLabel(quote)}</span>
+        ) : (
+          formatCurrency(quote.result.column.grandTotalKrw, "KRW")
+        )}
       </td>
       <td className="px-1.5 @min-[880px]:px-3 @min-[1000px]:px-4 py-4 text-right">
         <button
