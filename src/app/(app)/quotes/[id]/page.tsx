@@ -2,6 +2,7 @@ import { QuoteDocument } from "@/components/quote/QuoteDocument";
 import { QuoteActions } from "@/components/quote/QuoteActions";
 import { QuotePairSheet } from "@/components/quote/QuotePairSheet";
 import { getCompany, getPortById, getQuoteById } from "@/lib/data-store";
+import { PAIR_DOC_W_MM } from "@/lib/pair-sheet";
 import { decodeSessionCookie } from "@/lib/session";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -77,7 +78,8 @@ export default async function QuoteDetailPage({
           letter-spacing untouched. */}
       <div
         id="quote-print-capture"
-        className="fixed -left-[10000px] top-0 w-[210mm] tracking-normal"
+        className="fixed -left-[10000px] top-0 tracking-normal"
+        style={{ width: quote.pairedResult ? `${PAIR_DOC_W_MM}mm` : "210mm" }}
         aria-hidden
       >
         <QuoteDocument
@@ -88,6 +90,7 @@ export default async function QuoteDetailPage({
           originLabel={originLabel}
           destinationLabel={destinationLabel}
           forceTable
+          compact={Boolean(quote.pairedResult)}
         />
       </div>
       {/* 20FT+40HQ quotes: the second sheet, captured separately and placed
@@ -97,7 +100,8 @@ export default async function QuoteDetailPage({
       {quote.pairedResult && quote.input.pairedContainer && (
         <div
           id="quote-print-capture-paired"
-          className="fixed -left-[10000px] top-0 w-[210mm] tracking-normal"
+          className="fixed -left-[10000px] top-0 tracking-normal"
+          style={{ width: `${PAIR_DOC_W_MM}mm` }}
           aria-hidden
         >
           <QuoteDocument
@@ -108,6 +112,7 @@ export default async function QuoteDetailPage({
             originLabel={originLabel}
             destinationLabel={destinationLabel}
             forceTable
+            compact
           />
         </div>
       )}

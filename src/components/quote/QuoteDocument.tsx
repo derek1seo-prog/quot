@@ -21,6 +21,9 @@ interface QuoteDocumentProps {
    * recalculates 견적가/최종가격 through the same engine as the server. Never
    * passed for a saved quote's read-only view or the print/PDF output. */
   onRateChange?: (chargeTypeId: string, rate: number) => Promise<void> | void;
+  /** forceTable only: tighter page padding and table cell padding, for the
+   * 20FT+40HQ sheet's narrower halves (so they can be printed larger). */
+  compact?: boolean;
 }
 
 function krw(n: number) {
@@ -81,6 +84,7 @@ export function QuoteDocument({
   destinationLabel,
   forceTable = false,
   onRateChange,
+  compact = false,
 }: QuoteDocumentProps) {
   // The selected sales rep's own email/mobile number, snapshotted onto the
   // quote at creation time - falls back to the company-wide static values
@@ -133,7 +137,7 @@ export function QuoteDocument({
           : "max-w-[900px] rounded-[var(--radius-lg)] border border-[var(--border-subtle)] shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
       }`}
     >
-      <div className={forceTable ? "p-[12mm]" : "p-8 sm:p-12"}>
+      <div className={forceTable ? (compact ? "p-[7mm] quote-compact-cells" : "p-[12mm]") : "p-8 sm:p-12"}>
         {forceTable ? (
           <div className="flex items-start justify-between gap-4 pb-3 border-b-2 border-[var(--foreground)]">
             <div className="flex items-center gap-2.5">

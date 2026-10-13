@@ -4,13 +4,18 @@ import type { CompanyInfo, QuoteInput, QuoteResult } from "@/lib/types";
 import { Maximize2, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import {
+  PAIR_DOC_W_MM,
+  PAIR_HALF_W_MM,
+  PAIR_SHEET_H_MM,
+  PAIR_SHEET_W_MM as SHEET_W_MM,
+} from "@/lib/pair-sheet";
 import { QuoteDocument } from "./QuoteDocument";
 
-// Two portrait print layouts (each designed at A4 width, 210mm) shrunk to
-// half of an A4 landscape sheet: 148.5 / 210.
-const SHEET_W_MM = 297;
-const HALF_ZOOM = SHEET_W_MM / 2 / 210;
 const MM_TO_PX = 96 / 25.4;
+// As large as the half width allows; shrunk further only if a long quote
+// (e.g. EXW's extra rows) would otherwise run past the page height.
+const MAX_DOC_ZOOM = PAIR_HALF_W_MM / PAIR_DOC_W_MM;
 
 interface QuotePairSheetProps {
   company: CompanyInfo;
@@ -51,26 +56,69 @@ export function QuotePairSheet({
       originLabel={originLabel}
       destinationLabel={destinationLabel}
       forceTable
+      compact
     />
   ));
+
+  // Natural (unscaled) heights are measured on an off-screen copy that's
+  // always laid out - the print-only copy is display:none on screen.
+  const [docZoom, setDocZoom] = useState(MAX_DOC_ZOOM);
+  const [mounted, setMounted] = useState(false);
+  const measureRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  useLayoutEffect(() => {
+    const el = measureRef.current;
+    if (!el) return;
+    const update = () => {
+      const tallestPx = Math.max(...Array.from(el.children, (c) => c.getBoundingClientRect().height));
+      if (!(tallestPx > 0)) return;
+      const tallestMm = tallestPx / MM_TO_PX;
+      setDocZoom(Math.min(MAX_DOC_ZOOM, (PAIR_SHEET_H_MM - 2) / tallestMm));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    Array.from(el.children).forEach((c) => ro.observe(c));
+    return () => ro.disconnect();
+  }, [mounted]);
 
   const sheet = (
     <div className="flex bg-white" style={{ width: `${SHEET_W_MM}mm` }}>
       {docs.map((doc, i) => (
         <div
           key={i}
-          className={i === 1 ? "border-l border-dashed border-[var(--border)]" : ""}
-          style={{ width: "210mm", zoom: HALF_ZOOM, flexShrink: 0 }}
+          className={`flex justify-center shrink-0 ${i === 1 ? "border-l border-dashed border-[var(--border)]" : ""}`}
+          style={{ width: `${PAIR_HALF_W_MM}mm` }}
         >
-          {doc}
+          <div style={{ width: `${PAIR_DOC_W_MM}mm`, zoom: docZoom, flexShrink: 0 }}>{doc}</div>
         </div>
       ))}
     </div>
   );
 
+  const measurer =
+    mounted &&
+    createPortal(
+      <div
+        ref={measureRef}
+        aria-hidden
+        className="no-print pointer-events-none invisible fixed top-0 -left-[10000px] flex items-start"
+      >
+        {docs.map((doc, i) => (
+          <div key={i} style={{ width: `${PAIR_DOC_W_MM}mm` }}>
+            {doc}
+          </div>
+        ))}
+      </div>,
+      document.body,
+    );
+
   return (
     <>
       <style>{"@media print { @page { size: A4 landscape; margin: 0; } }"}</style>
+      {measurer}
       {fitToWidth ? (
         <FitToWidth naturalWidthPx={SHEET_W_MM * MM_TO_PX} docs={docs}>
           {sheet}

@@ -519,6 +519,15 @@ input[type="number"] {
   animation: trend-reveal 1.2s cubic-bezier(0.65, 0, 0.35, 1) 0.35s both;
 }
 
+/* QuoteDocument's `compact` print layout (20FT+40HQ halves): narrower
+ * columns, so cells get 2mm side padding instead of px-3.5 - otherwise
+ * headers like 기준통화 / 수량 wrap onto two lines. */
+.quote-compact-cells th,
+.quote-compact-cells td {
+  padding-left: 2mm;
+  padding-right: 2mm;
+}
+
 /* Dashboard bar charts grow from their baseline once on load (bars up,
  * route bars rightward); per-bar stagger via inline animation-delay. */
 @keyframes bar-grow-y {
