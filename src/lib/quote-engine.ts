@@ -19,12 +19,14 @@ import type {
   ChargeCatalogEntry,
   ChargeType,
   ContainerSelection,
+  CustomCharge,
   Customer,
   QuoteColumn,
   QuoteInput,
   QuoteLineItem,
   QuoteResult,
 } from "./types";
+import { CUSTOM_CHARGE_PREFIX } from "./custom-charges";
 
 const INLAND_TRUCKING_CHARGE_TYPE_ID = "INLAND_TRUCKING";
 const EXW_LOCAL_CHARGE_TYPE_ID = "EXW_LOCAL_CHARGE";
@@ -75,6 +77,23 @@ function round(n: number): number {
   return Math.round(n);
 }
 
+const MAX_CUSTOM_CHARGES = 30;
+
+/** Request input is untrusted - keep only well-formed custom lines. */
+function sanitizeCustomCharges(raw: unknown): CustomCharge[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((c): c is CustomCharge => typeof c === "object" && c !== null && typeof c.id === "string")
+    .slice(0, MAX_CUSTOM_CHARGES)
+    .map((c) => ({
+      id: c.id.slice(0, 40),
+      category: c.category === "EXW_LOCAL" ? ("EXW_LOCAL" as const) : ("LOCAL" as const),
+      nameKo: typeof c.nameKo === "string" ? c.nameKo.trim().slice(0, 60) : "",
+      currency: c.currency === "USD" ? ("USD" as const) : ("KRW" as const),
+      rate: typeof c.rate === "number" && Number.isFinite(c.rate) && c.rate >= 0 ? c.rate : 0,
+    }));
+}
+
 export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
   const originPort = getPortById(input.originPortId);
   if (!originPort || !originPort.regionId) {
@@ -92,6 +111,10 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     input.customerName ? getCustomerByName(input.customerName.trim()) : Promise.resolve(undefined),
   ]);
   const exchangeRate = input.exchangeRateOverride ?? currentExchangeRate?.rate ?? 0;
+  // Per-quote edits: standard charges removed from this quote (ocean
+  // freight is never removable) and extra lines typed in by an admin.
+  const excluded = new Set((input.excludedChargeTypeIds ?? []).filter((id) => id !== "OCEAN_FREIGHT"));
+  const customCharges = sanitizeCustomCharges(input.customCharges);
 
   // Inland trucking is customer-specific (not region/rate-sheet driven like
   // every other charge), so it's resolved separately here. Per product
@@ -111,7 +134,7 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     customer && truckingPrefix
       ? getTruckingRate(customer, truckingPrefix, input.container.containerTypeId)
       : undefined;
-  const truckingComplete = truckingRate != null;
+  const truckingComplete = truckingRate != null && !excluded.has(INLAND_TRUCKING_CHARGE_TYPE_ID);
 
   const containerTypes = getContainerTypes();
   const chargeTypes = getChargeTypes().filter((ct) =>
@@ -128,9 +151,12 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     // getApplicableLocalChargeTypes above) - it's resolved separately
     // below, the same way inland trucking bypasses this generic loop.
     .filter((ct) => ct.id !== EXW_LOCAL_CHARGE_TYPE_ID)
-    .filter((ct) => chargeAppliesToRegion(ct, region.id));
+    .filter((ct) => chargeAppliesToRegion(ct, region.id))
+    .filter((ct) => !excluded.has(ct.id));
   const oceanFreightChargeType = chargeTypes.find((ct) => ct.id === "OCEAN_FREIGHT");
-  const exwLocalChargeType = chargeTypes.find((ct) => ct.id === EXW_LOCAL_CHARGE_TYPE_ID);
+  const exwLocalChargeType = excluded.has(EXW_LOCAL_CHARGE_TYPE_ID)
+    ? undefined
+    : chargeTypes.find((ct) => ct.id === EXW_LOCAL_CHARGE_TYPE_ID);
 
   const selection: ContainerSelection = input.container;
   const column: QuoteColumn = (() => {
@@ -251,6 +277,25 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
       });
     }
 
+    // Admin-typed extra lines (per container, no VAT)
+    for (const c of customCharges) {
+      const base = c.rate * qty;
+      lineItems.push({
+        chargeTypeId: `${CUSTOM_CHARGE_PREFIX}${c.id}`,
+        name: "",
+        nameKo: c.nameKo,
+        category: c.category,
+        currency: c.currency,
+        unit: "CONTAINER",
+        rate: c.rate,
+        vatRate: 0,
+        vatAmount: 0,
+        quantity: qty,
+        amountForeign: base,
+        amountKrw: c.currency === "KRW" ? base : round(base * exchangeRate),
+      });
+    }
+
     const oceanFreightSubtotalKrw = lineItems
       .filter((li) => li.category === "OCEAN_FREIGHT")
       .reduce((sum, li) => sum + li.amountKrw, 0);
@@ -311,6 +356,13 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
           },
         ]
       : []),
+    ...customCharges.map((c) => ({
+      chargeTypeId: `${CUSTOM_CHARGE_PREFIX}${c.id}`,
+      name: "",
+      nameKo: c.nameKo,
+      category: c.category,
+      unit: "CONTAINER" as const,
+    })),
   ];
 
   return {

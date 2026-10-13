@@ -10,6 +10,7 @@ import {
   PAIR_SHEET_H_MM,
   PAIR_SHEET_W_MM as SHEET_W_MM,
 } from "@/lib/pair-sheet";
+import type { QuoteChargeEditor } from "@/lib/custom-charges";
 import { QuoteDocument } from "./QuoteDocument";
 
 const MM_TO_PX = 96 / 25.4;
@@ -28,6 +29,9 @@ interface QuotePairSheetProps {
   /** Scale the sheet down to fit its container (on-screen preview). Off for
    * the actual print copy, which must stay at true A4 landscape size. */
   fitToWidth?: boolean;
+  /** Quick quote (admin): the enlarge modal shows both sheets as editable
+   * on-screen documents, for adding / removing charge lines. */
+  editor?: QuoteChargeEditor;
 }
 
 /** The quick quote's "20FT+40HQ" output: the regular print layout for each
@@ -42,11 +46,13 @@ export function QuotePairSheet({
   originLabel,
   destinationLabel,
   fitToWidth = false,
+  editor,
 }: QuotePairSheetProps) {
-  const docs = [
+  const docInputs = [
     { input, result },
     { input: { ...input, container: input.pairedContainer ?? input.container }, result: pairedResult },
-  ].map((d) => (
+  ];
+  const docs = docInputs.map((d) => (
     <QuoteDocument
       key={d.result.column.containerTypeId}
       company={company}
@@ -120,7 +126,25 @@ export function QuotePairSheet({
       <style>{"@media print { @page { size: A4 landscape; margin: 0; } }"}</style>
       {measurer}
       {fitToWidth ? (
-        <FitToWidth naturalWidthPx={SHEET_W_MM * MM_TO_PX} docs={docs}>
+        <FitToWidth
+          naturalWidthPx={SHEET_W_MM * MM_TO_PX}
+          docs={docs}
+          editableDocs={
+            editor &&
+            docInputs.map((d) => (
+              <QuoteDocument
+                key={d.result.column.containerTypeId}
+                company={company}
+                quoteNumber={quoteNumber}
+                input={d.input}
+                result={d.result}
+                originLabel={originLabel}
+                destinationLabel={destinationLabel}
+                editor={editor}
+              />
+            ))
+          }
+        >
           {sheet}
         </FitToWidth>
       ) : (
@@ -139,10 +163,13 @@ const DOC_W_PX = 210 * MM_TO_PX;
 function FitToWidth({
   naturalWidthPx,
   docs,
+  editableDocs,
   children,
 }: {
   naturalWidthPx: number;
   docs: React.ReactNode[];
+  /** When set, the modal shows these (editable) instead of `docs`. */
+  editableDocs?: React.ReactNode[];
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -211,7 +238,9 @@ function FitToWidth({
           <Maximize2 size={12} /> 크게 보기
         </span>
       </div>
-      <p className="mt-2 text-center text-[12px] text-[var(--muted)]">클릭하면 크게 볼 수 있어요</p>
+      <p className="mt-2 text-center text-[12px] text-[var(--muted)]">
+        {editableDocs ? "클릭하면 크게 보고 항목을 추가·삭제할 수 있어요" : "클릭하면 크게 볼 수 있어요"}
+      </p>
 
       {open &&
         createPortal(
@@ -223,7 +252,9 @@ function FitToWidth({
             onClick={closeOnSelf}
           >
             <div className="sticky top-0 left-0 z-10 flex items-center justify-between gap-3 px-4 sm:px-8 py-3 bg-[var(--foreground)]/85 text-white backdrop-blur">
-              <p className="text-[13.5px] font-medium">견적서 크게 보기 · 20FT / 40HQ</p>
+              <p className="text-[13.5px] font-medium">
+                {editableDocs ? "견적서 크게 보기 · 항목 추가/삭제는 두 컨테이너에 함께 적용돼요" : "견적서 크게 보기 · 20FT / 40HQ"}
+              </p>
               <button
                 type="button"
                 autoFocus
@@ -234,20 +265,26 @@ function FitToWidth({
                 <X size={18} />
               </button>
             </div>
-            <div
-              className="w-fit mx-auto p-4 sm:p-8 grid gap-6 animate-modal-panel"
-              style={{ gridTemplateColumns: `repeat(${modalLayout.cols}, auto)` }}
-              onClick={closeOnSelf}
-            >
-              {docs.map((doc, i) => (
-                <div
-                  key={i}
-                  className="rounded-[var(--radius-md)] overflow-hidden bg-white shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
-                >
-                  <div style={{ width: "210mm", zoom: modalLayout.zoom }}>{doc}</div>
-                </div>
-              ))}
-            </div>
+            {editableDocs ? (
+              <div className="max-w-[900px] mx-auto p-4 sm:p-8 space-y-6 animate-modal-panel" onClick={closeOnSelf}>
+                {editableDocs}
+              </div>
+            ) : (
+              <div
+                className="w-fit mx-auto p-4 sm:p-8 grid gap-6 animate-modal-panel"
+                style={{ gridTemplateColumns: `repeat(${modalLayout.cols}, auto)` }}
+                onClick={closeOnSelf}
+              >
+                {docs.map((doc, i) => (
+                  <div
+                    key={i}
+                    className="rounded-[var(--radius-md)] overflow-hidden bg-white shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+                  >
+                    <div style={{ width: "210mm", zoom: modalLayout.zoom }}>{doc}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>,
           document.body,
         )}

@@ -13,10 +13,12 @@ import { QuotePairSheet } from "./QuotePairSheet";
 import { QuoteResultSkeleton } from "./QuoteResultSkeleton";
 import { SalesRepCombobox } from "./SalesRepCombobox";
 import { endOfMonthIso, todayIso } from "@/lib/format";
+import type { ExcludedCharge, QuoteChargeEditor } from "@/lib/custom-charges";
 import { useDebouncedValue, useRememberedSalesRepId } from "@/lib/hooks";
 import type {
   CompanyInfo,
   ContainerType,
+  CustomCharge,
   Customer,
   Port,
   QuoteInput,
@@ -26,7 +28,7 @@ import type {
 } from "@/lib/types";
 import { Loader2, Pencil, Printer, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const TODAY = todayIso();
 
@@ -137,6 +139,31 @@ export function PublicQuoteForm({
   // when isAdmin (RateCell is never rendered editable otherwise).
   const [rateOverrides, setRateOverrides] = useState<Record<string, number>>({});
   const [pendingRateEdits, setPendingRateEdits] = useState(0);
+  // Admin-only per-quote charge edits (QuoteDocument's editor): extra lines
+  // typed in, and standard lines removed from this quote.
+  const canEditCharges = isAdmin && mode === "quick";
+  const [customCharges, setCustomCharges] = useState<CustomCharge[]>([]);
+  const [excludedCharges, setExcludedCharges] = useState<ExcludedCharge[]>([]);
+  const chargeEditsKey = useDebouncedValue(
+    JSON.stringify([customCharges, excludedCharges.map((e) => e.chargeTypeId)]),
+    400,
+  );
+  const chargeEditor: QuoteChargeEditor | undefined = canEditCharges
+    ? {
+        customCharges,
+        excluded: excludedCharges,
+        onAdd: (category) =>
+          setCustomCharges((cs) => [
+            ...cs,
+            { id: Math.random().toString(36).slice(2, 10), category, nameKo: "", currency: "KRW", rate: 0 },
+          ]),
+        onChange: (id, patch) => setCustomCharges((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c))),
+        onRemove: (id) => setCustomCharges((cs) => cs.filter((c) => c.id !== id)),
+        onExclude: (charge) =>
+          setExcludedCharges((xs) => (xs.some((x) => x.chargeTypeId === charge.chargeTypeId) ? xs : [...xs, charge])),
+        onRestore: (chargeTypeId) => setExcludedCharges((xs) => xs.filter((x) => x.chargeTypeId !== chargeTypeId)),
+      }
+    : undefined;
 
   const polOptions: PortOption[] = useMemo(
     () =>
@@ -183,6 +210,10 @@ export function PublicQuoteForm({
             pairedContainer: { containerTypeId: pairTypes[1].id, quantity: 1 },
           }
         : { container: { containerTypeId, quantity: containerQuantity }, rateOverrides: overrides }),
+      ...(canEditCharges && {
+        customCharges: customCharges.filter((c) => c.nameKo.trim() !== "" || c.rate > 0),
+        excludedChargeTypeIds: excludedCharges.map((e) => e.chargeTypeId),
+      }),
     };
   }
 
@@ -191,17 +222,31 @@ export function PublicQuoteForm({
   // Live preview - recalculates whenever the lookup conditions change,
   // rather than a separate "조회" button, so changing a condition reads
   // as adjusting a live quote rather than submitting a new query each time.
+  // A recalculation caused only by charge-line edits refreshes the totals
+  // in place - no skeleton swap, which would unmount the row being typed in.
+  const conditionsKey = JSON.stringify([
+    originPortId,
+    destinationPortId,
+    incoterms,
+    containerTypeId,
+    containerQuantity,
+    debouncedQuickCustomerName,
+  ]);
+  const lastConditionsKey = useRef("");
   useEffect(() => {
     if (!ready) {
+      lastConditionsKey.current = "";
       requestAnimationFrame(() => {
         setResult(null);
         setPairedResult(null);
       });
       return;
     }
+    const silent = lastConditionsKey.current === conditionsKey;
+    lastConditionsKey.current = conditionsKey;
     let cancelled = false;
     requestAnimationFrame(() => {
-      if (!cancelled) {
+      if (!cancelled && !silent) {
         setCalculating(true);
         setError(null);
       }
@@ -236,7 +281,7 @@ export function PublicQuoteForm({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originPortId, destinationPortId, incoterms, containerTypeId, containerQuantity, debouncedQuickCustomerName]);
+  }, [conditionsKey, chargeEditsKey]);
 
   async function handleIssue() {
     setSaving(true);
@@ -538,6 +583,7 @@ export function PublicQuoteForm({
                   originLabel={originLabel}
                   destinationLabel={destinationLabel}
                   fitToWidth
+                  editor={chargeEditor}
                 />
               </div>
             )
@@ -550,6 +596,7 @@ export function PublicQuoteForm({
               originLabel={originLabel}
               destinationLabel={destinationLabel}
               onRateChange={isAdmin ? handleRateOverride : undefined}
+              editor={chargeEditor}
             />
           )}
           {isAdmin && mode === "quick" && !pairMode && (

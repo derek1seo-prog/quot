@@ -19,6 +19,11 @@ export async function POST(req: NextRequest) {
     const customer = session.customerId ? await getCustomerById(session.customerId) : undefined;
     input.customerName = customer?.name ?? "";
   }
+  // Adding/removing charge lines is an admin-only quick-quote tool.
+  if (session?.role !== "admin") {
+    input.customCharges = undefined;
+    input.excludedChargeTypeIds = undefined;
+  }
 
   try {
     const result = await calculateQuote(input);

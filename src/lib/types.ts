@@ -194,6 +194,18 @@ export interface ContainerSelection {
   quantity: number;
 }
 
+/** A charge line an admin types into a single quick quote (not part of
+ * the rate sheet) - see QuoteInput.customCharges. */
+export interface CustomCharge {
+  id: string;
+  /** 국내 부대비용 (LOCAL) or 현지 부대비용 (EXW_LOCAL). */
+  category: "LOCAL" | "EXW_LOCAL";
+  nameKo: string;
+  currency: "USD" | "KRW";
+  /** Per container (multiplied by the container quantity). */
+  rate: number;
+}
+
 export interface QuoteInput {
   customerName: string;
   contactName?: string;
@@ -228,6 +240,10 @@ export interface QuoteInput {
    * (they're keyed by chargeTypeId only, so a 20FT rate would leak into
    * the 40HQ side). */
   pairedContainer?: ContainerSelection;
+  /** Admin-only, per quote: extra charge lines, and standard charges left
+   * out of this quote. Neither changes the shared rate sheet. */
+  customCharges?: CustomCharge[];
+  excludedChargeTypeIds?: string[];
   exchangeRateOverride?: number; // if omitted, use current stored exchange rate
   /** Per-quote rate overrides, keyed by chargeTypeId (including "OCEAN_FREIGHT").
    * Lets a quote negotiate a one-off rate without touching the shared rate

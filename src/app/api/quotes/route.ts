@@ -47,6 +47,10 @@ export async function POST(req: NextRequest) {
     input.preparedByPhone = defaultRep?.phone;
     input.rateOverrides = undefined;
   }
+  if (session?.role !== "admin") {
+    input.customCharges = undefined;
+    input.excludedChargeTypeIds = undefined;
+  }
   if (input.pairedContainer) {
     input.container = { ...input.container, quantity: 1 };
     input.pairedContainer = { ...input.pairedContainer, quantity: 1 };

@@ -1,8 +1,10 @@
 "use client";
 
 import { RateCell } from "@/components/rates/RateCell";
+import { isCustomChargeId, type QuoteChargeEditor } from "@/lib/custom-charges";
 import { formatDate } from "@/lib/format";
-import type { CompanyInfo, QuoteInput, QuoteResult } from "@/lib/types";
+import type { CompanyInfo, CustomCharge, QuoteInput, QuoteResult } from "@/lib/types";
+import { ChevronDown, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface QuoteDocumentProps {
@@ -24,6 +26,9 @@ interface QuoteDocumentProps {
   /** forceTable only: tighter page padding and table cell padding, for the
    * 20FT+40HQ sheet's narrower halves (so they can be printed larger). */
   compact?: boolean;
+  /** On-screen table only: lets an admin add / edit / remove charge lines
+   * for this quote (quick quote). */
+  editor?: QuoteChargeEditor;
 }
 
 function krw(n: number) {
@@ -85,7 +90,9 @@ export function QuoteDocument({
   forceTable = false,
   onRateChange,
   compact = false,
+  editor: editorProp,
 }: QuoteDocumentProps) {
+  const editor = forceTable ? undefined : editorProp;
   // The selected sales rep's own email/mobile number, snapshotted onto the
   // quote at creation time - falls back to the company-wide static values
   // for quotes created before this feature existed. Only these two change
@@ -108,11 +115,7 @@ export function QuoteDocument({
   // no-op for every other quote.
   const domesticRows = result.chargeCatalog
     .filter((c) => c.category !== "OCEAN_FREIGHT" && c.category !== "EXW_LOCAL")
-    .sort((a, b) => {
-      const aVat = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(a.chargeTypeId) ? 1 : 0;
-      const bVat = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(b.chargeTypeId) ? 1 : 0;
-      return aVat - bVat;
-    });
+    .sort((a, b) => rowOrder(a.chargeTypeId) - rowOrder(b.chargeTypeId));
   const exwLocalRows = result.chargeCatalog.filter((c) => c.category === "EXW_LOCAL");
   const localRows = [...domesticRows, ...exwLocalRows];
   const containerSummary = `${result.column.containerLabel} × ${result.column.quantity}`;
@@ -286,34 +289,58 @@ export function QuoteDocument({
                   dense={forceTable}
                   categoryCell={{ label: "해상운임", rowSpan: 1 }}
                   onRateChange={onRateChange}
+                  reserveActionSpace={Boolean(editor)}
                 />
               )}
 
-              {domesticRows.map((row, i) => (
-                <ChargeRow
-                  key={row.chargeTypeId}
-                  label={row.nameKo}
-                  sublabel={row.name}
-                  column={result.column}
-                  chargeTypeId={row.chargeTypeId}
-                  dense={forceTable}
-                  onRateChange={onRateChange}
-                  categoryCell={i === 0 ? { label: "국내 부대비용", rowSpan: domesticRows.length } : undefined}
-                />
-              ))}
+              {editor ? (
+                <>
+                  <EditableChargeGroup
+                    label="국내 부대비용"
+                    category="LOCAL"
+                    rows={domesticRows.filter((r) => !isCustomChargeId(r.chargeTypeId))}
+                    result={result}
+                    editor={editor}
+                    onRateChange={onRateChange}
+                  />
+                  <EditableChargeGroup
+                    label="현지 부대비용"
+                    category="EXW_LOCAL"
+                    rows={exwLocalRows.filter((r) => !isCustomChargeId(r.chargeTypeId))}
+                    result={result}
+                    editor={editor}
+                    onRateChange={onRateChange}
+                  />
+                </>
+              ) : (
+                <>
+                  {domesticRows.map((row, i) => (
+                    <ChargeRow
+                      key={row.chargeTypeId}
+                      label={row.nameKo}
+                      sublabel={row.name}
+                      column={result.column}
+                      chargeTypeId={row.chargeTypeId}
+                      dense={forceTable}
+                      onRateChange={onRateChange}
+                      categoryCell={i === 0 ? { label: "국내 부대비용", rowSpan: domesticRows.length } : undefined}
+                    />
+                  ))}
 
-              {exwLocalRows.map((row, i) => (
-                <ChargeRow
-                  key={row.chargeTypeId}
-                  label={row.nameKo}
-                  sublabel={row.name}
-                  column={result.column}
-                  chargeTypeId={row.chargeTypeId}
-                  dense={forceTable}
-                  onRateChange={onRateChange}
-                  categoryCell={i === 0 ? { label: "현지 부대비용", rowSpan: exwLocalRows.length } : undefined}
-                />
-              ))}
+                  {exwLocalRows.map((row, i) => (
+                    <ChargeRow
+                      key={row.chargeTypeId}
+                      label={row.nameKo}
+                      sublabel={row.name}
+                      column={result.column}
+                      chargeTypeId={row.chargeTypeId}
+                      dense={forceTable}
+                      onRateChange={onRateChange}
+                      categoryCell={i === 0 ? { label: "현지 부대비용", rowSpan: exwLocalRows.length } : undefined}
+                    />
+                  ))}
+                </>
+              )}
 
               <tr
                 className="print:break-inside-avoid bg-[var(--accent)]"
@@ -405,6 +432,8 @@ function ChargeRow({
   dense = false,
   categoryCell,
   onRateChange,
+  onExclude,
+  reserveActionSpace = false,
 }: {
   label: string;
   sublabel: string;
@@ -417,13 +446,18 @@ function ChargeRow({
    * them. */
   categoryCell?: { label: string; rowSpan: number };
   onRateChange?: (chargeTypeId: string, rate: number) => Promise<void> | void;
+  /** Editor mode: a trash button that removes this standard line. */
+  onExclude?: () => void;
+  /** Editor mode, non-removable line: keep its amount aligned with the
+   * removable lines' (which leave room for the trash button). */
+  reserveActionSpace?: boolean;
 }) {
   const item = column.lineItems.find((li) => li.chargeTypeId === chargeTypeId);
   const vatApplies = VAT_APPLICABLE_CHARGE_TYPE_IDS.has(chargeTypeId);
 
   return (
     <tr
-      className={`border-b border-[var(--border-subtle)] print:break-inside-avoid ${
+      className={`group/row border-b border-[var(--border-subtle)] print:break-inside-avoid ${
         vatApplies ? "bg-[var(--sidebar-bg)]" : ""
       }`}
       style={vatApplies ? { WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } : undefined}
@@ -442,12 +476,16 @@ function ChargeRow({
         {dense ? (
           <div className="flex flex-wrap items-baseline gap-x-1 font-medium text-[var(--foreground)] text-[10.5px]">
             <span className="inline-block w-[78px] shrink-0">{label}</span>
-            <span className={`${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} text-[9px]`}>({sublabel})</span>
+            {sublabel && (
+              <span className={`${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} text-[9px]`}>({sublabel})</span>
+            )}
           </div>
         ) : (
           <>
             <p className="font-medium text-[var(--foreground)]">{label}</p>
-            <p className={`text-[11px] ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"}`}>{sublabel}</p>
+            {sublabel && (
+              <p className={`text-[11px] ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"}`}>{sublabel}</p>
+            )}
           </>
         )}
       </td>
@@ -471,14 +509,217 @@ function ChargeRow({
       </td>
       <td className={`px-3.5 text-right ${vatApplies ? "text-[var(--foreground)]" : "text-[var(--muted)]"} ${dense ? "py-1.5 text-[10.5px]" : "py-2"}`}>{item?.quantity ?? "-"}</td>
       <td className={`px-3.5 text-right ${dense ? "py-1.5" : "py-2"}`}>
-        {item ? (
-          <AnimatedAmount
-            text={krw(item.amountKrw)}
-            className={`text-[var(--foreground)] whitespace-nowrap ${dense ? "text-[10.5px]" : ""}`}
-          />
-        ) : (
-          <span className={`text-[var(--warning)] ${dense ? "text-[10.5px]" : "text-[12px]"}`}>미등록</span>
+        <span className="inline-flex items-center justify-end gap-1">
+          {item ? (
+            <AnimatedAmount
+              text={krw(item.amountKrw)}
+              className={`text-[var(--foreground)] whitespace-nowrap ${dense ? "text-[10.5px]" : ""}`}
+            />
+          ) : (
+            <span className={`text-[var(--warning)] ${dense ? "text-[10.5px]" : "text-[12px]"}`}>미등록</span>
+          )}
+          {onExclude ? (
+            <TrashButton label={`${label} 빼기`} onClick={onExclude} hoverOnly />
+          ) : (
+            reserveActionSpace && <span aria-hidden className="-mr-2 w-7 shrink-0" />
+          )}
+        </span>
+      </td>
+    </tr>
+  );
+}
+
+/** Custom lines sort after standard ones, VAT-shaded standard lines last
+ * among those - the same order the quick-quote editor shows. */
+function rowOrder(chargeTypeId: string): number {
+  if (isCustomChargeId(chargeTypeId)) return 2;
+  return VAT_APPLICABLE_CHARGE_TYPE_IDS.has(chargeTypeId) ? 1 : 0;
+}
+
+function TrashButton({ label, onClick, hoverOnly = false }: { label: string; onClick: () => void; hoverOnly?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className={`no-print -mr-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--muted)] transition hover:bg-red-50 hover:text-[var(--danger)] focus-visible:opacity-100 ${
+        hoverOnly ? "[@media(hover:hover)]:opacity-0 group-hover/row:opacity-100" : ""
+      }`}
+    >
+      <Trash2 size={14} />
+    </button>
+  );
+}
+
+const editInputClass =
+  "h-8 w-full rounded-[var(--radius-sm)] border border-[var(--border)] bg-white px-2 text-[13px] text-[var(--foreground)] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]";
+
+/** One 구분 group (국내 / 현지 부대비용) of the on-screen table in editor
+ * mode: its standard lines (each removable), then the admin's own lines
+ * (edited in place, from client state so typing is instant), then a
+ * "+ 항목 추가" row with restore chips for removed standard lines. */
+function EditableChargeGroup({
+  label,
+  category,
+  rows,
+  result,
+  editor,
+  onRateChange,
+}: {
+  label: string;
+  category: CustomCharge["category"];
+  rows: QuoteResult["chargeCatalog"];
+  result: QuoteResult;
+  editor: QuoteChargeEditor;
+  onRateChange?: (chargeTypeId: string, rate: number) => Promise<void> | void;
+}) {
+  const custom = editor.customCharges.filter((c) => c.category === category);
+  const excluded = editor.excluded.filter((e) => e.category === category);
+  const rowSpan = rows.length + custom.length + 1;
+  const categoryCell = { label, rowSpan };
+
+  return (
+    <>
+      {rows.map((row, i) => (
+        <ChargeRow
+          key={row.chargeTypeId}
+          label={row.nameKo}
+          sublabel={row.name}
+          column={result.column}
+          chargeTypeId={row.chargeTypeId}
+          onRateChange={onRateChange}
+          categoryCell={i === 0 ? categoryCell : undefined}
+          onExclude={() => editor.onExclude({ chargeTypeId: row.chargeTypeId, nameKo: row.nameKo, category })}
+        />
+      ))}
+      {custom.map((c, i) => (
+        <CustomChargeRow
+          key={c.id}
+          charge={c}
+          quantity={result.column.quantity}
+          exchangeRate={result.exchangeRate}
+          editor={editor}
+          categoryCell={rows.length === 0 && i === 0 ? categoryCell : undefined}
+        />
+      ))}
+      <tr className="border-b border-[var(--border-subtle)] no-print">
+        {rows.length + custom.length === 0 && (
+          <td
+            rowSpan={1}
+            className="px-3.5 py-2 align-top font-semibold text-[12px] text-[var(--muted)] border-r border-[var(--border-subtle)] whitespace-nowrap"
+          >
+            {label}
+          </td>
         )}
+        <td colSpan={5} className="px-3.5 py-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => editor.onAdd(category)}
+              className="inline-flex items-center gap-1 rounded-full px-2.5 h-7 text-[12.5px] font-medium text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
+            >
+              <Plus size={14} /> 항목 추가
+            </button>
+            {excluded.length > 0 && <span className="text-[12px] text-[var(--muted)]">제외됨:</span>}
+            {excluded.map((e) => (
+              <button
+                key={e.chargeTypeId}
+                type="button"
+                onClick={() => editor.onRestore(e.chargeTypeId)}
+                title={`${e.nameKo} 다시 넣기`}
+                className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-2 h-6 text-[11.5px] text-[var(--muted)] line-through decoration-[var(--muted)]/60 hover:no-underline hover:text-[var(--accent)] hover:border-[var(--accent)]/50 transition-colors"
+              >
+                {e.nameKo} <RotateCcw size={11} />
+              </button>
+            ))}
+          </div>
+        </td>
+      </tr>
+    </>
+  );
+}
+
+function CustomChargeRow({
+  charge,
+  quantity,
+  exchangeRate,
+  editor,
+  categoryCell,
+}: {
+  charge: CustomCharge;
+  quantity: number;
+  exchangeRate: number;
+  editor: QuoteChargeEditor;
+  categoryCell?: { label: string; rowSpan: number };
+}) {
+  // Computed here (same formula as the engine) so the amount follows the
+  // inputs instantly; 최종가격 catches up after the debounced recalculation.
+  const base = charge.rate * quantity;
+  const amountKrw = charge.currency === "KRW" ? base : Math.round(base * exchangeRate);
+  const [rateDraft, setRateDraft] = useState(charge.rate ? String(charge.rate) : "");
+
+  return (
+    <tr className="group/row border-b border-[var(--border-subtle)] bg-[var(--accent-soft)]/30">
+      {categoryCell && (
+        <td
+          rowSpan={categoryCell.rowSpan}
+          className="px-3.5 py-2 align-top font-semibold text-[12px] text-[var(--muted)] border-r border-[var(--border-subtle)] whitespace-nowrap"
+        >
+          {categoryCell.label}
+        </td>
+      )}
+      <td className="px-2 py-1.5">
+        <input
+          value={charge.nameKo}
+          onChange={(e) => editor.onChange(charge.id, { nameKo: e.target.value })}
+          placeholder="항목명"
+          maxLength={60}
+          autoFocus={charge.nameKo === "" && charge.rate === 0}
+          aria-label="항목명"
+          className={editInputClass}
+        />
+      </td>
+      <td className="px-2 py-1.5">
+        <div className="relative">
+          <select
+            value={charge.currency}
+            onChange={(e) => editor.onChange(charge.id, { currency: e.target.value === "USD" ? "USD" : "KRW" })}
+            aria-label="기준통화"
+            className={`${editInputClass} appearance-none pl-2 pr-5 cursor-pointer`}
+          >
+            <option value="KRW">KRW</option>
+            <option value="USD">USD</option>
+          </select>
+          <ChevronDown
+            size={12}
+            className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+          />
+        </div>
+      </td>
+      <td className="px-2 py-1.5">
+        <input
+          inputMode="decimal"
+          // The draft keeps in-progress text like "1." - but if the rate was
+          // changed elsewhere (the other sheet in 20FT+40HQ), show that.
+          value={Number(rateDraft || 0) === charge.rate ? rateDraft : String(charge.rate || "")}
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^0-9.]/g, "");
+            setRateDraft(v);
+            const n = Number(v);
+            editor.onChange(charge.id, { rate: Number.isFinite(n) ? n : 0 });
+          }}
+          placeholder="0"
+          aria-label="단가"
+          className={`${editInputClass} text-right tabular-nums`}
+        />
+      </td>
+      <td className="px-3.5 py-2 text-right text-[var(--muted)]">{quantity}</td>
+      <td className="px-3.5 py-2 text-right">
+        <span className="inline-flex items-center justify-end gap-1">
+          <span className="text-[var(--foreground)] whitespace-nowrap">{krw(amountKrw)}</span>
+          <TrashButton label={`${charge.nameKo || "항목"} 삭제`} onClick={() => editor.onRemove(charge.id)} />
+        </span>
       </td>
     </tr>
   );
