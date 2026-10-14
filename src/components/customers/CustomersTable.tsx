@@ -11,7 +11,7 @@ import { matchesSearch } from "@/lib/hangul";
 import type { Customer, SalesRep } from "@/lib/types";
 import { Building2, Check, Link2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { CustomerDialog, TRUCKING_PORTS, type CustomerDraft } from "./CustomerDialog";
+import { compareToSafeRate, CustomerDialog, TRUCKING_PORTS, type CustomerDraft } from "./CustomerDialog";
 
 /** 화주 관리 list (same look as 사원 관리): headcount + search, then a
  * table-like list - 화주 (담당자 · 연락처), 견적 담당자, and 내륙운송료 per
@@ -61,7 +61,7 @@ export function CustomersTable({
   async function handleSubmit(draft: CustomerDraft) {
     const editing = dialog?.customer;
     const rates = Object.fromEntries(
-      Object.entries(draft.rates).map(([k, v]) => [k, v === "" ? null : Number(v)]),
+      Object.entries({ ...draft.rates, ...draft.safeRates }).map(([k, v]) => [k, v === "" ? null : Number(v)]),
     );
     const body = {
       name: draft.name,
@@ -210,11 +210,29 @@ export function CustomersTable({
                     {/* 내륙운송료 - one column per port on desktop */}
                     {TRUCKING_PORTS.map((p) => (
                       <div key={p.label} className="hidden sm:block text-right tabular-nums text-[12.5px] leading-[1.45]">
-                        {p.fields.map((f) => (
-                          <p key={f.field} className={c[f.field] != null ? "text-[#334155]" : "text-[#cbd5e1]"}>
-                            {c[f.field] != null ? formatNumber(c[f.field] as number) : "—"}
-                          </p>
-                        ))}
+                        {p.fields.map((f) => {
+                          const rate = c[f.field];
+                          const safe = c[f.safeField];
+                          const cmp = compareToSafeRate(rate, safe);
+                          return (
+                            <p
+                              key={f.field}
+                              className={rate != null ? "text-[#334155]" : "text-[#cbd5e1]"}
+                              title={cmp?.title ?? (safe != null ? `안전운임 ₩${formatNumber(safe)}` : undefined)}
+                            >
+                              {cmp?.tone === "below" && (
+                                <span className="mr-1 text-[10px] text-[var(--accent)]" aria-label="안전운임보다 낮음">▼</span>
+                              )}
+                              {cmp?.tone === "equal" && (
+                                <span className="mr-1 text-[10px] text-[var(--muted)]" aria-label="안전운임과 동일">=</span>
+                              )}
+                              {cmp?.tone === "above" && (
+                                <span className="mr-1 text-[10px] text-[var(--muted)]" aria-label="안전운임보다 높음">▲</span>
+                              )}
+                              {rate != null ? formatNumber(rate) : "—"}
+                            </p>
+                          );
+                        })}
                       </div>
                     ))}
                     {/* ...and a compact summary line on mobile */}

@@ -172,6 +172,14 @@ export interface Customer {
   busanTruckingRate40hq?: number; // KRW
   pyeongtaekTruckingRate20ft?: number; // KRW
   pyeongtaekTruckingRate40hq?: number; // KRW
+  /** 안전운임 for the same port -> site legs, KRW - reference only (shown
+   * next to the 운송료 in 화주 관리; quotes always use the 운송료). */
+  incheonSafeRate20ft?: number;
+  incheonSafeRate40hq?: number;
+  busanSafeRate20ft?: number;
+  busanSafeRate40hq?: number;
+  pyeongtaekSafeRate20ft?: number;
+  pyeongtaekSafeRate40hq?: number;
   createdAt: string;
   /** Bearer token for this customer's self-service link (/c/[accessToken]) -
    * a cryptographically random string, not a guessable/sequential id.

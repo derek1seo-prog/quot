@@ -20,29 +20,61 @@ export type TruckingField =
   | "pyeongtaekTruckingRate20ft"
   | "pyeongtaekTruckingRate40hq";
 
-export const TRUCKING_PORTS: { label: string; fields: { field: TruckingField; size: string }[] }[] = [
+export type SafeRateField =
+  | "incheonSafeRate20ft"
+  | "incheonSafeRate40hq"
+  | "busanSafeRate20ft"
+  | "busanSafeRate40hq"
+  | "pyeongtaekSafeRate20ft"
+  | "pyeongtaekSafeRate40hq";
+
+export const TRUCKING_PORTS: {
+  label: string;
+  fields: { field: TruckingField; safeField: SafeRateField; size: string }[];
+}[] = [
   {
     label: "인천항",
     fields: [
-      { field: "incheonTruckingRate20ft", size: "20FT" },
-      { field: "incheonTruckingRate40hq", size: "40HQ" },
+      { field: "incheonTruckingRate20ft", safeField: "incheonSafeRate20ft", size: "20FT" },
+      { field: "incheonTruckingRate40hq", safeField: "incheonSafeRate40hq", size: "40HQ" },
     ],
   },
   {
     label: "부산항",
     fields: [
-      { field: "busanTruckingRate20ft", size: "20FT" },
-      { field: "busanTruckingRate40hq", size: "40HQ" },
+      { field: "busanTruckingRate20ft", safeField: "busanSafeRate20ft", size: "20FT" },
+      { field: "busanTruckingRate40hq", safeField: "busanSafeRate40hq", size: "40HQ" },
     ],
   },
   {
     label: "평택항",
     fields: [
-      { field: "pyeongtaekTruckingRate20ft", size: "20FT" },
-      { field: "pyeongtaekTruckingRate40hq", size: "40HQ" },
+      { field: "pyeongtaekTruckingRate20ft", safeField: "pyeongtaekSafeRate20ft", size: "20FT" },
+      { field: "pyeongtaekTruckingRate40hq", safeField: "pyeongtaekSafeRate40hq", size: "40HQ" },
     ],
   },
 ];
+
+/** 운송료 vs 안전운임, for the dialog's comparison line and the list's
+ * marker/tooltip. null unless both amounts are on file. */
+export function compareToSafeRate(rate: number | undefined, safe: number | undefined) {
+  if (rate == null || safe == null || safe <= 0) return null;
+  const diff = rate - safe;
+  const pct = Math.round((Math.abs(diff) / safe) * 100);
+  return {
+    tone: diff < 0 ? ("below" as const) : diff === 0 ? ("equal" as const) : ("above" as const),
+    text:
+      diff < 0
+        ? `▼${formatNumber(-diff)} (${pct}%)`
+        : diff === 0
+          ? "동일"
+          : `▲${formatNumber(diff)} (${pct}%)`,
+    title:
+      diff === 0
+        ? `안전운임 ₩${formatNumber(safe)}과 동일`
+        : `안전운임 ₩${formatNumber(safe)} · ${formatNumber(Math.abs(diff))}(${pct}%) ${diff < 0 ? "낮음" : "높음"}`,
+  };
+}
 
 export interface CustomerDraft {
   name: string;
@@ -50,17 +82,24 @@ export interface CustomerDraft {
   phone: string;
   salesRepId: string;
   rates: Record<TruckingField, string>;
+  safeRates: Record<SafeRateField, string>;
 }
 
 function draftFrom(c: Customer | null): CustomerDraft {
   const rates = {} as Record<TruckingField, string>;
-  for (const p of TRUCKING_PORTS) for (const f of p.fields) rates[f.field] = c?.[f.field] != null ? String(c[f.field]) : "";
+  const safeRates = {} as Record<SafeRateField, string>;
+  for (const p of TRUCKING_PORTS)
+    for (const f of p.fields) {
+      rates[f.field] = c?.[f.field] != null ? String(c[f.field]) : "";
+      safeRates[f.safeField] = c?.[f.safeField] != null ? String(c[f.safeField]) : "";
+    }
   return {
     name: c?.name ?? "",
     contactName: c?.contactName ?? "",
     phone: c?.phone ?? "",
     salesRepId: c?.salesRepId ?? "",
     rates,
+    safeRates,
   };
 }
 
@@ -231,19 +270,47 @@ export function CustomerDialog({
               <p className="text-[13px] font-medium text-[var(--foreground)]">내륙운송료</p>
               <span className="text-[11.5px] text-[var(--muted)]">· 항구 → 입고지, KRW</span>
             </div>
+            <p className="text-[11.5px] text-[var(--muted)] mb-3">
+              아래 칸 &lsquo;안전&rsquo;은 안전운임 (참고용) · 견적에는 위 칸 운송료가 들어가요
+            </p>
             <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] divide-y divide-[var(--border-subtle)]">
               {TRUCKING_PORTS.map((p) => (
-                <div key={p.label} className="flex items-center gap-3 px-3 py-2.5">
-                  <span className="w-12 shrink-0 text-[13px] font-medium text-[var(--foreground)]">{p.label}</span>
+                <div key={p.label} className="flex items-start gap-3 px-3 py-2.5">
+                  <span className="w-12 shrink-0 pt-2 text-[13px] font-medium text-[var(--foreground)]">{p.label}</span>
                   <div className="flex-1 grid grid-cols-2 gap-2">
-                    {p.fields.map((f) => (
-                      <MoneyInput
-                        key={f.field}
-                        label={f.size}
-                        value={draft.rates[f.field]}
-                        onChange={(v) => setDraft((d) => ({ ...d, rates: { ...d.rates, [f.field]: v } }))}
-                      />
-                    ))}
+                    {p.fields.map((f) => {
+                      const cmp = compareToSafeRate(
+                        draft.rates[f.field] !== "" ? Number(draft.rates[f.field]) : undefined,
+                        draft.safeRates[f.safeField] !== "" ? Number(draft.safeRates[f.safeField]) : undefined,
+                      );
+                      return (
+                        <div key={f.field} className="space-y-1">
+                          <MoneyInput
+                            label={f.size}
+                            value={draft.rates[f.field]}
+                            onChange={(v) => setDraft((d) => ({ ...d, rates: { ...d.rates, [f.field]: v } }))}
+                          />
+                          <MoneyInput
+                            label="안전"
+                            ariaLabel={`${f.size} 안전운임`}
+                            subtle
+                            value={draft.safeRates[f.safeField]}
+                            onChange={(v) =>
+                              setDraft((d) => ({ ...d, safeRates: { ...d.safeRates, [f.safeField]: v } }))
+                            }
+                          />
+                          <p
+                            className={cn(
+                              "h-4 text-right text-[11px] tabular-nums",
+                              cmp?.tone === "below" ? "text-[var(--accent)]" : "text-[var(--muted)]",
+                            )}
+                            title={cmp?.title}
+                          >
+                            {cmp && (cmp.tone === "equal" ? "안전운임과 동일" : `안전운임 대비 ${cmp.text}`)}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -307,7 +374,20 @@ function IconField({
 
 /** Won amount: digits while focused, comma-formatted at rest, with the
  * container size as a leading label inside the box. */
-function MoneyInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function MoneyInput({
+  label,
+  value,
+  onChange,
+  ariaLabel,
+  subtle = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  ariaLabel?: string;
+  /** Secondary (안전운임) box: shorter, on a muted background. */
+  subtle?: boolean;
+}) {
   const [focused, setFocused] = useState(false);
   return (
     <label className="relative block">
@@ -326,8 +406,13 @@ function MoneyInput({ label, value, onChange }: { label: string; value: string; 
         }}
         onBlur={() => setFocused(false)}
         onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
-        aria-label={`${label} 운송료`}
-        className="w-full h-9 pl-12 pr-2.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-white text-right text-[13.5px] tabular-nums text-[var(--foreground)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+        aria-label={ariaLabel ?? `${label} 운송료`}
+        className={cn(
+          "w-full pl-12 pr-2.5 rounded-[var(--radius-sm)] border text-right tabular-nums outline-none placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]",
+          subtle
+            ? "h-8 border-[var(--border-subtle)] bg-[var(--sidebar-bg)] text-[12.5px] text-[var(--muted)] focus:bg-white focus:text-[var(--foreground)]"
+            : "h-9 border-[var(--border)] bg-white text-[13.5px] text-[var(--foreground)]",
+        )}
       />
     </label>
   );

@@ -41,6 +41,12 @@ export async function POST(req: NextRequest) {
     busanTruckingRate40hq: body.busanTruckingRate40hq ?? undefined,
     pyeongtaekTruckingRate20ft: body.pyeongtaekTruckingRate20ft ?? undefined,
     pyeongtaekTruckingRate40hq: body.pyeongtaekTruckingRate40hq ?? undefined,
+    incheonSafeRate20ft: body.incheonSafeRate20ft ?? undefined,
+    incheonSafeRate40hq: body.incheonSafeRate40hq ?? undefined,
+    busanSafeRate20ft: body.busanSafeRate20ft ?? undefined,
+    busanSafeRate40hq: body.busanSafeRate40hq ?? undefined,
+    pyeongtaekSafeRate20ft: body.pyeongtaekSafeRate20ft ?? undefined,
+    pyeongtaekSafeRate40hq: body.pyeongtaekSafeRate40hq ?? undefined,
     createdAt: new Date().toISOString(),
     accessToken: generateAccessToken(),
   };
@@ -77,6 +83,12 @@ export async function PUT(req: NextRequest) {
     busanTruckingRate40hq: pick("busanTruckingRate40hq"),
     pyeongtaekTruckingRate20ft: pick("pyeongtaekTruckingRate20ft"),
     pyeongtaekTruckingRate40hq: pick("pyeongtaekTruckingRate40hq"),
+    incheonSafeRate20ft: pick("incheonSafeRate20ft"),
+    incheonSafeRate40hq: pick("incheonSafeRate40hq"),
+    busanSafeRate20ft: pick("busanSafeRate20ft"),
+    busanSafeRate40hq: pick("busanSafeRate40hq"),
+    pyeongtaekSafeRate20ft: pick("pyeongtaekSafeRate20ft"),
+    pyeongtaekSafeRate40hq: pick("pyeongtaekSafeRate40hq"),
     // Backfills a token for any customer created before this feature -
     // every customer ends up with one the next time an admin touches them.
     accessToken: existing.accessToken ?? generateAccessToken(),
