@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     input.preparedByEmail = defaultRep?.email;
     input.preparedByPhone = defaultRep?.phone;
     input.rateOverrides = undefined;
+    input.pairedRateOverrides = undefined;
   }
   if (session?.role !== "admin") {
     input.customCharges = undefined;
@@ -54,14 +55,15 @@ export async function POST(req: NextRequest) {
   if (input.pairedContainer) {
     input.container = { ...input.container, quantity: 1 };
     input.pairedContainer = { ...input.pairedContainer, quantity: 1 };
-    input.rateOverrides = undefined;
   }
 
   try {
     const { pairedContainer } = input;
     const [result, pairedResult, existingQuotes] = await Promise.all([
       calculateQuote(input),
-      pairedContainer ? calculateQuote({ ...input, container: pairedContainer }) : undefined,
+      pairedContainer
+        ? calculateQuote({ ...input, container: pairedContainer, rateOverrides: input.pairedRateOverrides })
+        : undefined,
       getQuotes(),
     ]);
     const quote: Quote = {

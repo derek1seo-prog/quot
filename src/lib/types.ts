@@ -244,10 +244,11 @@ export interface QuoteInput {
   container: ContainerSelection;
   /** Quick quote's "20FT+40HQ" option: a second container quoted on the
    * same record and printed beside the first on one landscape page. Both
-   * are always quantity 1, and rateOverrides never apply in this mode
-   * (they're keyed by chargeTypeId only, so a 20FT rate would leak into
-   * the 40HQ side). */
+   * are always quantity 1; rateOverrides apply to `container`,
+   * pairedRateOverrides to this one. */
   pairedContainer?: ContainerSelection;
+  /** rateOverrides for the pairedContainer side (keyed the same way). */
+  pairedRateOverrides?: Record<string, number>;
   /** Admin-only, per quote: extra charge lines, and standard charges left
    * out of this quote. Neither changes the shared rate sheet. */
   customCharges?: CustomCharge[];

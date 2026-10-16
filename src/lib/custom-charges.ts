@@ -24,4 +24,6 @@ export interface QuoteChargeEditor {
   onRemove: (id: string) => void;
   onExclude: (charge: ExcludedCharge) => void;
   onRestore: (chargeTypeId: string) => void;
+  /** Edits made but not yet reflected in the totals (recalculating). */
+  pending?: boolean;
 }

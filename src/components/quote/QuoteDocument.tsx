@@ -4,7 +4,7 @@ import { RateCell } from "@/components/rates/RateCell";
 import { isCustomChargeId, type QuoteChargeEditor } from "@/lib/custom-charges";
 import { formatDate } from "@/lib/format";
 import type { CompanyInfo, CustomCharge, QuoteInput, QuoteResult } from "@/lib/types";
-import { ChevronDown, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface QuoteDocumentProps {
@@ -350,10 +350,15 @@ export function QuoteDocument({
                   최종가격(VAT 별도)
                 </td>
                 <td colSpan={2} className={`px-3.5 text-right ${forceTable ? "py-2.5" : "py-3"}`}>
-                  <AnimatedAmount
-                    text={`KRW ${result.column.grandTotalKrw.toLocaleString()}`}
-                    className={`font-bold text-white whitespace-nowrap ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}
-                  />
+                  <span className="inline-flex items-center justify-end gap-2">
+                    {editor?.pending && (
+                      <Loader2 size={15} className="animate-spin text-white/80" aria-label="합계 반영 중" />
+                    )}
+                    <AnimatedAmount
+                      text={`KRW ${result.column.grandTotalKrw.toLocaleString()}`}
+                      className={`font-bold text-white whitespace-nowrap ${forceTable ? "text-[13.5px]" : "text-[17px]"}`}
+                    />
+                  </span>
                   {result.column.missingRate && (
                     <p className="text-[11px] font-normal text-white/90 mt-0.5">
                       일부 요율 미등록
@@ -576,12 +581,15 @@ function EditableChargeGroup({
 }) {
   const custom = editor.customCharges.filter((c) => c.category === category);
   const excluded = editor.excluded.filter((e) => e.category === category);
-  const rowSpan = rows.length + custom.length + 1;
+  // Hidden as soon as they're removed - not only once the recalculated
+  // result (which no longer lists them) comes back.
+  const shown = rows.filter((r) => !editor.excluded.some((e) => e.chargeTypeId === r.chargeTypeId));
+  const rowSpan = shown.length + custom.length + 1;
   const categoryCell = { label, rowSpan };
 
   return (
     <>
-      {rows.map((row, i) => (
+      {shown.map((row, i) => (
         <ChargeRow
           key={row.chargeTypeId}
           label={row.nameKo}
@@ -600,11 +608,11 @@ function EditableChargeGroup({
           quantity={result.column.quantity}
           exchangeRate={result.exchangeRate}
           editor={editor}
-          categoryCell={rows.length === 0 && i === 0 ? categoryCell : undefined}
+          categoryCell={shown.length === 0 && i === 0 ? categoryCell : undefined}
         />
       ))}
       <tr className="border-b border-[var(--border-subtle)] no-print">
-        {rows.length + custom.length === 0 && (
+        {shown.length + custom.length === 0 && (
           <td
             rowSpan={1}
             className="px-3.5 py-2 align-top font-semibold text-[12px] text-[var(--muted)] border-r border-[var(--border-subtle)] whitespace-nowrap"
@@ -660,7 +668,7 @@ function CustomChargeRow({
   const [rateDraft, setRateDraft] = useState(charge.rate ? String(charge.rate) : "");
 
   return (
-    <tr className="group/row border-b border-[var(--border-subtle)] bg-[var(--accent-soft)]/30">
+    <tr className="group/row border-b border-[var(--border-subtle)] bg-[var(--accent-soft)]/30 animate-row-flash">
       {categoryCell && (
         <td
           rowSpan={categoryCell.rowSpan}

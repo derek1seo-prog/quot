@@ -10,6 +10,7 @@ import { IncotermsSelect } from "./IncotermsSelect";
 import { PortCombobox, type PortOption } from "./PortCombobox";
 import { QuoteDocument } from "./QuoteDocument";
 import { QuotePairSheet } from "./QuotePairSheet";
+import { Toast, type ToastMessage } from "@/components/ui/Toast";
 import { QuoteResultSkeleton } from "./QuoteResultSkeleton";
 import { SalesRepCombobox } from "./SalesRepCombobox";
 import { endOfMonthIso, todayIso } from "@/lib/format";
@@ -26,7 +27,7 @@ import type {
   Region,
   SalesRep,
 } from "@/lib/types";
-import { Loader2, Pencil, Printer, Save } from "lucide-react";
+import { Check, Loader2, Pencil, Printer, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -138,30 +139,61 @@ export function PublicQuoteForm({
   // (quotes/new/page.tsx) - keyed by chargeTypeId. Only ever populated
   // when isAdmin (RateCell is never rendered editable otherwise).
   const [rateOverrides, setRateOverrides] = useState<Record<string, number>>({});
+  // 20FT+40HQ: overrides for the second (paired) container's sheet.
+  const [pairedRateOverrides, setPairedRateOverrides] = useState<Record<string, number>>({});
   const [pendingRateEdits, setPendingRateEdits] = useState(0);
   // Admin-only per-quote charge edits (QuoteDocument's editor): extra lines
   // typed in, and standard lines removed from this quote.
   const canEditCharges = isAdmin && mode === "quick";
   const [customCharges, setCustomCharges] = useState<CustomCharge[]>([]);
   const [excludedCharges, setExcludedCharges] = useState<ExcludedCharge[]>([]);
-  const chargeEditsKey = useDebouncedValue(
-    JSON.stringify([customCharges, excludedCharges.map((e) => e.chargeTypeId)]),
-    400,
-  );
+  const liveEditsKey = JSON.stringify([customCharges, excludedCharges.map((e) => e.chargeTypeId)]);
+  const chargeEditsKey = useDebouncedValue(liveEditsKey, 400);
+  // The edits the shown totals were last calculated with - while it differs
+  // from the live edits, totals are "반영 중", then briefly "반영됨".
+  const [appliedEditsKey, setAppliedEditsKey] = useState(liveEditsKey);
+  const chargesPending = canEditCharges && appliedEditsKey !== liveEditsKey;
+  const [showApplied, setShowApplied] = useState(false);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const notify = (text: string, action?: ToastMessage["action"]) => setToast({ id: Date.now(), text, action });
   const chargeEditor: QuoteChargeEditor | undefined = canEditCharges
     ? {
         customCharges,
         excluded: excludedCharges,
-        onAdd: (category) =>
+        pending: chargesPending,
+        onAdd: (category) => {
           setCustomCharges((cs) => [
             ...cs,
             { id: Math.random().toString(36).slice(2, 10), category, nameKo: "", currency: "KRW", rate: 0 },
-          ]),
+          ]);
+          notify(`${category === "EXW_LOCAL" ? "현지" : "국내"} 부대비용에 항목을 추가했어요`);
+        },
         onChange: (id, patch) => setCustomCharges((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c))),
-        onRemove: (id) => setCustomCharges((cs) => cs.filter((c) => c.id !== id)),
-        onExclude: (charge) =>
-          setExcludedCharges((xs) => (xs.some((x) => x.chargeTypeId === charge.chargeTypeId) ? xs : [...xs, charge])),
-        onRestore: (chargeTypeId) => setExcludedCharges((xs) => xs.filter((x) => x.chargeTypeId !== chargeTypeId)),
+        onRemove: (id) => {
+          const index = customCharges.findIndex((c) => c.id === id);
+          const removed = customCharges[index];
+          if (!removed) return;
+          setCustomCharges((cs) => cs.filter((c) => c.id !== id));
+          notify(`'${removed.nameKo.trim() || "항목"}' 삭제했어요`, {
+            label: "되돌리기",
+            onClick: () =>
+              setCustomCharges((cs) =>
+                cs.some((c) => c.id === id) ? cs : [...cs.slice(0, index), removed, ...cs.slice(index)],
+              ),
+          });
+        },
+        onExclude: (charge) => {
+          setExcludedCharges((xs) => (xs.some((x) => x.chargeTypeId === charge.chargeTypeId) ? xs : [...xs, charge]));
+          notify(`'${charge.nameKo}' 뺐어요`, {
+            label: "되돌리기",
+            onClick: () => setExcludedCharges((xs) => xs.filter((x) => x.chargeTypeId !== charge.chargeTypeId)),
+          });
+        },
+        onRestore: (chargeTypeId) => {
+          const restored = excludedCharges.find((x) => x.chargeTypeId === chargeTypeId);
+          setExcludedCharges((xs) => xs.filter((x) => x.chargeTypeId !== chargeTypeId));
+          notify(`'${restored?.nameKo ?? "항목"}' 다시 넣었어요`);
+        },
       }
     : undefined;
 
@@ -187,7 +219,10 @@ export function PublicQuoteForm({
   const originLabel = originPort ? `${originPort.nameKo} (${originPort.name})` : "";
   const destinationLabel = destinationPort ? `${destinationPort.nameKo} (${destinationPort.name})` : "";
 
-  function buildInput(overrides: Record<string, number> = rateOverrides): QuoteInput {
+  function buildInput(
+    overrides: Record<string, number> = rateOverrides,
+    pairedOverrides: Record<string, number> = pairedRateOverrides,
+  ): QuoteInput {
     return {
       customerId: mode === "quick" && isAdmin ? matchedQuickCustomer?.id : undefined,
       customerName: mode === "quick" ? quickCustomerName : (lockedCustomer?.name ?? ""),
@@ -208,6 +243,8 @@ export function PublicQuoteForm({
         ? {
             container: { containerTypeId: pairTypes[0].id, quantity: 1 },
             pairedContainer: { containerTypeId: pairTypes[1].id, quantity: 1 },
+            rateOverrides: overrides,
+            pairedRateOverrides: pairedOverrides,
           }
         : { container: { containerTypeId, quantity: containerQuantity }, rateOverrides: overrides }),
       ...(canEditCharges && {
@@ -252,6 +289,7 @@ export function PublicQuoteForm({
       }
     });
     const input = buildInput();
+    const editsUsed = liveEditsKey;
     const calculate = async (body: QuoteInput) => {
       const res = await fetch("/api/calculate", {
         method: "POST",
@@ -264,12 +302,19 @@ export function PublicQuoteForm({
     };
     Promise.all([
       calculate(input),
-      input.pairedContainer ? calculate({ ...input, container: input.pairedContainer }) : null,
+      input.pairedContainer
+        ? calculate({ ...input, container: input.pairedContainer, rateOverrides: input.pairedRateOverrides })
+        : null,
     ])
       .then(([main, paired]) => {
         if (cancelled) return;
         setResult(main);
         setPairedResult(paired);
+        if (silent && editsUsed !== appliedEditsKey) {
+          setShowApplied(true);
+          setTimeout(() => setShowApplied(false), 1500);
+        }
+        setAppliedEditsKey(editsUsed);
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : "계산에 실패했습니다.");
@@ -306,19 +351,32 @@ export function PublicQuoteForm({
   // engine call as every other field, then commits the override so it
   // persists across later recalculations (route/incoterms/container
   // changes) via buildInput()'s own default param.
-  async function handleRateOverride(chargeTypeId: string, rate: number) {
+  // `side` picks which sheet's 단가 changed in 20FT+40HQ mode ("paired" =
+  // the second container); only that side is recalculated.
+  async function handleRateOverride(chargeTypeId: string, rate: number, side: "main" | "paired" = "main") {
     setPendingRateEdits((n) => n + 1);
     try {
-      const next = { ...rateOverrides, [chargeTypeId]: rate };
+      const paired = side === "paired";
+      const nextMain = paired ? rateOverrides : { ...rateOverrides, [chargeTypeId]: rate };
+      const nextPaired = paired ? { ...pairedRateOverrides, [chargeTypeId]: rate } : pairedRateOverrides;
+      const input = buildInput(nextMain, nextPaired);
+      const body = paired && input.pairedContainer
+        ? { ...input, container: input.pairedContainer, rateOverrides: nextPaired }
+        : input;
       const res = await fetch("/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildInput(next)),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "재계산에 실패했습니다.");
-      setRateOverrides(next);
-      setResult(data as QuoteResult);
+      if (paired) {
+        setPairedRateOverrides(nextPaired);
+        setPairedResult(data as QuoteResult);
+      } else {
+        setRateOverrides(nextMain);
+        setResult(data as QuoteResult);
+      }
     } finally {
       setPendingRateEdits((n) => n - 1);
     }
@@ -506,7 +564,14 @@ export function PublicQuoteForm({
                     <button
                       key={ct.id}
                       type="button"
-                      onClick={() => setContainerTypeId(ct.id)}
+                      onClick={() => {
+                        if (ct.id === containerTypeId) return;
+                        setContainerTypeId(ct.id);
+                        // 단가 overrides belong to one container type - a 20FT
+                        // rate must never carry over to a 40HQ quote.
+                        setRateOverrides({});
+                        setPairedRateOverrides({});
+                      }}
                       title={ct.id === PAIR_CONTAINER_ID ? "컨테이너 1개 기준, 두 타입을 한 장에 나란히" : undefined}
                       className={`${ct.id === PAIR_CONTAINER_ID ? "flex-[1.5] whitespace-nowrap px-2" : "flex-1"} h-10 rounded-[var(--radius-sm)] border-2 text-[13.5px] font-semibold transition-toggle-select ${
                         selected
@@ -555,16 +620,22 @@ export function PublicQuoteForm({
         <>
           {mode === "quick" && (
             <div className="flex items-center justify-end gap-3 max-w-[900px] mx-auto">
-              {isAdmin && pendingRateEdits > 0 && (
+              {isAdmin && (pendingRateEdits > 0 || chargesPending) ? (
                 <span className="text-[12px] text-[var(--muted)] flex items-center gap-1.5">
-                  <Loader2 size={13} className="animate-spin" /> 단가 반영 중...
+                  <Loader2 size={13} className="animate-spin" /> {pendingRateEdits > 0 ? "단가" : "합계"} 반영 중...
                 </span>
+              ) : (
+                showApplied && (
+                  <span className="text-[12px] font-medium text-[var(--success)] flex items-center gap-1 animate-dropdown-panel">
+                    <Check size={13} /> 반영됨
+                  </span>
+                )
               )}
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={handleQuickPrint}
-                disabled={saving || pendingRateEdits > 0}
+                disabled={saving || pendingRateEdits > 0 || chargesPending}
                 icon={saving ? <Loader2 size={15} className="animate-spin" /> : <Printer size={15} />}
               >
                 {saving ? "저장 중..." : "인쇄"}
@@ -584,6 +655,7 @@ export function PublicQuoteForm({
                   destinationLabel={destinationLabel}
                   fitToWidth
                   editor={chargeEditor}
+                  onRateChange={isAdmin ? (side, id, rate) => handleRateOverride(id, rate, side) : undefined}
                 />
               </div>
             )
@@ -658,6 +730,7 @@ export function PublicQuoteForm({
         )}
       </div>
     )}
+    <Toast message={toast} onDismiss={() => setToast(null)} />
     </>
   );
 }

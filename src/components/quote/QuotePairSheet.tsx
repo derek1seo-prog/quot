@@ -32,6 +32,9 @@ interface QuotePairSheetProps {
   /** Quick quote (admin): the enlarge modal shows both sheets as editable
    * on-screen documents, for adding / removing charge lines. */
   editor?: QuoteChargeEditor;
+  /** Quick quote (admin): 단가 edits in the enlarge modal, per sheet -
+   * "main" is the first container, "paired" the second. */
+  onRateChange?: (side: "main" | "paired", chargeTypeId: string, rate: number) => Promise<void> | void;
 }
 
 /** The quick quote's "20FT+40HQ" output: the regular print layout for each
@@ -47,6 +50,7 @@ export function QuotePairSheet({
   destinationLabel,
   fitToWidth = false,
   editor,
+  onRateChange,
 }: QuotePairSheetProps) {
   const docInputs = [
     { input, result },
@@ -131,7 +135,7 @@ export function QuotePairSheet({
           docs={docs}
           editableDocs={
             editor &&
-            docInputs.map((d) => (
+            docInputs.map((d, i) => (
               <QuoteDocument
                 key={d.result.column.containerTypeId}
                 company={company}
@@ -141,6 +145,9 @@ export function QuotePairSheet({
                 originLabel={originLabel}
                 destinationLabel={destinationLabel}
                 editor={editor}
+                onRateChange={
+                  onRateChange && ((chargeTypeId, rate) => onRateChange(i === 0 ? "main" : "paired", chargeTypeId, rate))
+                }
               />
             ))
           }
@@ -253,7 +260,9 @@ function FitToWidth({
           >
             <div className="sticky top-0 left-0 z-10 flex items-center justify-between gap-3 px-4 sm:px-8 py-3 bg-[var(--foreground)]/85 text-white backdrop-blur">
               <p className="text-[13.5px] font-medium">
-                {editableDocs ? "견적서 크게 보기 · 항목 추가/삭제는 두 컨테이너에 함께 적용돼요" : "견적서 크게 보기 · 20FT / 40HQ"}
+                {editableDocs
+                  ? "견적서 크게 보기 · 단가는 컨테이너별로, 항목 추가·삭제는 두 컨테이너에 함께 적용돼요"
+                  : "견적서 크게 보기 · 20FT / 40HQ"}
               </p>
               <button
                 type="button"
