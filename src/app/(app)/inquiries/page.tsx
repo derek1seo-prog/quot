@@ -1,9 +1,11 @@
 import { InquiryInbox } from "@/components/inquiry/InquiryInbox";
+import { getSalesReps } from "@/lib/data-store";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "문의함 | I.S. Sea & Air" };
 
-export default function InquiriesPage() {
+export default async function InquiriesPage() {
+  const salesReps = await getSalesReps();
   return (
     <div className="max-w-[1200px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-14">
       <div className="mb-6 animate-dashboard-fade-up">
@@ -14,7 +16,7 @@ export default function InquiriesPage() {
         </p>
       </div>
       <div className="animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
-        <InquiryInbox />
+        <InquiryInbox salesReps={salesReps} />
       </div>
     </div>
   );

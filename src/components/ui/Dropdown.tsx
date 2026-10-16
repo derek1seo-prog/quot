@@ -19,6 +19,8 @@ export function Dropdown({
   options,
   icon,
   className,
+  buttonClassName,
+  openUp = false,
   "aria-label": ariaLabel,
 }: {
   value: string;
@@ -26,6 +28,10 @@ export function Dropdown({
   options: DropdownOption[];
   icon?: ReactNode;
   className?: string;
+  /** Overrides for the trigger button (e.g. a smaller height). */
+  buttonClassName?: string;
+  /** Open the list above the trigger - for a picker at the bottom of a panel. */
+  openUp?: boolean;
   "aria-label": string;
 }) {
   const [open, setOpen] = useState(false);
@@ -85,6 +91,7 @@ export function Dropdown({
         className={cn(
           "w-full h-10 px-3 rounded-[var(--radius-sm)] border bg-white text-[14px] outline-none transition-shadow flex items-center gap-2 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]",
           open ? "border-[var(--accent)] ring-4 ring-[var(--accent-soft)]" : "border-[var(--border)]",
+          buttonClassName,
         )}
       >
         {icon && <span className="shrink-0 text-[var(--muted)]">{icon}</span>}
@@ -105,8 +112,11 @@ export function Dropdown({
         <div
           role="listbox"
           aria-label={ariaLabel}
-          className="absolute z-20 top-full mt-1 w-full min-w-[160px] max-h-64 overflow-y-auto rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white shadow-lg py-1 animate-dropdown-panel"
-          style={{ transformOrigin: "top" }}
+          className={cn(
+            "absolute z-20 w-full min-w-[160px] max-h-64 overflow-y-auto rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white shadow-lg py-1 animate-dropdown-panel",
+            openUp ? "bottom-full mb-1" : "top-full mt-1",
+          )}
+          style={{ transformOrigin: openUp ? "bottom" : "top" }}
         >
           {options.map((o, i) => {
             const active = o.value === value;

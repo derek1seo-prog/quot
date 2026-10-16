@@ -3,17 +3,18 @@
 import { DayDivider, dayLabel } from "@/components/inquiry/ChatWidget";
 import { MonoAvatar } from "@/components/ui/Avatar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { IconAction } from "@/components/ui/IconAction";
 import { Input } from "@/components/ui/Field";
 import { cn } from "@/lib/cn";
 import { matchesSearch } from "@/lib/hangul";
 import type { InquirySummary } from "@/lib/inquiries";
-import type { InquiryThread } from "@/lib/types";
-import { ArrowLeft, Building2, Globe, Inbox, Loader2, Phone, Search, SendHorizontal, Trash2, UserRound } from "lucide-react";
+import { useRememberedSalesRepId } from "@/lib/hooks";
+import type { InquiryThread, SalesRep } from "@/lib/types";
+import { ArrowLeft, Building2, Contact, Globe, Inbox, Loader2, Phone, Search, SendHorizontal, Trash2, UserRound } from "lucide-react";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 const POLL_MS = 4000;
-const LAST_SALES_REP_KEY = "quot:lastSalesRepId";
 
 function titleOf(t: { company?: string; contactName?: string; id: string }) {
   return t.company || t.contactName || `방문자 ${t.id.slice(-4).toUpperCase()}`;
@@ -45,7 +46,11 @@ function notifyChanged() {
 /** Admin 문의함: visitor threads on the left (newest activity first, unread
  * counts), the selected conversation + reply box on the right. Polls so new
  * messages show up without reloading. */
-export function InquiryInbox() {
+export function InquiryInbox({ salesReps }: { salesReps: SalesRep[] }) {
+  // Who's answering - their name is shown to the visitor on each reply.
+  // Shares the "last picked rep" memory with the quote screens' 발신 담당자.
+  const [replyRepId, setReplyRepId] = useRememberedSalesRepId(salesReps);
+  const replyRep = salesReps.find((r) => r.id === replyRepId);
   const [threads, setThreads] = useState<InquirySummary[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [thread, setThread] = useState<InquiryThread | null>(null);
@@ -132,12 +137,7 @@ export function InquiryInbox() {
     if (!text || !selectedId || sending) return;
     setSending(true);
     try {
-      let salesRepId: string | undefined;
-      try {
-        salesRepId = localStorage.getItem(LAST_SALES_REP_KEY) ?? undefined;
-      } catch {
-        // storage blocked - reply without a name
-      }
+      const salesRepId = replyRep?.id;
       const res = await fetch(`/api/inquiries/${selectedId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -333,37 +333,61 @@ export function InquiryInbox() {
               )}
             </div>
 
-            <div className="shrink-0 bg-white border-t border-[var(--border-subtle)] p-3 flex items-end gap-2">
-              <textarea
-                ref={replyRef}
-                value={reply}
-                rows={1}
-                maxLength={2000}
-                onChange={(e) => {
-                  setReply(e.target.value);
-                  const el = e.target;
-                  el.style.height = "auto";
-                  el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                    e.preventDefault();
-                    sendReply();
+            <div className="shrink-0 bg-white border-t border-[var(--border-subtle)] p-3">
+              {salesReps.length > 0 && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[12px] font-medium text-[var(--muted)] shrink-0">답변자</span>
+                  <Dropdown
+                    value={replyRep?.id ?? ""}
+                    onChange={setReplyRepId}
+                    options={salesReps.map((r) => ({ value: r.id, label: r.name }))}
+                    icon={<Contact size={14} />}
+                    aria-label="답변하는 담당자"
+                    openUp
+                    className="w-[180px]"
+                    buttonClassName="h-8 text-[13px] px-2.5"
+                  />
+                  <span className="hidden sm:inline text-[11.5px] text-[var(--muted)] truncate">
+                    방문자에게 이 이름으로 표시돼요 · Enter 전송, Shift+Enter 줄바꿈
+                  </span>
+                </div>
+              )}
+              <div className="flex items-end gap-2">
+                <textarea
+                  ref={replyRef}
+                  value={reply}
+                  rows={1}
+                  maxLength={2000}
+                  onChange={(e) => {
+                    setReply(e.target.value);
+                    const el = e.target;
+                    el.style.height = "auto";
+                    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                      e.preventDefault();
+                      sendReply();
+                    }
+                  }}
+                  placeholder={
+                    replyRep
+                      ? `${replyRep.name}(으)로 답변`
+                      : "답변을 입력하세요 (Enter 전송, Shift+Enter 줄바꿈)"
                   }
-                }}
-                placeholder="답변을 입력하세요 (Enter 전송, Shift+Enter 줄바꿈)"
-                aria-label="답변"
-                className="flex-1 resize-none max-h-[140px] min-h-[42px] px-3.5 py-[10px] rounded-[14px] border border-[var(--border)] bg-white text-[14px] leading-[1.45] outline-none placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
-              />
-              <button
-                type="button"
-                onClick={sendReply}
-                disabled={!reply.trim() || sending}
-                aria-label="답변 보내기"
-                className="shrink-0 w-[42px] h-[42px] rounded-[14px] inline-flex items-center justify-center bg-[var(--accent)] text-white transition-all disabled:bg-[#cbd5e1] hover:brightness-110 active:scale-95"
-              >
-                {sending ? <Loader2 size={17} className="animate-spin" /> : <SendHorizontal size={17} />}
-              </button>
+                  aria-label="답변"
+                  className="flex-1 resize-none max-h-[140px] min-h-[42px] px-3.5 py-[10px] rounded-[14px] border border-[var(--border)] bg-white text-[14px] leading-[1.45] outline-none placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+                />
+                <button
+                  type="button"
+                  onClick={sendReply}
+                  disabled={!reply.trim() || sending}
+                  aria-label="답변 보내기"
+                  className="shrink-0 w-[42px] h-[42px] rounded-[14px] inline-flex items-center justify-center bg-[var(--accent)] text-white transition-all disabled:bg-[#cbd5e1] hover:brightness-110 active:scale-95"
+                >
+                  {sending ? <Loader2 size={17} className="animate-spin" /> : <SendHorizontal size={17} />}
+                </button>
+              </div>
             </div>
           </>
         )}
