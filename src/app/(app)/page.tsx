@@ -8,7 +8,8 @@ import { QuoteTrendBars } from "@/components/dashboard/QuoteTrendBars";
 import type { TrendPoint } from "@/components/dashboard/QuoteTrendSparkline";
 import { TopRoutes, type RouteStat } from "@/components/dashboard/TopRoutes";
 import { QuickQuoteScreen } from "@/components/quote/QuickQuoteScreen";
-import { getCurrentExchangeRate, getPorts, getQuotes } from "@/lib/data-store";
+import { getCurrentExchangeRate, getPorts, getQuotes, getVesselWatches } from "@/lib/data-store";
+import { isDelayed } from "@/lib/vessels";
 import { getUsdKrwTrend, kstToday, rateChange, shiftIsoDate, shortDate } from "@/lib/exchange-rate-history";
 import { formatCurrency, formatDate, pairLabel, pairTotalsTitle } from "@/lib/format";
 import { decodeSessionCookie } from "@/lib/session";
@@ -25,11 +26,14 @@ export default async function DashboardPage() {
     return <QuickQuoteScreen isAdmin={false} />;
   }
 
-  const [quotes, exchangeRate, usdTrend] = await Promise.all([
+  const [quotes, exchangeRate, usdTrend, vesselWatches] = await Promise.all([
     getQuotes(),
     getCurrentExchangeRate("USD"),
     getUsdKrwTrend(),
+    getVesselWatches(),
   ]);
+  const trackedVessels = vesselWatches.filter((w) => w.status === "active");
+  const delayedVessels = trackedVessels.filter(isDelayed).length;
   const allPorts = getPorts();
   const portNameById = new Map(allPorts.map((p) => [p.id, p.nameKo]));
 
@@ -120,7 +124,7 @@ export default async function DashboardPage() {
         chip?: { text: string; tone: "up" | "down" | "neutral"; title?: string };
         href: string;
       }
-    | { kind: "link"; label: string; sublabel: string; href: string; icon: ReactNode }
+    | { kind: "link"; label: string; sublabel: string; href: string; icon: ReactNode; internal?: boolean }
   )[] = [
     {
       kind: "stat",
@@ -151,10 +155,14 @@ export default async function DashboardPage() {
     },
     {
       kind: "link",
-      label: "선박 스케줄 조회",
-      sublabel: "터미널별 입출항 일정",
-      href: "https://www.tradlinx.com/ko/container-terminal-schedule",
+      label: "선박 스케줄",
+      sublabel:
+        trackedVessels.length > 0
+          ? `추적 중 ${trackedVessels.length}척${delayedVessels > 0 ? ` · 지연 ${delayedVessels}척` : ""}`
+          : "입·출항일 변경 추적",
+      href: "/vessels",
       icon: <Ship size={18} />,
+      internal: true,
     },
     {
       kind: "link",
@@ -243,8 +251,7 @@ export default async function DashboardPage() {
             <a
               key={c.label}
               href={c.href}
-              target="_blank"
-              rel="noopener noreferrer"
+              {...(c.internal ? {} : { target: "_blank", rel: "noopener noreferrer" })}
               // A seam between the stat and link groups so the grouping
               // reads as intentional, not just array order - only makes
               // sense on the wide single-row (4-col) layout, where this
@@ -258,7 +265,11 @@ export default async function DashboardPage() {
                   <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
                     {c.icon}
                   </div>
-                  <ExternalLink size={14} className="text-[var(--muted)]" />
+                  {c.internal ? (
+                    <ArrowUpRight size={14} className="text-[var(--muted)]" />
+                  ) : (
+                    <ExternalLink size={14} className="text-[var(--muted)]" />
+                  )}
                 </div>
                 <p className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
                   {c.label}

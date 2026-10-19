@@ -347,3 +347,33 @@ export interface InquiryThread {
   /** Admin replies the visitor hasn't seen yet. */
   unreadForVisitor: number;
 }
+
+/** One port of a tracked voyage (출발항 / 경유 / 도착항), in route order. */
+export interface VesselPortCall {
+  id: string;
+  portName: string;
+  kind: "POL" | "VIA" | "POD";
+  /** "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm", Korea time. */
+  eta?: string;
+  etd?: string;
+  /** Every change to eta/etd, oldest first - the first `from` is the
+   * originally announced date the delay badge compares against. */
+  history: { at: string; field: "eta" | "etd"; from?: string; to?: string; by?: string }[];
+}
+
+/** A shipment whose vessel schedule the team is following (선박 스케줄). */
+export interface VesselWatch {
+  id: string;
+  vesselName: string;
+  voyage: string;
+  carrier?: string;
+  customerName?: string;
+  memo?: string;
+  calls: VesselPortCall[];
+  status: "active" | "done";
+  /** Where the dates come from - only "manual" for now; an automatic feed
+   * (e.g. a Port-MIS API) can write its own source later. */
+  source: "manual";
+  createdAt: string;
+  updatedAt: string;
+}

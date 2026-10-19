@@ -37,6 +37,7 @@ import type {
   QuoteResult,
   Region,
   SalesRep,
+  VesselWatch,
 } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "src", "data");
@@ -402,4 +403,14 @@ export async function getInquiries(): Promise<InquiryThread[]> {
 
 export async function saveInquiries(threads: InquiryThread[]): Promise<void> {
   await writeMutable("inquiries.json", threads);
+}
+
+// ---------- 선박 스케줄 (vessel watches) ----------
+
+export async function getVesselWatches(): Promise<VesselWatch[]> {
+  return readMutable<VesselWatch[]>("vessel-watches.json");
+}
+
+export async function saveVesselWatches(watches: VesselWatch[]): Promise<void> {
+  await writeMutable("vessel-watches.json", watches);
 }

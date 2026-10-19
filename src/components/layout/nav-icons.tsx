@@ -51,6 +51,8 @@ export function NavIcon({
       );
     case "customers":
       return <Users size={size} />;
+    case "vessels":
+      return <Ship size={size} />;
     case "sales-reps":
       return <Contact size={size} />;
     case "settings":

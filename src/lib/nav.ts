@@ -11,7 +11,8 @@ export interface NavItemDef {
     | "sales-reps"
     | "settings"
     | "rates"
-    | "inquiries";
+    | "inquiries"
+    | "vessels";
   /** ISO-ish country code (Country.id, e.g. "CN") for icon: "region" items -
    * rendered as that country's flag instead of a generic icon, since 요율
    * 관리 already groups regions by country and more countries keep getting
@@ -44,6 +45,7 @@ export const navSections: NavSectionDef[] = [
       { href: "/quick-quote", label: "빠른 견적 만들기", icon: "quick-quote" },
       { href: "/quotes/new", label: "새 견적 만들기", icon: "new-quote", legacy: true },
       { href: "/quotes", label: "견적 목록", icon: "quote-list" },
+      { href: "/vessels", label: "선박 스케줄", icon: "vessels" },
     ],
   },
   {
