@@ -253,6 +253,8 @@ export interface QuoteInput {
    * out of this quote. Neither changes the shared rate sheet. */
   customCharges?: CustomCharge[];
   excludedChargeTypeIds?: string[];
+  /** "부가세 포함": add VAT (10%) on the VAT-applicable lines to the total. */
+  vatIncluded?: boolean;
   exchangeRateOverride?: number; // if omitted, use current stored exchange rate
   /** Per-quote rate overrides, keyed by chargeTypeId (including "OCEAN_FREIGHT").
    * Lets a quote negotiate a one-off rate without touching the shared rate
@@ -283,7 +285,10 @@ export interface QuoteColumn {
   lineItems: QuoteLineItem[];
   oceanFreightSubtotalKrw: number;
   localSubtotalKrw: number;
+  /** Includes vatKrw when the quote is "부가세 포함". */
   grandTotalKrw: number;
+  /** VAT added to the total ("부가세 포함" quotes only). */
+  vatKrw?: number;
   missingRate: boolean; // true if ocean freight rate not yet configured
 }
 

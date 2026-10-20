@@ -3,6 +3,7 @@
 import { RateCell } from "@/components/rates/RateCell";
 import { isCustomChargeId, type QuoteChargeEditor } from "@/lib/custom-charges";
 import { formatDate } from "@/lib/format";
+import { VAT_APPLICABLE_CHARGE_TYPE_IDS, VAT_RATE } from "@/lib/vat";
 import type { CompanyInfo, CustomCharge, QuoteInput, QuoteResult } from "@/lib/types";
 import { ChevronDown, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -76,9 +77,8 @@ function AnimatedAmount({ text, className }: { text: string; className?: string 
   );
 }
 
-// Charges VAT will be applied to separately - shaded in the table so
-// customers can see at a glance which lines that applies to.
-const VAT_APPLICABLE_CHARGE_TYPE_IDS = new Set(["INLAND_TRUCKING", "DOC_FEE", "HANDLING_CHG"]);
+// Charges VAT applies to (src/lib/vat.ts) are shaded in the table so
+// customers can see at a glance which lines that is.
 
 export function QuoteDocument({
   company,
@@ -119,6 +119,8 @@ export function QuoteDocument({
   const exwLocalRows = result.chargeCatalog.filter((c) => c.category === "EXW_LOCAL");
   const localRows = [...domesticRows, ...exwLocalRows];
   const containerSummary = `${result.column.containerLabel} × ${result.column.quantity}`;
+  const vatKrw = result.column.vatKrw;
+  const totalLabel = `최종가격(VAT ${vatKrw !== undefined ? "포함" : "별도"})`;
 
   // forceTable (print/PDF) keeps 항목 wide since its dense row layout puts
   // the label and English subtitle side by side on one line. The on-screen
@@ -342,12 +344,29 @@ export function QuoteDocument({
                 </>
               )}
 
+              {vatKrw !== undefined && (
+                <tr className="border-b border-[var(--border-subtle)] print:break-inside-avoid">
+                  <td
+                    colSpan={4}
+                    className={`px-3.5 font-semibold text-[var(--foreground)] ${forceTable ? "py-1.5 text-[10.5px]" : "py-2.5 text-[13px]"}`}
+                  >
+                    부가세 ({Math.round(VAT_RATE * 100)}%)
+                    <span className={`ml-1.5 font-normal text-[var(--muted)] ${forceTable ? "text-[9px]" : "text-[11.5px]"}`}>
+                      음영 항목 기준
+                    </span>
+                  </td>
+                  <td colSpan={2} className={`px-3.5 text-right ${forceTable ? "py-1.5 text-[10.5px]" : "py-2.5"}`}>
+                    <AnimatedAmount text={krw(vatKrw)} className="font-medium text-[var(--foreground)] whitespace-nowrap" />
+                  </td>
+                </tr>
+              )}
+
               <tr
                 className="print:break-inside-avoid bg-[var(--accent)]"
                 style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
               >
                 <td colSpan={4} className={`px-3.5 font-bold text-white ${forceTable ? "py-2.5 text-[13.5px]" : "py-3 text-[15px]"}`}>
-                  최종가격(VAT 별도)
+                  {totalLabel}
                 </td>
                 <td colSpan={2} className={`px-3.5 text-right ${forceTable ? "py-2.5" : "py-3"}`}>
                   <span className="inline-flex items-center justify-end gap-2">
@@ -386,7 +405,11 @@ export function QuoteDocument({
           <ul className="list-disc list-inside space-y-0.5">
             <li>상기 견적은 {formatDate(input.validUntil)} 까지 유효합니다.</li>
             <li>환율 변동 시 운임 및 부대비용이 재계산될 수 있습니다. (적용 환율: USD 1 = ₩{result.exchangeRate.toLocaleString()})</li>
-            <li>상기 금액은 원화(KRW) 환산 기준이며, 부가세가 포함된 항목은 별도 표기됩니다.</li>
+            <li>
+              {vatKrw !== undefined
+                ? `상기 금액은 원화(KRW) 환산 기준이며, 음영 표시 항목의 부가세(${Math.round(VAT_RATE * 100)}%)가 최종가격에 포함되어 있습니다.`
+                : "상기 금액은 원화(KRW) 환산 기준이며, 부가세가 포함된 항목은 별도 표기됩니다."}
+            </li>
             {input.remarks && <li>{input.remarks}</li>}
           </ul>
         </div>
@@ -776,7 +799,12 @@ function MobileChargeCard({
       </div>
 
       <div className="flex items-center justify-between px-4 py-3 bg-[var(--sidebar-bg)]/60 border-t border-[var(--border-subtle)]">
-        <span className="text-[13px] font-bold text-[var(--foreground)]">최종가격(VAT 별도)</span>
+        <span className="text-[13px] font-bold text-[var(--foreground)]">
+          최종가격(VAT {column.vatKrw !== undefined ? "포함" : "별도"})
+          {column.vatKrw !== undefined && (
+            <span className="block text-[11px] font-normal text-[var(--muted)]">부가세 {krw(column.vatKrw)} 포함</span>
+          )}
+        </span>
         <div className="text-right">
           <span className="text-[15px] font-bold text-[var(--accent)] whitespace-nowrap">
             KRW {column.grandTotalKrw.toLocaleString()}

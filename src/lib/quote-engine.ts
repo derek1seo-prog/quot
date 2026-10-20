@@ -27,6 +27,7 @@ import type {
   QuoteResult,
 } from "./types";
 import { CUSTOM_CHARGE_PREFIX } from "./custom-charges";
+import { VAT_APPLICABLE_CHARGE_TYPE_IDS, VAT_RATE } from "./vat";
 
 const INLAND_TRUCKING_CHARGE_TYPE_ID = "INLAND_TRUCKING";
 const EXW_LOCAL_CHARGE_TYPE_ID = "EXW_LOCAL_CHARGE";
@@ -302,6 +303,13 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     const localSubtotalKrw = lineItems
       .filter((li) => li.category !== "OCEAN_FREIGHT")
       .reduce((sum, li) => sum + li.amountKrw, 0);
+    const vatKrw = input.vatIncluded
+      ? round(
+          lineItems
+            .filter((li) => VAT_APPLICABLE_CHARGE_TYPE_IDS.has(li.chargeTypeId))
+            .reduce((sum, li) => sum + li.amountKrw, 0) * VAT_RATE,
+        )
+      : undefined;
 
     return {
       containerTypeId: selection.containerTypeId,
@@ -310,7 +318,8 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
       lineItems,
       oceanFreightSubtotalKrw,
       localSubtotalKrw,
-      grandTotalKrw: oceanFreightSubtotalKrw + localSubtotalKrw,
+      grandTotalKrw: oceanFreightSubtotalKrw + localSubtotalKrw + (vatKrw ?? 0),
+      ...(vatKrw !== undefined && { vatKrw }),
       missingRate,
     };
   })();

@@ -141,6 +141,8 @@ export function PublicQuoteForm({
   const [rateOverrides, setRateOverrides] = useState<Record<string, number>>({});
   // 20FT+40HQ: overrides for the second (paired) container's sheet.
   const [pairedRateOverrides, setPairedRateOverrides] = useState<Record<string, number>>({});
+  // "부가세 포함" adds 10% VAT on the VAT-applicable (shaded) lines to the total.
+  const [vatIncluded, setVatIncluded] = useState(false);
   const [pendingRateEdits, setPendingRateEdits] = useState(0);
   // Admin-only per-quote charge edits (QuoteDocument's editor): extra lines
   // typed in, and standard lines removed from this quote.
@@ -247,6 +249,7 @@ export function PublicQuoteForm({
             pairedRateOverrides: pairedOverrides,
           }
         : { container: { containerTypeId, quantity: containerQuantity }, rateOverrides: overrides }),
+      vatIncluded,
       ...(canEditCharges && {
         customCharges: customCharges.filter((c) => c.nameKo.trim() !== "" || c.rate > 0),
         excludedChargeTypeIds: excludedCharges.map((e) => e.chargeTypeId),
@@ -326,7 +329,7 @@ export function PublicQuoteForm({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conditionsKey, chargeEditsKey]);
+  }, [conditionsKey, chargeEditsKey, vatIncluded]);
 
   async function handleIssue() {
     setSaving(true);
@@ -631,6 +634,28 @@ export function PublicQuoteForm({
                   </span>
                 )
               )}
+              <div
+                role="radiogroup"
+                aria-label="부가세 표시"
+                className="inline-flex p-0.5 rounded-full bg-[var(--sidebar-bg)] text-[12.5px] font-medium"
+              >
+                {([false, true] as const).map((v) => (
+                  <button
+                    key={String(v)}
+                    type="button"
+                    role="radio"
+                    aria-checked={vatIncluded === v}
+                    onClick={() => setVatIncluded(v)}
+                    className={`px-3 h-8 rounded-full transition-colors ${
+                      vatIncluded === v
+                        ? "bg-white shadow-sm text-[var(--foreground)]"
+                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    }`}
+                  >
+                    부가세 {v ? "포함" : "별도"}
+                  </button>
+                ))}
+              </div>
               <Button
                 variant="secondary"
                 size="sm"
