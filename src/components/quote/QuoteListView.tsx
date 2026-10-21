@@ -287,7 +287,7 @@ export function QuoteListView({
                     <th className={`${QUOTE_CELL_X} py-3 font-medium whitespace-nowrap`}>인코텀즈</th>
                     <th className={`${QUOTE_CELL_X} py-3 font-medium whitespace-nowrap`}>담당자</th>
                     <th className={`${QUOTE_CELL_X} py-3 font-medium whitespace-nowrap`}>견적일</th>
-                    <th className={`${QUOTE_CELL_X} py-3 font-medium text-right whitespace-nowrap`}>합계</th>
+                    <th className={`${QUOTE_CELL_X} py-3 font-medium text-right whitespace-nowrap`}>컨테이너</th>
                     <th className="px-1.5 @min-[880px]:px-3 @min-[1000px]:px-4 py-3" />
                   </tr>
                 </thead>

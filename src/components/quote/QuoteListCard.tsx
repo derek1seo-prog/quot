@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { formatCurrency, formatDate, pairLabel, pairTotalsTitle } from "@/lib/format";
+import { containerSummary, formatDate, quoteTotalsTitle } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -68,15 +68,9 @@ export function QuoteListCard({
           {formatDate(quote.input.quoteDate)}
           {quote.input.preparedBy?.trim() ? ` · ${quote.input.preparedBy.trim()}` : ""}
         </span>
-        {pairLabel(quote) ? (
-          <span className="text-[12.5px] text-[var(--muted)]" title={pairTotalsTitle(quote)}>
-            {pairLabel(quote)}
-          </span>
-        ) : (
-          <span className="text-[13.5px] font-semibold text-[var(--foreground)]">
-            {formatCurrency(quote.result.column.grandTotalKrw, "KRW")}
-          </span>
-        )}
+        <span className="text-[13.5px] font-semibold text-[var(--foreground)]" title={quoteTotalsTitle(quote)}>
+          {containerSummary(quote)}
+        </span>
       </div>
     </div>
   );

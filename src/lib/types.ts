@@ -258,6 +258,8 @@ export interface QuoteInput {
   /** Non-EXW quotes: still charge LSS (저유황할증료, a 현지 부대비용 line
    * that EXW quotes always include) - "FOB + LSS". */
   includeLss?: boolean;
+  /** ALL-IN: region surcharges (BAF/CAF/CRS, EBS/CRS, ...) folded into the ocean freight. */
+  allIn?: boolean;
   exchangeRateOverride?: number; // if omitted, use current stored exchange rate
   /** Per-quote rate overrides, keyed by chargeTypeId (including "OCEAN_FREIGHT").
    * Lets a quote negotiate a one-off rate without touching the shared rate

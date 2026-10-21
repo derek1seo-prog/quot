@@ -153,7 +153,7 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     ct.transportModes.includes(input.transportMode),
   );
 
-  const applicableChargeTypes = chargeTypes
+  let applicableChargeTypes = chargeTypes
     .filter((ct) => ct.category !== "OCEAN_FREIGHT")
     // EXW_LOCAL charges (LSS, EXW LOCAL CHARGE) only apply when the quote's
     // own Incoterms is EXW - every other charge type here is filtered by
@@ -169,7 +169,26 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     .filter((ct) => ct.id !== EXW_LOCAL_CHARGE_TYPE_ID)
     .filter((ct) => chargeAppliesToRegion(ct, region.id))
     .filter((ct) => !excluded.has(ct.id));
-  const oceanFreightChargeType = chargeTypes.find((ct) => ct.id === "OCEAN_FREIGHT");
+  // ALL-IN: the region's surcharges (BAF/CAF/CRS, EBS/CRS, ...) aren't
+  // listed - their 단가 is folded into the ocean freight's instead.
+  const allInSurcharges = input.allIn
+    ? applicableChargeTypes.filter((ct) => ct.category === "SURCHARGE" && ct.unit === "CONTAINER")
+    : [];
+  if (allInSurcharges.length > 0) {
+    applicableChargeTypes = applicableChargeTypes.filter((ct) => !allInSurcharges.includes(ct));
+  }
+  const baseOceanFreightChargeType = chargeTypes.find((ct) => ct.id === "OCEAN_FREIGHT");
+  const oceanFreightChargeType =
+    baseOceanFreightChargeType && input.allIn
+      ? {
+          ...baseOceanFreightChargeType,
+          nameKo: "ALL-IN 운임",
+          name:
+            allInSurcharges.length > 0
+              ? `${baseOceanFreightChargeType.name} (incl. ${allInSurcharges.map((ct) => ct.id.replace(/_SURCHARGE$/, "")).join(", ")})`
+              : `${baseOceanFreightChargeType.name} (ALL-IN)`,
+        }
+      : baseOceanFreightChargeType;
   const exwLocalChargeType = excluded.has(EXW_LOCAL_CHARGE_TYPE_ID)
     ? undefined
     : chargeTypes.find((ct) => ct.id === EXW_LOCAL_CHARGE_TYPE_ID);
@@ -193,7 +212,27 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     if (!oceanFreight) {
       missingRate = true;
     } else if (oceanFreightChargeType) {
-      const rate = input.rateOverrides?.[oceanFreightChargeType.id] ?? oceanFreight.rate;
+      // ALL-IN: rate sheet O/F + each folded surcharge (same currency). An
+      // edited O/F 단가 is then the all-in figure itself.
+      let allInRate = oceanFreight.rate;
+      for (const ct of allInSurcharges) {
+        const r = chargeRates.find(
+          (cr) =>
+            cr.regionId === region.id &&
+            cr.chargeTypeId === ct.id &&
+            cr.containerTypeId === selection.containerTypeId,
+        );
+        if (!r) {
+          missingRate = true;
+          continue;
+        }
+        const sr = input.rateOverrides?.[ct.id] ?? r.rate;
+        if (r.currency === oceanFreight.currency) allInRate += sr;
+        else if (r.currency === "USD") allInRate += sr * exchangeRate;
+        else if (exchangeRate > 0) allInRate += sr / exchangeRate;
+      }
+      allInRate = Math.round(allInRate * 100) / 100;
+      const rate = input.rateOverrides?.[oceanFreightChargeType.id] ?? allInRate;
       const base = rate * qty;
       const vatAmount = 0;
       const amountForeign = base + vatAmount;

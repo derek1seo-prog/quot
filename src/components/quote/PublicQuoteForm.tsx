@@ -45,6 +45,8 @@ const DEFAULT_QUICK_CONTACT_NAME = "수입 담당자님";
 // Container-type button value for "20FT+40HQ": the first two container
 // types, one of each, side by side on one sheet (see QuotePairSheet).
 const PAIR_CONTAINER_ID = "__pair__";
+// 부산착 rates are entered as ALL-IN figures, so those quotes start with ALL-IN on.
+const ALL_IN_DEFAULT_DESTINATION_IDS = ["busan"];
 
 /** Shared by /quick-quote (and "/" for a non-admin visitor) and /my - a
  * single-screen (not the admin wizard's multi-step) rate-lookup form.
@@ -148,6 +150,10 @@ export function PublicQuoteForm({
   const [vatIncluded, setVatIncluded] = useState(false);
   // "FOB + LSS": a non-EXW quote that still charges LSS (EXW always does).
   const [includeLss, setIncludeLss] = useState(false);
+  // ALL-IN (surcharges folded into O/F): on by default for 부산착; a manual
+  // choice holds until the destination changes.
+  const [allInChoice, setAllInChoice] = useState<boolean | null>(null);
+  const allIn = allInChoice ?? ALL_IN_DEFAULT_DESTINATION_IDS.includes(destinationPortId);
   const [pendingRateEdits, setPendingRateEdits] = useState(0);
   // Admin-only per-quote charge edits (QuoteDocument's editor): extra lines
   // typed in, and standard lines removed from this quote.
@@ -264,6 +270,7 @@ export function PublicQuoteForm({
         : { container: { containerTypeId, quantity: containerQuantity }, rateOverrides: overrides }),
       vatIncluded,
       ...(lssApplies && includeLss && { includeLss: true }),
+      ...(allIn && { allIn: true }),
       ...(canEditCharges && {
         customCharges: customCharges.filter((c) => c.nameKo.trim() !== "" || c.rate > 0),
         excludedChargeTypeIds: excludedCharges.map((e) => e.chargeTypeId),
@@ -287,6 +294,7 @@ export function PublicQuoteForm({
     containerQuantity,
     debouncedQuickCustomerName,
     lssApplies && includeLss,
+    allIn,
   ]);
   const lastConditionsKey = useRef("");
   useEffect(() => {
@@ -560,7 +568,38 @@ export function PublicQuoteForm({
           </FieldGroup>
           <FieldGroup>
             <FieldLabel>도착항 (POD)</FieldLabel>
-            <PortCombobox value={destinationPortId} onChange={setDestinationPortId} options={podOptions} />
+            <PortCombobox
+              value={destinationPortId}
+              onChange={(id) => {
+                setDestinationPortId(id);
+                setAllInChoice(null);
+              }}
+              options={podOptions}
+            />
+            {destinationPortId && (
+              <label className="mt-2 flex items-center gap-2 cursor-pointer select-none text-[12.5px] text-[var(--foreground)]">
+                <input
+                  type="checkbox"
+                  checked={allIn}
+                  onChange={(e) => {
+                    setAllInChoice(e.target.checked);
+                    // An edited O/F 단가 meant the other basis - start over.
+                    const dropOf = (o: Record<string, number>) => {
+                      const next = { ...o };
+                      delete next.OCEAN_FREIGHT;
+                      return next;
+                    };
+                    setRateOverrides(dropOf);
+                    setPairedRateOverrides(dropOf);
+                  }}
+                  className="h-4 w-4 accent-[var(--accent)]"
+                />
+                <span>
+                  ALL-IN
+                  <span className="ml-1 text-[var(--muted)]">· 할증료(BAF·CAF·CRS 등)를 해상 운임에 포함해요</span>
+                </span>
+              </label>
+            )}
           </FieldGroup>
           <FieldGroup>
             <FieldLabel hint={mode === "quick" && !isAdmin ? "FOB 고정" : undefined}>선적 조건 (Incoterms)</FieldLabel>
