@@ -120,7 +120,9 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     getChargeRates(),
     input.customerName ? getCustomerByName(input.customerName.trim()) : Promise.resolve(undefined),
   ]);
-  const exchangeRate = input.exchangeRateOverride ?? currentExchangeRate?.rate ?? 0;
+  const rateOverride = Number(input.exchangeRateOverride);
+  const exchangeRate =
+    Number.isFinite(rateOverride) && rateOverride > 0 ? rateOverride : (currentExchangeRate?.rate ?? 0);
   // Per-quote edits: standard charges removed from this quote (ocean
   // freight is never removable) and extra lines typed in by an admin.
   const excluded = new Set((input.excludedChargeTypeIds ?? []).filter((id) => id !== "OCEAN_FREIGHT"));

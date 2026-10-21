@@ -154,7 +154,13 @@ export function PublicQuoteForm({
   const canEditCharges = isAdmin && mode === "quick";
   const [customCharges, setCustomCharges] = useState<CustomCharge[]>([]);
   const [excludedCharges, setExcludedCharges] = useState<ExcludedCharge[]>([]);
-  const liveEditsKey = JSON.stringify([customCharges, excludedCharges.map((e) => e.chargeTypeId)]);
+  // Admin's own USD→KRW rate for this quote; null = today's stored rate.
+  const [exchangeRateOverride, setExchangeRateOverride] = useState<number | null>(null);
+  const liveEditsKey = JSON.stringify([
+    customCharges,
+    excludedCharges.map((e) => e.chargeTypeId),
+    exchangeRateOverride,
+  ]);
   const chargeEditsKey = useDebouncedValue(liveEditsKey, 400);
   // The edits the shown totals were last calculated with - while it differs
   // from the live edits, totals are "반영 중", then briefly "반영됨".
@@ -261,6 +267,7 @@ export function PublicQuoteForm({
       ...(canEditCharges && {
         customCharges: customCharges.filter((c) => c.nameKo.trim() !== "" || c.rate > 0),
         excludedChargeTypeIds: excludedCharges.map((e) => e.chargeTypeId),
+        ...(exchangeRateOverride !== null && { exchangeRateOverride }),
       }),
     };
   }
@@ -645,7 +652,7 @@ export function PublicQuoteForm({
       {!calculating && !error && result && (
         <>
           {mode === "quick" && (
-            <div className="flex items-center justify-end gap-3 max-w-[900px] mx-auto">
+            <div className="flex flex-wrap items-center justify-end gap-3 max-w-[900px] mx-auto">
               {isAdmin && (pendingRateEdits > 0 || chargesPending) ? (
                 <span className="text-[12px] text-[var(--muted)] flex items-center gap-1.5">
                   <Loader2 size={13} className="animate-spin" /> {pendingRateEdits > 0 ? "단가" : "합계"} 반영 중...
@@ -656,6 +663,20 @@ export function PublicQuoteForm({
                     <Check size={13} /> 반영됨
                   </span>
                 )
+              )}
+              {canEditCharges && (
+                <ExchangeRateControl
+                  rate={result.exchangeRate}
+                  custom={exchangeRateOverride !== null}
+                  onCommit={(rate) => {
+                    setExchangeRateOverride(rate);
+                    notify(`환율 ₩${rate.toLocaleString()} 적용`);
+                  }}
+                  onReset={() => {
+                    setExchangeRateOverride(null);
+                    notify("오늘 환율로 되돌렸어요");
+                  }}
+                />
               )}
               <div
                 role="radiogroup"
@@ -780,5 +801,68 @@ export function PublicQuoteForm({
     )}
     <Toast message={toast} onDismiss={() => setToast(null)} />
     </>
+  );
+}
+
+/** Quick quote (admin): the USD→KRW rate this quote is calculated at. Shows
+ * the rate in use (today's stored rate until edited); typing commits on
+ * blur / Enter, Esc cancels. Once custom, "오늘 환율" goes back. */
+function ExchangeRateControl({
+  rate,
+  custom,
+  onCommit,
+  onReset,
+}: {
+  rate: number;
+  custom: boolean;
+  onCommit: (rate: number) => void;
+  onReset: () => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => {
+    if (draft === null) return;
+    const next = Math.round(Number(draft.replace(/,/g, "")) * 100) / 100;
+    setDraft(null);
+    if (Number.isFinite(next) && next > 0 && next !== rate) onCommit(next);
+  };
+  return (
+    <div
+      className={`inline-flex items-center gap-1 h-9 pl-3 pr-1 rounded-full text-[12.5px] font-medium ${
+        custom ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--sidebar-bg)] text-[var(--muted)]"
+      }`}
+    >
+      <label htmlFor="quote-exchange-rate" className="whitespace-nowrap">
+        환율 USD 1 = ₩
+      </label>
+      <input
+        id="quote-exchange-rate"
+        inputMode="decimal"
+        value={draft ?? rate.toLocaleString()}
+        onFocus={(e) => {
+          setDraft(String(rate));
+          requestAnimationFrame(() => e.target.select());
+        }}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Escape") {
+            setDraft(null);
+            requestAnimationFrame(() => (e.target as HTMLInputElement).blur());
+          }
+        }}
+        title={custom ? "직접 정한 환율" : "오늘 환율 (클릭해서 변경)"}
+        className="w-[72px] h-7 rounded-full bg-white px-2 text-[12.5px] tabular-nums text-[var(--foreground)] border border-transparent focus:border-[var(--accent)] focus:outline-none"
+      />
+      {custom && (
+        <button
+          type="button"
+          onClick={onReset}
+          className="h-7 px-2 rounded-full whitespace-nowrap hover:bg-white/70"
+        >
+          오늘 환율
+        </button>
+      )}
+    </div>
   );
 }

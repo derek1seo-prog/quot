@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
   if (session?.role !== "admin") {
     input.customCharges = undefined;
     input.excludedChargeTypeIds = undefined;
+    input.exchangeRateOverride = undefined;
   }
   if (input.pairedContainer) {
     input.container = { ...input.container, quantity: 1 };
