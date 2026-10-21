@@ -255,6 +255,9 @@ export interface QuoteInput {
   excludedChargeTypeIds?: string[];
   /** "부가세 포함": add VAT (10%) on the VAT-applicable lines to the total. */
   vatIncluded?: boolean;
+  /** Non-EXW quotes: still charge LSS (저유황할증료, a 현지 부대비용 line
+   * that EXW quotes always include) - "FOB + LSS". */
+  includeLss?: boolean;
   exchangeRateOverride?: number; // if omitted, use current stored exchange rate
   /** Per-quote rate overrides, keyed by chargeTypeId (including "OCEAN_FREIGHT").
    * Lets a quote negotiate a one-off rate without touching the shared rate

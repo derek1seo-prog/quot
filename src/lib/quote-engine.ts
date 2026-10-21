@@ -14,6 +14,7 @@ import {
   getOceanFreightRates,
   getPortById,
   getRegionById,
+  getRegions,
 } from "./data-store";
 import type {
   ChargeCatalogEntry,
@@ -31,6 +32,7 @@ import { VAT_APPLICABLE_CHARGE_TYPE_IDS, VAT_RATE } from "./vat";
 
 const INLAND_TRUCKING_CHARGE_TYPE_ID = "INLAND_TRUCKING";
 const EXW_LOCAL_CHARGE_TYPE_ID = "EXW_LOCAL_CHARGE";
+export const LSS_CHARGE_TYPE_ID = "LSS";
 
 /** Customer-specific inland trucking rate for a destination port + container type, if on file. */
 function getTruckingRate(
@@ -72,6 +74,13 @@ export function getApplicableLocalChargeTypes(
     // shipment, so it's never listed here for an admin to pre-register.
     .filter((ct) => ct.id !== EXW_LOCAL_CHARGE_TYPE_ID)
     .filter((ct) => chargeAppliesToRegion(ct, regionId));
+}
+
+/** Regions whose rate sheet has an LSS line - where "FOB + LSS" does anything. */
+export function getLssRegionIds(): string[] {
+  const lss = getChargeTypes().find((ct) => ct.id === LSS_CHARGE_TYPE_ID);
+  if (!lss) return [];
+  return lss.visibility.scope === "ALL" ? getRegions().map((r) => r.id) : lss.visibility.regionIds;
 }
 
 function round(n: number): number {
@@ -147,7 +156,11 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     // EXW_LOCAL charges (LSS, EXW LOCAL CHARGE) only apply when the quote's
     // own Incoterms is EXW - every other charge type here is filtered by
     // region/transport mode alone, this one by the quote itself.
-    .filter((ct) => ct.category !== "EXW_LOCAL" || input.incoterms === "EXW")
+    // ...or, for "FOB + LSS" quotes (input.includeLss), just the LSS line.
+    .filter(
+      (ct) =>
+        ct.category !== "EXW_LOCAL" || input.incoterms === "EXW" || (input.includeLss === true && ct.id === LSS_CHARGE_TYPE_ID),
+    )
     // EXW LOCAL CHARGE has no registered rate sheet entry (see
     // getApplicableLocalChargeTypes above) - it's resolved separately
     // below, the same way inland trucking bypasses this generic loop.

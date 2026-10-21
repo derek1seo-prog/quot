@@ -1,3 +1,4 @@
+import { getLssRegionIds } from "@/lib/quote-engine";
 import { PublicQuoteForm } from "@/components/quote/PublicQuoteForm";
 import { Card, CardContent } from "@/components/ui/Card";
 import {
@@ -56,6 +57,7 @@ export default async function MyQuotesPage() {
         preparedBy={defaultRep?.name ?? DEFAULT_SALES_REP_FALLBACK_NAME}
         preparedByEmail={defaultRep?.email}
         preparedByPhone={defaultRep?.phone}
+        lssRegionIds={getLssRegionIds()}
       />
 
       <h2 className="text-[19px] font-semibold tracking-tight text-[var(--foreground)] mt-12 mb-4">

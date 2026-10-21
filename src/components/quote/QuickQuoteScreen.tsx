@@ -1,5 +1,6 @@
 import { PublicQuoteForm } from "@/components/quote/PublicQuoteForm";
 import { getCompany, getContainerTypes, getCustomers, getPorts, getRegions, getSalesReps } from "@/lib/data-store";
+import { getLssRegionIds } from "@/lib/quote-engine";
 
 /** Shared by "/" (shown to anyone not logged in as admin) and "/quick-quote"
  * (reachable by admins too, as its own nav tab, alongside the full wizard).
@@ -42,6 +43,7 @@ export async function QuickQuoteScreen({ isAdmin }: { isAdmin: boolean }) {
         company={getCompany()}
         salesReps={salesReps}
         customers={customers}
+        lssRegionIds={getLssRegionIds()}
       />
     </div>
   );

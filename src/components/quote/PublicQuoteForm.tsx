@@ -66,6 +66,7 @@ export function PublicQuoteForm({
   preparedByPhone,
   salesReps = [],
   customers = [],
+  lssRegionIds = [],
 }: {
   mode: "quick" | "customer";
   /** True only for an authenticated admin session using the quick-quote
@@ -86,6 +87,8 @@ export function PublicQuoteForm({
   preparedByPhone?: string;
   salesReps?: SalesRep[];
   customers?: Customer[];
+  /** Regions with an LSS rate - where the "FOB + LSS" switch is offered. */
+  lssRegionIds?: string[];
 }) {
   const router = useRouter();
   const [originPortId, setOriginPortId] = useState("");
@@ -143,6 +146,8 @@ export function PublicQuoteForm({
   const [pairedRateOverrides, setPairedRateOverrides] = useState<Record<string, number>>({});
   // "부가세 포함" adds 10% VAT on the VAT-applicable (shaded) lines to the total.
   const [vatIncluded, setVatIncluded] = useState(false);
+  // "FOB + LSS": a non-EXW quote that still charges LSS (EXW always does).
+  const [includeLss, setIncludeLss] = useState(false);
   const [pendingRateEdits, setPendingRateEdits] = useState(0);
   // Admin-only per-quote charge edits (QuoteDocument's editor): extra lines
   // typed in, and standard lines removed from this quote.
@@ -219,6 +224,8 @@ export function PublicQuoteForm({
   const originPort = originPorts.find((p) => p.id === originPortId);
   const destinationPort = destinationPorts.find((p) => p.id === destinationPortId);
   const originLabel = originPort ? `${originPort.nameKo} (${originPort.name})` : "";
+  // The LSS switch only means something off-EXW, for a region with an LSS rate.
+  const lssApplies = incoterms !== "EXW" && Boolean(originPort?.regionId && lssRegionIds.includes(originPort.regionId));
   const destinationLabel = destinationPort ? `${destinationPort.nameKo} (${destinationPort.name})` : "";
 
   function buildInput(
@@ -250,6 +257,7 @@ export function PublicQuoteForm({
           }
         : { container: { containerTypeId, quantity: containerQuantity }, rateOverrides: overrides }),
       vatIncluded,
+      ...(lssApplies && includeLss && { includeLss: true }),
       ...(canEditCharges && {
         customCharges: customCharges.filter((c) => c.nameKo.trim() !== "" || c.rate > 0),
         excludedChargeTypeIds: excludedCharges.map((e) => e.chargeTypeId),
@@ -271,6 +279,7 @@ export function PublicQuoteForm({
     containerTypeId,
     containerQuantity,
     debouncedQuickCustomerName,
+    lssApplies && includeLss,
   ]);
   const lastConditionsKey = useRef("");
   useEffect(() => {
@@ -552,6 +561,20 @@ export function PublicQuoteForm({
               <Input value="FOB" disabled />
             ) : (
               <IncotermsSelect value={incoterms} onChange={setIncoterms} />
+            )}
+            {lssApplies && (
+              <label className="mt-2 flex items-center gap-2 cursor-pointer select-none text-[12.5px] text-[var(--foreground)]">
+                <input
+                  type="checkbox"
+                  checked={includeLss}
+                  onChange={(e) => setIncludeLss(e.target.checked)}
+                  className="h-4 w-4 accent-[var(--accent)]"
+                />
+                <span>
+                  LSS(저유황할증료) 추가
+                  <span className="ml-1 text-[var(--muted)]">· {incoterms}여도 현지 부대비용에 LSS만 넣어요</span>
+                </span>
+              </label>
             )}
           </FieldGroup>
           <FieldGroup>
