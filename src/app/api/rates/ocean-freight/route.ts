@@ -21,6 +21,10 @@ export async function PUT(req: NextRequest) {
     containerTypeId: string;
     rate: number;
   };
+  // Negative is allowed: an ALL-IN lane's O/F can sit below its surcharges.
+  if (typeof body.rate !== "number" || !Number.isFinite(body.rate)) {
+    return NextResponse.json({ error: "invalid rate" }, { status: 400 });
+  }
   const existing = (await getOceanFreightRates()).find(
     (r) =>
       r.portId === body.portId &&

@@ -2,10 +2,11 @@
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { containerSummary, formatDate, quoteTotalsTitle } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
+import { ContainerChips } from "./ContainerChips";
 
 // Density follows the table's own width (its wrapper is an @container), so
 // the one-line table fits next to the sidebar or on a tablet without
@@ -59,11 +60,8 @@ export function QuoteListRow({
         {quote.input.preparedBy?.trim() || "-"}
       </td>
       <td className={`${QUOTE_CELL_X} py-4 ${TEXT} text-[var(--muted)] whitespace-nowrap`}>{formatDate(quote.input.quoteDate)}</td>
-      <td
-        className={`${QUOTE_CELL_X} py-4 ${TEXT} font-medium text-right text-[var(--foreground)] whitespace-nowrap`}
-        title={quoteTotalsTitle(quote)}
-      >
-        {containerSummary(quote)}
+      <td className={`${QUOTE_CELL_X} py-3.5 whitespace-nowrap`}>
+        <ContainerChips quote={quote} />
       </td>
       <td className="px-1.5 @min-[880px]:px-3 @min-[1000px]:px-4 py-4 text-right">
         <button

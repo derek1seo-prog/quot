@@ -1,3 +1,4 @@
+import { ALL_IN_DEFAULT_DESTINATION_IDS } from "./all-in";
 import { getContainerTypes, getDestinationPorts, getPorts } from "./data-store";
 import { todayIso } from "./format";
 import { calculateQuote } from "./quote-engine";
@@ -51,6 +52,9 @@ export async function getRateOverviewByRegion(regionId: string): Promise<RateOve
               destinationPortId,
               incoterms: "FOB",
               container: { containerTypeId: ct.id, quantity: 1 },
+              // Same ALL-IN default as a quote, so a 부산착 lane shows its
+              // all-in O/F rather than a raw (possibly negative) rate.
+              allIn: ALL_IN_DEFAULT_DESTINATION_IDS.includes(destinationPortId),
             });
             const missing = result.column.missingRate;
             const oceanFreightItem = result.column.lineItems.find(

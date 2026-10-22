@@ -13,6 +13,7 @@ import { QuotePairSheet } from "./QuotePairSheet";
 import { Toast, type ToastMessage } from "@/components/ui/Toast";
 import { QuoteResultSkeleton } from "./QuoteResultSkeleton";
 import { SalesRepCombobox } from "./SalesRepCombobox";
+import { ALL_IN_DEFAULT_DESTINATION_IDS } from "@/lib/all-in";
 import { endOfMonthIso, todayIso } from "@/lib/format";
 import type { ExcludedCharge, QuoteChargeEditor } from "@/lib/custom-charges";
 import { useDebouncedValue, useRememberedSalesRepId } from "@/lib/hooks";
@@ -45,8 +46,6 @@ const DEFAULT_QUICK_CONTACT_NAME = "수입 담당자님";
 // Container-type button value for "20FT+40HQ": the first two container
 // types, one of each, side by side on one sheet (see QuotePairSheet).
 const PAIR_CONTAINER_ID = "__pair__";
-// 부산착 rates are entered as ALL-IN figures, so those quotes start with ALL-IN on.
-const ALL_IN_DEFAULT_DESTINATION_IDS = ["busan"];
 
 /** Shared by /quick-quote (and "/" for a non-admin visitor) and /my - a
  * single-screen (not the admin wizard's multi-step) rate-lookup form.

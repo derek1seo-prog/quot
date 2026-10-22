@@ -184,6 +184,8 @@ export function RegionRatesEditor({
           <CardTitle>기본 운임 (Ocean Freight)</CardTitle>
           <CardDescription>
             항구별 · 컨테이너 타입별 해상 운임 (USD). 셀을 클릭해 바로 수정하고, 포커스를 벗어나면 자동 저장됩니다.
+            <br />
+            ALL-IN 운임을 맞추려면 마이너스(-)로 입력할 수 있어요. (예: -200 + 할증료 520 = ALL-IN 320)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -273,6 +275,7 @@ export function RegionRatesEditor({
                               >
                                 <RateCell
                                   value={existing?.rate ?? null}
+                                  allowNegative
                                   onSave={(v) => saveOceanFreight(port.id, dest.portId, ct.id, v)}
                                 />
                               </td>
@@ -469,6 +472,7 @@ function MobilePortRateCard({
                     <span className="text-[11px] text-[var(--muted)]">{ct.label}</span>
                     <RateCell
                       value={existing?.rate ?? null}
+                      allowNegative
                       onSave={(v) => onSave(port.id, dest.portId, ct.id, v)}
                     />
                   </div>

@@ -3,10 +3,11 @@
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDeleteQuote } from "@/lib/useDeleteQuote";
-import { containerSummary, formatDate, quoteTotalsTitle } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import type { Quote } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
+import { ContainerChips } from "./ContainerChips";
 
 /** Mobile (< sm) equivalent of QuoteListRow's <tr> - same fields and the
  * same delete action, laid out as a card instead of a table row. The
@@ -68,9 +69,7 @@ export function QuoteListCard({
           {formatDate(quote.input.quoteDate)}
           {quote.input.preparedBy?.trim() ? ` · ${quote.input.preparedBy.trim()}` : ""}
         </span>
-        <span className="text-[13.5px] font-semibold text-[var(--foreground)]" title={quoteTotalsTitle(quote)}>
-          {containerSummary(quote)}
-        </span>
+        <ContainerChips quote={quote} />
       </div>
     </div>
   );

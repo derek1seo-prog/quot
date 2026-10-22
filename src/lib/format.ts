@@ -67,20 +67,6 @@ export function pairLabel(quote: Pick<Quote, "result" | "pairedResult">): string
     : null;
 }
 
-/** 견적 목록: the containers a quote was made for - "20FT 2대", or
- * "20FT 1대 + 40HQ 1대" for a 20FT+40HQ quote. */
-export function containerSummary(quote: Pick<Quote, "input" | "result" | "pairedResult">): string {
-  const main = `${quote.result.column.containerLabel} ${quote.input.container.quantity}대`;
-  return quote.pairedResult
-    ? `${main} + ${quote.pairedResult.column.containerLabel} ${quote.input.pairedContainer?.quantity ?? 1}대`
-    : main;
-}
-
-/** Hover text with the quote's total(s). */
-export function quoteTotalsTitle(quote: Pick<Quote, "result" | "pairedResult">): string {
-  return pairTotalsTitle(quote) ?? `합계 ${formatCurrency(quote.result.column.grandTotalKrw, "KRW")}`;
-}
-
 /** Hover text with both totals of a 20FT+40HQ quote. */
 export function pairTotalsTitle(quote: Pick<Quote, "result" | "pairedResult">): string | undefined {
   if (!quote.pairedResult) return undefined;

@@ -12,6 +12,7 @@ export function RateCell({
   onSave,
   placeholder = "미등록",
   debounceMs,
+  allowNegative = false,
 }: {
   value: number | null;
   onSave: (value: number) => Promise<void>;
@@ -21,6 +22,9 @@ export function RateCell({
    * Omitted (the admin rates table's default) keeps the original
    * blur-only commit. */
   debounceMs?: number;
+  /** O/F rate sheet: a leading "-" is allowed, so an ALL-IN lane's O/F can
+   * sit below its surcharges (e.g. -200 + 520 = 320). */
+  allowNegative?: boolean;
 }) {
   const [draft, setDraft] = useState<string>(value != null ? String(value) : "");
   const [focused, setFocused] = useState(false);
@@ -45,8 +49,14 @@ export function RateCell({
     }
   }
 
+  const isNumber = (d: string) => d !== "" && d !== "-";
+
   function commit() {
-    if (draft === "") return;
+    if (!isNumber(draft)) {
+      // A lone "-" (or a cleared cell) reverts instead of saving.
+      setDraft(value != null ? String(value) : "");
+      return;
+    }
     commitValue(Number(draft));
   }
 
@@ -57,13 +67,14 @@ export function RateCell({
     }
   }
 
-  const displayValue = focused ? draft : draft !== "" ? formatNumber(Number(draft)) : "";
+  const displayValue = focused ? draft : isNumber(draft) ? formatNumber(Number(draft)) : "";
 
   return (
     <div className="relative">
       <input
         type="text"
-        inputMode="numeric"
+        // The mobile numeric pad has no minus key.
+        inputMode={allowNegative ? "text" : "numeric"}
         value={displayValue}
         placeholder={placeholder}
         onFocus={(e) => {
@@ -76,11 +87,12 @@ export function RateCell({
           requestAnimationFrame(() => el.select());
         }}
         onChange={(e) => {
-          const next = e.target.value.replace(/[^0-9]/g, "");
+          const digits = e.target.value.replace(/[^0-9]/g, "");
+          const next = allowNegative && e.target.value.trimStart().startsWith("-") ? `-${digits}` : digits;
           setDraft(next);
           if (debounceMs != null) {
             clearDebounce();
-            if (next !== "") {
+            if (isNumber(next)) {
               debounceTimer.current = setTimeout(() => commitValue(Number(next)), debounceMs);
             }
           }
@@ -101,6 +113,7 @@ export function RateCell({
           state !== "idle" && "pr-7",
           "border-[var(--border)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]",
           draft === "" && "text-[var(--muted)]",
+          isNumber(draft) && Number(draft) < 0 && "text-[var(--danger)]",
         )}
       />
       {state === "saving" && (
