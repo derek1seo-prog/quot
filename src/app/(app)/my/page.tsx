@@ -39,10 +39,10 @@ export default async function MyQuotesPage() {
   const defaultRep = await getSalesRepById(DEFAULT_SALES_REP_ID);
 
   return (
-    <div className="max-w-[1000px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
-      <p className="text-[13px] font-medium text-[var(--accent)] mb-2">{customer.name}</p>
-      <h1 className="text-[28px] font-semibold tracking-tight mb-1">견적 조회</h1>
-      <p className="text-[13px] text-[var(--muted)] mb-8">
+    <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-20 py-5 sm:py-10 lg:py-16">
+      <p className="text-[12px] sm:text-[13px] font-medium text-[var(--accent)] mb-1 sm:mb-2">{customer.name}</p>
+      <h1 className="text-[22px] sm:text-[28px] font-semibold tracking-tight mb-1">견적 조회</h1>
+      <p className="text-[12.5px] sm:text-[13px] text-[var(--muted)] mb-5 sm:mb-8">
         조건을 선택하면 귀사에 적용되는 운임으로 견적을 바로 확인할 수 있습니다.
       </p>
 
@@ -69,7 +69,7 @@ export default async function MyQuotesPage() {
             <p className="text-[15px] font-medium text-[var(--foreground)]">
               발급된 견적이 아직 없습니다.
             </p>
-            <p className="text-[13px] text-[var(--muted)] mt-1">
+            <p className="text-[12.5px] sm:text-[13px] text-[var(--muted)] mt-1">
               위에서 조건을 선택하고 견적서를 발급해보세요.
             </p>
           </CardContent>

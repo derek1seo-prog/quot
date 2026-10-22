@@ -255,7 +255,8 @@ export function ChatWidget({ companyName }: { companyName: string }) {
         </div>
       )}
 
-      {/* Launcher - morphs between the labelled pill and a round close button */}
+      {/* Launcher - morphs between the labelled pill and a round close button
+          (on a phone it stays a round icon button, off the content) */}
       <button
         type="button"
         onClick={() => (open ? closePanel() : openPanel())}
@@ -263,7 +264,7 @@ export function ChatWidget({ companyName }: { companyName: string }) {
         aria-expanded={open}
         className={cn(
           "fixed z-[45] bottom-5 right-5 sm:bottom-6 sm:right-6 h-12 rounded-full bg-gradient-to-br from-[var(--accent)] to-[#3b5bdb] text-white shadow-[0_12px_30px_-8px_rgba(37,99,235,0.65)] transition-[width,padding,filter,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:brightness-110 active:scale-[0.96] animate-chat-launcher-in",
-          open ? "w-12 px-0" : "w-[166px] px-4",
+          open ? "w-12 px-0" : "max-sm:w-12 max-sm:px-0 w-[166px] px-4",
           !open && data.unread > 0 && "animate-chat-pulse",
           panel !== "closed" && "max-sm:hidden",
         )}
@@ -285,7 +286,7 @@ export function ChatWidget({ companyName }: { companyName: string }) {
               )}
             />
           </span>
-          <span className={cn("text-[14px] font-semibold transition-all duration-200", open ? "w-0 opacity-0" : "opacity-100")}>
+          <span className={cn("text-[14px] font-semibold transition-all duration-200", open ? "w-0 opacity-0" : "opacity-100 max-sm:hidden")}>
             실시간 상담하기
           </span>
         </span>

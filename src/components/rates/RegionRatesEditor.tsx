@@ -433,7 +433,7 @@ function MobilePortRateCard({
   onSaveNote: (notes: string, entries: CarrierEntry[]) => Promise<void>;
 }) {
   return (
-    <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] p-4">
+    <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] p-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-medium text-[var(--foreground)] text-[14px]">{port.nameKo}</p>
@@ -460,26 +460,29 @@ function MobilePortRateCard({
           </button>
         </div>
       </div>
-      <div className="mt-3 space-y-3">
+      {/* One row per destination, container types as columns (labelled once). */}
+      <div className="mt-2.5 grid grid-cols-[3rem_1fr_1fr] items-center gap-x-2 gap-y-1.5">
+        <span />
+        {containerTypes.map((ct) => (
+          <span key={ct.id} className="text-[11px] text-[var(--muted)] text-center">
+            {ct.label}
+          </span>
+        ))}
         {destinationPorts.map((dest) => (
-          <div key={dest.portId}>
-            <p className="text-[11px] text-[var(--muted)] uppercase tracking-wide mb-1.5">{dest.label}</p>
-            <div className="grid grid-cols-2 gap-2">
-              {containerTypes.map((ct) => {
-                const existing = findRate(port.id, dest.portId, ct.id);
-                return (
-                  <div key={ct.id}>
-                    <span className="text-[11px] text-[var(--muted)]">{ct.label}</span>
-                    <RateCell
-                      value={existing?.rate ?? null}
-                      allowNegative
-                      onSave={(v) => onSave(port.id, dest.portId, ct.id, v)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <Fragment key={dest.portId}>
+            <span className="text-[12.5px] text-[var(--foreground)]">{dest.label}</span>
+            {containerTypes.map((ct) => {
+              const existing = findRate(port.id, dest.portId, ct.id);
+              return (
+                <RateCell
+                  key={ct.id}
+                  value={existing?.rate ?? null}
+                  allowNegative
+                  onSave={(v) => onSave(port.id, dest.portId, ct.id, v)}
+                />
+              );
+            })}
+          </Fragment>
         ))}
       </div>
       {expanded && (

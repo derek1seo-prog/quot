@@ -19,19 +19,20 @@ export default async function QuotesListPage({
   const portNameById = Object.fromEntries(getPorts().map((p) => [p.id, p.nameKo]));
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-20 py-5 sm:py-10 lg:py-16">
+      <div className="flex items-end sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-8">
         <div className="animate-dashboard-fade-up">
-          <p className="text-[13px] font-medium text-[var(--accent)] mb-2">견적 관리</p>
-          <h1 className="text-[28px] font-semibold tracking-tight">견적 목록</h1>
+          <p className="text-[12px] sm:text-[13px] font-medium text-[var(--accent)] mb-1 sm:mb-2">견적 관리</p>
+          <h1 className="text-[22px] sm:text-[28px] font-semibold tracking-tight">견적 목록</h1>
         </div>
         <LinkButton
           href="/quick-quote"
           icon={<FilePlus2 size={16} />}
-          className="animate-dashboard-fade-up"
+          className="animate-dashboard-fade-up max-sm:h-9 max-sm:px-3.5 max-sm:text-[13px]"
           style={{ animationDelay: "80ms" }}
         >
-          새 견적 만들기
+          <span className="sm:hidden">새 견적</span>
+          <span className="max-sm:hidden">새 견적 만들기</span>
         </LinkButton>
       </div>
 

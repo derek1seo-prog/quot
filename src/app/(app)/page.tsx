@@ -15,10 +15,14 @@ import { formatCurrency, formatDate, pairLabel, pairTotalsTitle } from "@/lib/fo
 import { decodeSessionCookie } from "@/lib/session";
 import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
+import { ContainerChips } from "@/components/quote/ContainerChips";
 import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 
 export const dynamic = "force-dynamic";
+
+// Phone: the two hero buttons share one row, at a normal button size.
+const MOBILE_HERO_BUTTON = "max-sm:w-full max-sm:h-11 max-sm:px-3 max-sm:text-[14px]";
 
 export default async function DashboardPage() {
   const session = decodeSessionCookie(await cookies());
@@ -174,36 +178,36 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-10 lg:mb-14">
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-20 py-5 sm:py-10 lg:py-16">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 sm:gap-6 mb-5 sm:mb-10 lg:mb-14">
         <div className="animate-dashboard-fade-up">
-          <p className="text-[13px] font-medium text-[var(--accent)] mb-2">
+          <p className="text-[12px] sm:text-[13px] font-medium text-[var(--accent)] mb-1 sm:mb-2">
             Dashboard <span className="text-[var(--muted)] font-normal">· {todayLabel}</span>
           </p>
-          <h1 className="text-[32px] lg:text-[36px] font-semibold tracking-tight text-[var(--foreground)]">
+          <h1 className="text-[24px] sm:text-[32px] lg:text-[36px] font-semibold tracking-tight text-[var(--foreground)]">
             수출입 포워딩 견적
           </h1>
-          <p className="text-[15px] text-[var(--muted)] mt-2 max-w-xl">
+          <p className="max-sm:hidden text-[15px] text-[var(--muted)] mt-2 max-w-xl">
             출발지와 컨테이너 타입만 선택하면 운임과 부대비용이 자동으로 계산되어,
             바로 전달 가능한 견적서가 만들어집니다.
           </p>
         </div>
-        <div className="flex gap-2 animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
+        <div className="grid grid-cols-2 sm:flex gap-2 animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>
           <div className="relative">
-            <LinkButton href="/quick-quote" size="lg" icon={<Zap size={18} />}>
-              빠른 견적 만들기
+            <LinkButton href="/quick-quote" size="lg" icon={<Zap size={18} />} className={MOBILE_HERO_BUTTON}>
+              빠른 견적<span className="max-sm:hidden"> 만들기</span>
             </LinkButton>
             <Badge tone="accent" className="absolute -top-2 -right-2 shadow-sm">
               신버전
             </Badge>
           </div>
-          <LinkButton href="/quotes/new" variant="secondary" size="lg" icon={<FilePlus2 size={18} />}>
-            새 견적 만들기
+          <LinkButton href="/quotes/new" variant="secondary" size="lg" icon={<FilePlus2 size={18} />} className={MOBILE_HERO_BUTTON}>
+            새 견적<span className="max-sm:hidden"> 만들기</span>
           </LinkButton>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5 mb-10 lg:mb-14">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 mb-6 sm:mb-10 lg:mb-14">
         {dashboardCards.map((c, i) =>
           c.kind === "stat" ? (
             <Link
@@ -212,11 +216,11 @@ export default async function DashboardPage() {
               className="animate-dashboard-fade-up"
               style={{ animationDelay: `${140 + i * 50}ms` }}
             >
-              <Card className="relative overflow-hidden p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+              <Card className="relative overflow-hidden p-3.5 sm:p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                 {c.trend && <CardBackdropTrend values={c.trend} />}
                 <div className="relative">
-                  <div className="flex items-center justify-between gap-2 mb-6">
-                    <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
+                  <div className="flex items-center justify-between gap-2 mb-3 sm:mb-6">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
                       {c.icon}
                     </div>
                     {c.chip && (
@@ -233,16 +237,16 @@ export default async function DashboardPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
+                  <p className="text-[17px] sm:text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
                     {c.countUp ? (
                       <CountUpStat value={c.countUp.value} prefix={c.countUp.prefix} suffix={c.countUp.suffix} />
                     ) : (
                       c.value
                     )}
                   </p>
-                  <p className="text-[13px] text-[var(--muted)] mt-0.5">{c.label}</p>
+                  <p className="text-[12.5px] sm:text-[13px] text-[var(--muted)] mt-0.5">{c.label}</p>
                   {c.sublabel && (
-                    <p className="text-[12px] text-[var(--muted)]/70 mt-0.5">{c.sublabel}</p>
+                    <p className="text-[11.5px] sm:text-[12px] text-[var(--muted)]/70 mt-0.5">{c.sublabel}</p>
                   )}
                 </div>
               </Card>
@@ -260,9 +264,9 @@ export default async function DashboardPage() {
               className={`animate-dashboard-fade-up ${i === 2 ? "xl:border-l xl:border-[var(--border-subtle)] xl:pl-5" : ""}`}
               style={{ animationDelay: `${140 + i * 50}ms` }}
             >
-              <Card className="p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
+              <Card className="p-3.5 sm:p-5 h-full transition-all duration-200 ease-out hover:border-[var(--accent)]/50 hover:bg-[var(--accent-soft)]/40 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                <div className="flex items-center justify-between mb-3 sm:mb-6">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
                     {c.icon}
                   </div>
                   {c.internal ? (
@@ -271,24 +275,24 @@ export default async function DashboardPage() {
                     <ExternalLink size={14} className="text-[var(--muted)]" />
                   )}
                 </div>
-                <p className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
+                <p className="text-[17px] sm:text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
                   {c.label}
                 </p>
-                <p className="text-[13px] text-[var(--muted)] mt-0.5">{c.sublabel}</p>
+                <p className="text-[12.5px] sm:text-[13px] text-[var(--muted)] mt-0.5 line-clamp-2">{c.sublabel}</p>
               </Card>
             </a>
           ),
         )}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4 lg:gap-5 mb-10 lg:mb-14">
-        <Card className="p-5 flex flex-col animate-dashboard-fade-up" style={{ animationDelay: "300ms" }}>
+      <div className="grid lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mb-6 sm:mb-10 lg:mb-14">
+        <Card className="p-4 sm:p-5 flex flex-col animate-dashboard-fade-up" style={{ animationDelay: "300ms" }}>
           <p className="text-[13px] font-medium text-[var(--muted)] mb-3">
             견적 추이 <span className="font-normal">· 최근 14일</span>
           </p>
           <QuoteTrendBars data={trendData} previousTotal={trendPreviousTotal} />
         </Card>
-        <Card className="p-5 animate-dashboard-fade-up" style={{ animationDelay: "330ms" }}>
+        <Card className="p-4 sm:p-5 animate-dashboard-fade-up" style={{ animationDelay: "330ms" }}>
           <p className="text-[13px] font-medium text-[var(--muted)] mb-3">
             많이 견적한 구간 <span className="font-normal">· 최근 30일</span>
           </p>
@@ -297,10 +301,10 @@ export default async function DashboardPage() {
       </div>
 
       <div
-        className="flex items-center justify-between mb-4 animate-dashboard-fade-up"
+        className="flex items-center justify-between mb-3 sm:mb-4 animate-dashboard-fade-up"
         style={{ animationDelay: "340ms" }}
       >
-        <h2 className="text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
+        <h2 className="text-[17px] sm:text-[19px] font-semibold tracking-tight text-[var(--foreground)]">
           최근 견적
         </h2>
         <Link
@@ -386,33 +390,23 @@ export default async function DashboardPage() {
               <Link
                 key={q.id}
                 href={`/quotes/${q.id}`}
-                className="block px-6 py-4 active:bg-[var(--sidebar-bg)]/50 animate-dashboard-fade-up"
+                className="block px-4 py-3 active:bg-[var(--sidebar-bg)]/60 animate-dashboard-fade-up"
                 style={{ animationDelay: `${420 + i * 35}ms` }}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[13.5px] font-medium text-[var(--accent)]">
-                    {q.quoteNumber}
-                  </span>
-                  <span className="text-[12px] text-[var(--muted)]">
-                    {routeLabel(q.input.originPortId, q.input.destinationPortId)}
-                  </span>
+                  <span className="text-[13.5px] font-semibold text-[var(--accent)]">{q.quoteNumber}</span>
+                  <ContainerChips quote={q} />
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[13.5px] text-[var(--foreground)]">{q.input.customerName}</p>
-                  <Badge tone="neutral">{q.input.incoterms}</Badge>
+                <div className="flex items-center gap-1.5 mt-1 min-w-0">
+                  <p className="text-[14px] font-medium text-[var(--foreground)] truncate">{q.input.customerName || "-"}</p>
+                  <Badge tone="neutral" className="shrink-0">
+                    {q.input.incoterms}
+                  </Badge>
                 </div>
-                <div className="flex items-center justify-between mt-1.5">
-                  <span className="text-[12px] text-[var(--muted)]">
-                    {formatDate(q.input.quoteDate)}
-                  </span>
-                  {pairLabel(q) ? (
-                    <span className="text-[12.5px] text-[var(--muted)]">{pairLabel(q)}</span>
-                  ) : (
-                    <span className="text-[13.5px] font-semibold text-[var(--foreground)]">
-                      {formatCurrency(q.result.column.grandTotalKrw, "KRW")}
-                    </span>
-                  )}
-                </div>
+                <p className="mt-0.5 truncate text-[12px] text-[var(--muted)]">
+                  {routeLabel(q.input.originPortId, q.input.destinationPortId)} · {formatDate(q.input.quoteDate)}
+                  {q.input.preparedBy?.trim() ? ` · ${q.input.preparedBy.trim()}` : ""}
+                </p>
               </Link>
             ))}
           </div>

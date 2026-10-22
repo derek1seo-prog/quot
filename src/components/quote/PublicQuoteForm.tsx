@@ -440,7 +440,7 @@ export function PublicQuoteForm({
   return (
     <>
     <div className="space-y-6 no-print">
-      <Card className="p-6 sm:p-8">
+      <Card className="p-4 sm:p-8">
         {mode === "customer" && lockedCustomer && (
           <div className="grid sm:grid-cols-2 gap-4 mb-6 pb-6 border-b border-[var(--border-subtle)]">
             <FieldGroup>
@@ -560,7 +560,7 @@ export function PublicQuoteForm({
           </div>
         )}
 
-        <div className="grid sm:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
           <FieldGroup>
             <FieldLabel>출발항 (POL)</FieldLabel>
             <PortCombobox value={originPortId} onChange={setOriginPortId} options={polOptions} />
@@ -624,7 +624,8 @@ export function PublicQuoteForm({
           </FieldGroup>
           <FieldGroup>
             <FieldLabel>컨테이너 타입</FieldLabel>
-            <div className="flex gap-2">
+            {/* Phone: the type buttons get the full row, 수량 its own line. */}
+            <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1 flex gap-2">
                 {[
                   ...containerTypes,
@@ -655,16 +656,21 @@ export function PublicQuoteForm({
                   );
                 })}
               </div>
-              <Input
-                type="number"
-                min={1}
-                value={pairMode ? 1 : containerQuantity}
-                disabled={pairMode}
-                title={pairMode ? "20FT+40HQ는 컨테이너 1개 기준입니다" : undefined}
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => setContainerQuantity(Math.max(1, Number(e.target.value) || 1))}
-                className="w-20 text-center"
-              />
+              <label className="flex items-center gap-2">
+                <span className="sm:hidden text-[13px] text-[var(--muted)]">수량</span>
+                <Input
+                  type="number"
+                  min={1}
+                  value={pairMode ? 1 : containerQuantity}
+                  disabled={pairMode}
+                  title={pairMode ? "20FT+40HQ는 컨테이너 1개 기준입니다" : undefined}
+                  aria-label="수량"
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => setContainerQuantity(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-20 text-center"
+                />
+                {pairMode && <span className="sm:hidden text-[12px] text-[var(--muted)]">컨테이너 1개 기준</span>}
+              </label>
             </div>
           </FieldGroup>
         </div>
@@ -690,14 +696,15 @@ export function PublicQuoteForm({
       {!calculating && !error && result && (
         <>
           {mode === "quick" && (
-            <div className="flex flex-wrap items-center justify-end gap-3 max-w-[900px] mx-auto">
+            // Phone: 환율 gets its own full row, then 부가세 + 인쇄 share one.
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 max-w-[900px] mx-auto">
               {isAdmin && (pendingRateEdits > 0 || chargesPending) ? (
-                <span className="text-[12px] text-[var(--muted)] flex items-center gap-1.5">
+                <span className="text-[12px] text-[var(--muted)] flex items-center gap-1.5 max-sm:w-full max-sm:justify-end">
                   <Loader2 size={13} className="animate-spin" /> {pendingRateEdits > 0 ? "단가" : "합계"} 반영 중...
                 </span>
               ) : (
                 showApplied && (
-                  <span className="text-[12px] font-medium text-[var(--success)] flex items-center gap-1 animate-dropdown-panel">
+                  <span className="text-[12px] font-medium text-[var(--success)] flex items-center gap-1 animate-dropdown-panel max-sm:w-full max-sm:justify-end">
                     <Check size={13} /> 반영됨
                   </span>
                 )
@@ -719,7 +726,7 @@ export function PublicQuoteForm({
               <div
                 role="radiogroup"
                 aria-label="부가세 표시"
-                className="inline-flex p-0.5 rounded-full bg-[var(--sidebar-bg)] text-[12.5px] font-medium"
+                className="inline-flex max-sm:flex-1 p-0.5 rounded-full bg-[var(--sidebar-bg)] text-[12.5px] font-medium"
               >
                 {([false, true] as const).map((v) => (
                   <button
@@ -728,7 +735,7 @@ export function PublicQuoteForm({
                     role="radio"
                     aria-checked={vatIncluded === v}
                     onClick={() => setVatIncluded(v)}
-                    className={`px-3 h-8 rounded-full transition-colors ${
+                    className={`max-sm:flex-1 px-3 h-8 max-sm:h-9 rounded-full transition-colors ${
                       vatIncluded === v
                         ? "bg-white shadow-sm text-[var(--foreground)]"
                         : "text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -743,6 +750,7 @@ export function PublicQuoteForm({
                 size="sm"
                 onClick={handleQuickPrint}
                 disabled={saving || pendingRateEdits > 0 || chargesPending}
+                className="max-sm:h-10 max-sm:px-4"
                 icon={saving ? <Loader2 size={15} className="animate-spin" /> : <Printer size={15} />}
               >
                 {saving ? "저장 중..." : "인쇄"}
@@ -865,7 +873,7 @@ function ExchangeRateControl({
   };
   return (
     <div
-      className={`inline-flex items-center gap-1 h-9 pl-3 pr-1 rounded-full text-[12.5px] font-medium ${
+      className={`inline-flex max-sm:w-full items-center gap-1 h-9 pl-3 pr-1 rounded-full text-[12.5px] font-medium ${
         custom ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--sidebar-bg)] text-[var(--muted)]"
       }`}
     >
@@ -890,7 +898,7 @@ function ExchangeRateControl({
           }
         }}
         title={custom ? "직접 정한 환율" : "오늘 환율 (클릭해서 변경)"}
-        className="w-[72px] h-7 rounded-full bg-white px-2 text-[12.5px] tabular-nums text-[var(--foreground)] border border-transparent focus:border-[var(--accent)] focus:outline-none"
+        className="w-[72px] max-sm:flex-1 h-7 rounded-full bg-white px-2 text-[16px] sm:text-[12.5px] max-sm:text-right tabular-nums text-[var(--foreground)] border border-transparent focus:border-[var(--accent)] focus:outline-none"
       />
       {custom && (
         <button

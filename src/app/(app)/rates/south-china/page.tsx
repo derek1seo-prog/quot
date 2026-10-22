@@ -31,11 +31,11 @@ export default async function SouthChinaRatesPage() {
   const portNotes = allPortNotes.filter((n) => ports.some((p) => p.id === n.portId));
 
   return (
-    <div className="max-w-[1100px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
+    <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-20 py-5 sm:py-10 lg:py-16">
       <div className="animate-dashboard-fade-up">
-        <p className="text-[13px] font-medium text-[var(--accent)] mb-2">요율 관리</p>
-        <h1 className="text-[28px] font-semibold tracking-tight mb-1">{region?.nameKo ?? "남중국"}</h1>
-        <p className="text-[13px] text-[var(--muted)] mb-8">
+        <p className="text-[12px] sm:text-[13px] font-medium text-[var(--accent)] mb-1 sm:mb-2">요율 관리</p>
+        <h1 className="text-[22px] sm:text-[28px] font-semibold tracking-tight mb-1">{region?.nameKo ?? "남중국"}</h1>
+        <p className="text-[12.5px] sm:text-[13px] text-[var(--muted)] mb-5 sm:mb-8">
           EBS · CRS 부대비용이 적용되는 권역입니다.
         </p>
       </div>

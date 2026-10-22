@@ -253,9 +253,9 @@ export default function NewQuotePage() {
   }
 
   return (
-    <div className="max-w-[1000px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
-      <p className="text-[13px] font-medium text-[var(--accent)] mb-2">새 견적 만들기</p>
-      <h1 className="text-[28px] font-semibold tracking-tight mb-8">수출입 FCL 견적</h1>
+    <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-20 py-5 sm:py-10 lg:py-16">
+      <p className="text-[12px] sm:text-[13px] font-medium text-[var(--accent)] mb-1 sm:mb-2">새 견적 만들기</p>
+      <h1 className="text-[22px] sm:text-[28px] font-semibold tracking-tight mb-5 sm:mb-8">수출입 FCL 견적</h1>
 
       <StepIndicator steps={steps} current={step} />
 

@@ -22,11 +22,11 @@ export async function QuickQuoteScreen({ isAdmin }: { isAdmin: boolean }) {
   ]);
 
   return (
-    <div className="max-w-[1000px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16 print:max-w-none print:m-0 print:py-0 print:px-0">
+    <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-20 py-5 sm:py-10 lg:py-16 print:max-w-none print:m-0 print:py-0 print:px-0">
       <div className="no-print">
-        <p className="text-[13px] font-medium text-[var(--accent)] mb-2">빠른 견적 만들기</p>
-        <h1 className="text-[28px] font-semibold tracking-tight mb-1">견적 조회</h1>
-        <p className="text-[13px] text-[var(--muted)] mb-8">
+        <p className="text-[12px] sm:text-[13px] font-medium text-[var(--accent)] mb-1 sm:mb-2">빠른 견적 만들기</p>
+        <h1 className="text-[22px] sm:text-[28px] font-semibold tracking-tight mb-1">견적 조회</h1>
+        <p className="text-[12.5px] sm:text-[13px] text-[var(--muted)] mb-5 sm:mb-8">
           {isAdmin
             ? "출발지와 도착지, 컨테이너 타입을 선택하면 운임과 부대비용이 자동으로 계산되어 바로 인쇄할 수 있습니다."
             : "출발지와 도착지, 컨테이너 타입을 선택하면 견적을 체험해볼 수 있습니다."}

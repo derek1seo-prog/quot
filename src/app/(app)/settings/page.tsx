@@ -20,10 +20,10 @@ export default async function SettingsPage() {
     : "";
 
   return (
-    <div className="max-w-[900px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16 space-y-8">
+    <div className="max-w-[900px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-20 py-5 sm:py-10 lg:py-16 space-y-5 sm:space-y-8">
       <div className="animate-dashboard-fade-up">
-        <p className="text-[13px] font-medium text-[var(--accent)] mb-2">설정</p>
-        <h1 className="text-[28px] font-semibold tracking-tight">설정</h1>
+        <p className="text-[12px] sm:text-[13px] font-medium text-[var(--accent)] mb-1 sm:mb-2">설정</p>
+        <h1 className="text-[22px] sm:text-[28px] font-semibold tracking-tight">설정</h1>
       </div>
 
       <Card className="animate-dashboard-fade-up" style={{ animationDelay: "80ms" }}>

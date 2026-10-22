@@ -17,7 +17,7 @@ import {
 } from "@/lib/quote-list-filters";
 import type { Quote } from "@/lib/types";
 import { matchesSearch } from "@/lib/hangul";
-import { ArrowUpDown, Building2, ChevronLeft, ChevronRight, Contact, RotateCcw, Search, SearchX, X } from "lucide-react";
+import { ArrowUpDown, Building2, SlidersHorizontal, ChevronLeft, ChevronRight, Contact, RotateCcw, Search, SearchX, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 /** Filter/sort bar + list for 견적 목록. Everything runs client-side over
@@ -128,6 +128,11 @@ export function QuoteListView({
     filters.from !== "" ||
     filters.to !== "";
 
+  // Phone: 업체 / 담당자 / 견적일 fold behind a "필터" button so the list
+  // starts on the first screen; the chips below still show what's applied.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeFilterCount = [filters.customer, filters.rep, filters.from || filters.to].filter(Boolean).length;
+
   // Applied filters as removable chips (the search panel's state, restated).
   const chips: { key: string; label: string; clear: () => void }[] = [];
   if (filters.q.trim()) chips.push({ key: "q", label: `검색: “${filters.q.trim()}”`, clear: () => set("q", "") });
@@ -149,21 +154,43 @@ export function QuoteListView({
   return (
     <>
       {/* 검색 패널 - its own card, so filtering reads as a separate step from the results */}
-      <section className="mb-4 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-white p-4 sm:p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-        <div className="relative">
-          <Search
-            size={17}
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]"
-          />
-          <input
-            value={filters.q}
-            onChange={(e) => set("q", e.target.value)}
-            placeholder="견적번호, 고객명, 항구로 검색"
-            aria-label="검색"
-            className="w-full h-12 pl-11 pr-4 rounded-[12px] border border-transparent bg-[#f1f5f9] text-[14.5px] text-[var(--foreground)] outline-none transition-all placeholder:text-[#94a3b8] focus:bg-white focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
-          />
+      <section className="mb-3 sm:mb-4 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-white p-3 sm:p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="flex gap-2">
+          <div className="relative flex-1 min-w-0">
+            <Search
+              size={17}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+            />
+            <input
+              value={filters.q}
+              onChange={(e) => set("q", e.target.value)}
+              placeholder="견적번호, 고객명, 항구로 검색"
+              aria-label="검색"
+              className="w-full h-11 sm:h-12 pl-11 pr-4 rounded-[12px] border border-transparent bg-[#f1f5f9] text-[16px] sm:text-[14.5px] text-[var(--foreground)] outline-none transition-all placeholder:text-[#94a3b8] focus:bg-white focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+            className={`sm:hidden relative shrink-0 inline-flex items-center gap-1.5 h-11 px-3.5 rounded-[12px] border text-[13.5px] font-medium transition-colors ${
+              filtersOpen || activeFilterCount > 0
+                ? "border-[var(--accent)]/40 bg-[var(--accent-soft)] text-[var(--accent)]"
+                : "border-[var(--border)] text-[var(--foreground)]"
+            }`}
+          >
+            <SlidersHorizontal size={15} />
+            필터
+            {activeFilterCount > 0 && (
+              <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[11px] leading-[18px] text-center tabular-nums">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
         </div>
-        <div className="mt-4 grid grid-cols-2 lg:grid-cols-[1fr_1fr_1.5fr] gap-3">
+        <div
+          className={`mt-3 sm:mt-4 grid grid-cols-2 lg:grid-cols-[1fr_1fr_1.5fr] gap-3 ${filtersOpen ? "animate-dropdown-panel" : "max-sm:hidden"}`}
+        >
           <FilterField label="업체">
             <FilterCombobox
               value={filters.customer}
@@ -247,7 +274,7 @@ export function QuoteListView({
 
       {/* 결과 */}
       <section className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-white overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)]">
-        <div className="flex items-center justify-between gap-3 px-5 sm:px-6 py-3.5 border-b border-[var(--border-subtle)]">
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-2.5 sm:py-3.5 border-b border-[var(--border-subtle)]">
           <p className="text-[14px] text-[var(--foreground)] whitespace-nowrap">
             <span className="font-semibold">{isFiltered ? "검색 결과" : "전체 견적"}</span>
             <span className="ml-2 font-semibold text-[var(--accent)] tabular-nums">{visible.length}</span>
@@ -259,7 +286,7 @@ export function QuoteListView({
             onChange={(v) => set("sort", isQuoteSort(v) ? v : "newest")}
             aria-label="정렬"
             icon={<ArrowUpDown size={14} />}
-            className="w-[148px] shrink-0"
+            className="w-[132px] sm:w-[148px] shrink-0"
             options={Object.entries(QUOTE_SORT_LABELS).map(([value, label]) => ({ value, label }))}
           />
         </div>

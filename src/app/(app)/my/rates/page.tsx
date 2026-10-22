@@ -36,10 +36,10 @@ export default async function MyRatesPage() {
   );
 
   return (
-    <div className="max-w-[1100px] mx-auto px-6 lg:px-8 xl:px-20 py-10 lg:py-16">
-      <p className="text-[13px] font-medium text-[var(--accent)] mb-2">운임표 보기</p>
-      <h1 className="text-[28px] font-semibold tracking-tight mb-1">구간별 운임 한눈에 보기</h1>
-      <p className="text-[13px] text-[var(--muted)] mb-8">
+    <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-20 py-5 sm:py-10 lg:py-16">
+      <p className="text-[12px] sm:text-[13px] font-medium text-[var(--accent)] mb-1 sm:mb-2">운임표 보기</p>
+      <h1 className="text-[22px] sm:text-[28px] font-semibold tracking-tight mb-1">구간별 운임 한눈에 보기</h1>
+      <p className="text-[12.5px] sm:text-[13px] text-[var(--muted)] mb-5 sm:mb-8">
         해상운임을 기준으로 표시되며, 색이 진할수록 운임이 높은 구간입니다. 셀에 마우스를 올리거나 탭하면 부대비용을 포함한 예상 총비용을 확인할 수 있습니다.
       </p>
 
