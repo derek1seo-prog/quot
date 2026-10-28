@@ -38,12 +38,15 @@ import {
   Pencil,
   Plus,
   Search,
+  LayoutList,
   Ship,
+  Table2,
   Trash2,
   Truck,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { ContainerDialog, type ContainerDraft } from "./ContainerDialog";
+import { ContainerSheet, splitVsl, type SheetDraft, type SheetHandlers } from "./ContainerSheet";
 import { DateTimePopover } from "./InlinePopover";
 
 /** Pipeline columns - the stages folded into what the user tracks daily. */
@@ -89,6 +92,8 @@ export function ContainerBoard({
   const [containers, setContainers] = useState(initialContainers);
   const [vessels, setVessels] = useState(initialVessels);
   const [tab, setTab] = useState<Tab>("active");
+  // 현황 (grouped by vessel) or 시트 (the team's spreadsheet, editable).
+  const [view, setView] = useState<"board" | "sheet">("board");
   const [pipe, setPipe] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [dialog, setDialog] = useState<{ editing: ContainerShipment | null } | null>(null);
@@ -171,11 +176,15 @@ export function ContainerBoard({
     return true;
   }
 
-  async function putVessel(v: VesselWatch, calls: VesselWatch["calls"]): Promise<VesselWatch | null> {
+  async function putVessel(
+    v: VesselWatch,
+    calls: VesselWatch["calls"],
+    extra?: { vesselName?: string; voyage?: string },
+  ): Promise<VesselWatch | null> {
     const res = await fetch("/api/vessels", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: v.id, calls, by: repName }),
+      body: JSON.stringify({ id: v.id, calls, ...extra, by: repName }),
     });
     if (!res.ok) {
       notify("저장하지 못했어요. 다시 시도해 주세요.");
@@ -286,6 +295,71 @@ export function ContainerBoard({
     }
   }
 
+  // ---- 시트 보기 ------------------------------------------------------------
+
+  const sheetHandlers: SheetHandlers = {
+    async onContainer(c, patch) {
+      // Absent / cleared values go as "" so the server clears them.
+      const body: Record<string, unknown> = { id: c.id };
+      for (const [key, value] of Object.entries(patch)) body[key] = value ?? "";
+      await putContainers(body);
+    },
+    onFlag: toggleFlag,
+    async onVessel(v, patch) {
+      const { pol, pod } = voyageEnds(v);
+      const calls = v.calls.map((c) => {
+        if (c.id === pol?.id) return { ...c, ...(patch.pol !== undefined && { portName: patch.pol }), ...("etd" in patch && { etd: patch.etd }) };
+        if (c.id === pod?.id) return { ...c, ...(patch.pod !== undefined && { portName: patch.pod }), ...("eta" in patch && { eta: patch.eta }) };
+        return c;
+      });
+      await putVessel(v, calls, patch.vsl !== undefined ? splitVsl(patch.vsl) : undefined);
+    },
+    async onCreate(d: SheetDraft) {
+      const res = await fetch("/api/containers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vessel: { ...splitVsl(d.vsl), pol: d.pol, pod: d.pod, etd: d.etd || undefined, eta: d.eta || undefined },
+          containers: [
+            {
+              importer: d.importer,
+              exporter: d.exporter,
+              size: d.size,
+              containerNo: d.containerNo,
+              hbl: d.hbl,
+              freeTimeUntil: d.freeTimeUntil,
+              deliveryDate: d.deliveryDate,
+              deliveryTime: d.deliveryDate ? d.deliveryTime : "",
+              surrendered: d.surrendered,
+              settled: d.settled,
+              memo: d.memo,
+            },
+          ],
+        }),
+      });
+      if (!res.ok) throw new Error("save failed");
+      const { containers: created, vessel } = (await res.json()) as { containers: ContainerShipment[]; vessel: VesselWatch | null };
+      if (vessel) setVessels((vs) => [vessel, ...vs]);
+      setContainers((cs) => [...cs, ...created]);
+      window.dispatchEvent(new Event("containers:changed"));
+      notify(`${d.containerNo || "컨테이너"} 행을 추가했어요${vessel ? ` · ${vesselLabel(vessel)} 선박 일정도 만들었어요` : ""}`);
+    },
+    onDelete: setPendingDelete,
+  };
+
+  // Sheet order: by departure, then ship, HB/L and box - so a ship's rows
+  // (and an HB/L's) sit together and can merge like the original sheet.
+  const sheetRows = [...visible].sort((a, b) => {
+    const va = summaryOf(a.c.vesselWatchId);
+    const vb = summaryOf(b.c.vesselWatchId);
+    return (
+      (va.etd ?? "9999").localeCompare(vb.etd ?? "9999") ||
+      a.c.vesselWatchId.localeCompare(b.c.vesselWatchId) ||
+      a.c.hbl.localeCompare(b.c.hbl) ||
+      a.c.createdAt.localeCompare(b.c.createdAt)
+    );
+  });
+
   // ---- render -------------------------------------------------------------
 
   const closedCount = rows.length - openRows.length;
@@ -372,26 +446,51 @@ export function ContainerBoard({
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 pt-1">
-        <div className="inline-flex p-1 rounded-full bg-[var(--sidebar-bg)] text-[13px] font-medium self-start">
-          {(
-            [
-              ["active", `진행 중 ${openRows.length}`],
-              ["closed", `종료 ${closedCount}`],
-              ["all", "전체"],
-            ] as const
-          ).map(([t, label]) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTab(t)}
-              className={cn(
-                "px-3.5 h-8 rounded-full transition-colors",
-                tab === t ? "bg-white shadow-sm text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]",
-              )}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 self-start">
+          <div className="inline-flex p-1 rounded-full bg-[var(--foreground)]/[0.06] text-[13px] font-medium" role="tablist" aria-label="보기">
+            {(
+              [
+                ["board", "현황", <LayoutList key="b" size={14} />],
+                ["sheet", "시트", <Table2 key="s" size={14} />],
+              ] as const
+            ).map(([v, label, icon]) => (
+              <button
+                key={v}
+                type="button"
+                role="tab"
+                aria-selected={view === v}
+                onClick={() => setView(v)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 h-8 rounded-full transition-colors",
+                  view === v ? "bg-[var(--foreground)] text-white shadow-sm" : "text-[var(--muted)] hover:text-[var(--foreground)]",
+                )}
+              >
+                {icon}
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="inline-flex p-1 rounded-full bg-[var(--sidebar-bg)] text-[13px] font-medium">
+            {(
+              [
+                ["active", `진행 중 ${openRows.length}`],
+                ["closed", `종료 ${closedCount}`],
+                ["all", "전체"],
+              ] as const
+            ).map(([t, label]) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={cn(
+                  "px-3.5 h-8 rounded-full transition-colors",
+                  tab === t ? "bg-white shadow-sm text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
         {pipe && (
           <button
@@ -419,7 +518,9 @@ export function ContainerBoard({
         </div>
       </div>
 
-      {groups.length === 0 ? (
+      {view === "sheet" ? (
+        <ContainerSheet rows={sheetRows} vessels={vessels} today={today} handlers={sheetHandlers} />
+      ) : groups.length === 0 ? (
         <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--border)] bg-white py-16 px-6 text-center">
           <span className="mx-auto w-12 h-12 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
             <Boxes size={22} />
