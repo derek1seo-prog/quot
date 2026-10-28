@@ -8,12 +8,12 @@ import { QuoteTrendBars } from "@/components/dashboard/QuoteTrendBars";
 import type { TrendPoint } from "@/components/dashboard/QuoteTrendSparkline";
 import { TopRoutes, type RouteStat } from "@/components/dashboard/TopRoutes";
 import { QuickQuoteScreen } from "@/components/quote/QuickQuoteScreen";
-import { getCurrentExchangeRate, getPorts, getQuotes, getVesselWatches } from "@/lib/data-store";
-import { isDelayed } from "@/lib/vessels";
+import { getContainers, getCurrentExchangeRate, getPorts, getQuotes, getVesselWatches } from "@/lib/data-store";
+import { attentionItems, containerStage, voyageSummary } from "@/lib/containers";
 import { getUsdKrwTrend, kstToday, rateChange, shiftIsoDate, shortDate } from "@/lib/exchange-rate-history";
 import { formatCurrency, formatDate, pairLabel, pairTotalsTitle } from "@/lib/format";
 import { decodeSessionCookie } from "@/lib/session";
-import { ArrowUpRight, DollarSign, ExternalLink, FilePlus2, Ship, ShieldCheck, Zap } from "lucide-react";
+import { ArrowUpRight, Boxes, DollarSign, ExternalLink, FilePlus2, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import { ContainerChips } from "@/components/quote/ContainerChips";
 import { cookies } from "next/headers";
@@ -30,14 +30,19 @@ export default async function DashboardPage() {
     return <QuickQuoteScreen isAdmin={false} />;
   }
 
-  const [quotes, exchangeRate, usdTrend, vesselWatches] = await Promise.all([
+  const [quotes, exchangeRate, usdTrend, vesselWatches, containers] = await Promise.all([
     getQuotes(),
     getCurrentExchangeRate("USD"),
     getUsdKrwTrend(),
     getVesselWatches(),
+    getContainers(),
   ]);
-  const trackedVessels = vesselWatches.filter((w) => w.status === "active");
-  const delayedVessels = trackedVessels.filter(isDelayed).length;
+  const today = kstToday();
+  const containerAttention = attentionItems(containers, vesselWatches, today).length;
+  const voyageById = new Map(vesselWatches.map((w) => [w.id, voyageSummary(w)]));
+  const containersAtSea = containers.filter(
+    (c) => containerStage(c, voyageById.get(c.vesselWatchId) ?? voyageSummary(undefined), today) === "sailing",
+  ).length;
   const allPorts = getPorts();
   const portNameById = new Map(allPorts.map((p) => [p.id, p.nameKo]));
 
@@ -159,13 +164,13 @@ export default async function DashboardPage() {
     },
     {
       kind: "link",
-      label: "선박 스케줄",
+      label: "컨테이너 현황",
       sublabel:
-        trackedVessels.length > 0
-          ? `추적 중 ${trackedVessels.length}척${delayedVessels > 0 ? ` · 지연 ${delayedVessels}척` : ""}`
-          : "입·출항일 변경 추적",
-      href: "/vessels",
-      icon: <Ship size={18} />,
+        containers.length > 0
+          ? `운항 중 ${containersAtSea}대${containerAttention > 0 ? ` · 확인 필요 ${containerAttention}건` : ""}`
+          : "출항·배차·프리타임 관리",
+      href: "/containers",
+      icon: <Boxes size={18} />,
       internal: true,
     },
     {

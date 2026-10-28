@@ -38,6 +38,7 @@ import type {
   Region,
   SalesRep,
   VesselWatch,
+  ContainerShipment,
 } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "src", "data");
@@ -413,4 +414,21 @@ export async function getVesselWatches(): Promise<VesselWatch[]> {
 
 export async function saveVesselWatches(watches: VesselWatch[]): Promise<void> {
   await writeMutable("vessel-watches.json", watches);
+}
+
+export async function getContainers(): Promise<ContainerShipment[]> {
+  return readMutable<ContainerShipment[]>("containers.json");
+}
+
+export async function saveContainers(containers: ContainerShipment[]): Promise<void> {
+  await writeMutable("containers.json", containers);
+}
+
+/** Last KST day the daily container alert went out - one digest per day. */
+export async function getContainerAlertState(): Promise<{ lastSentDay?: string }> {
+  return readMutable<{ lastSentDay?: string }>("container-alert-state.json");
+}
+
+export async function saveContainerAlertState(state: { lastSentDay?: string }): Promise<void> {
+  await writeMutable("container-alert-state.json", state);
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getVesselWatches, saveVesselWatches } from "@/lib/data-store";
+import { getContainers, getVesselWatches, saveContainers, saveVesselWatches } from "@/lib/data-store";
 import { generateId } from "@/lib/id";
 import { requireAdmin } from "@/lib/session";
 import type { VesselPortCall, VesselWatch } from "@/lib/types";
@@ -31,6 +31,16 @@ function buildCalls(raw: Body["calls"], existing: VesselPortCall[], by: string |
       etd: isScheduleDate(c.etd) ? c.etd : undefined,
       history: prev ? [...prev.history] : [],
     };
+    // Confirmed ATD / ATA ("출항 확인" / "입항 확인"); absent = keep as is.
+    const actual = "actual" in c ? c.actual : prev?.actual;
+    const departed = isScheduleDate(actual?.departed) ? actual.departed : undefined;
+    const arrived = isScheduleDate(actual?.arrived) ? actual.arrived : undefined;
+    if (departed || arrived) call.actual = { departed, arrived };
+    for (const [field, key] of [["atd", "departed"], ["ata", "arrived"]] as const) {
+      const from = prev?.actual?.[key];
+      const to = call.actual?.[key];
+      if (prev && from !== to) call.history.push({ at: now, field, from, to, by });
+    }
     for (const field of ["eta", "etd"] as const) {
       const from = prev?.[field];
       const to = call[field];
@@ -103,7 +113,11 @@ export async function DELETE(req: NextRequest) {
   const forbidden = requireAdmin(req);
   if (forbidden) return forbidden;
   const id = req.nextUrl.searchParams.get("id");
-  const watches = await getVesselWatches();
+  const [watches, containers] = await Promise.all([getVesselWatches(), getContainers()]);
   await saveVesselWatches(watches.filter((w) => w.id !== id));
+  // Its containers have no schedule without it - they go too.
+  if (containers.some((c) => c.vesselWatchId === id)) {
+    await saveContainers(containers.filter((c) => c.vesselWatchId !== id));
+  }
   return NextResponse.json({ ok: true });
 }

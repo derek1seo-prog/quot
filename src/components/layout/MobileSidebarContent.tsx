@@ -6,6 +6,7 @@ import { getActiveHref, getNavSections, type Role } from "@/lib/nav";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavIcon } from "./nav-icons";
+import { useContainerAttention } from "@/lib/useContainerAttention";
 import { useInquiryUnread } from "@/lib/useInquiryUnread";
 
 export function MobileSidebarContent({
@@ -18,6 +19,7 @@ export function MobileSidebarContent({
   const pathname = usePathname();
   const navSections = getNavSections(role);
   const unread = useInquiryUnread(role === "admin");
+  const attention = useContainerAttention(role === "admin");
   const activeHref = getActiveHref(pathname, navSections);
   let itemIndex = 0;
 
@@ -67,6 +69,11 @@ export function MobileSidebarContent({
                     {item.unreadBadge && unread > 0 && (
                       <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[10.5px] font-bold leading-[18px] text-center">
                         {unread > 99 ? "99+" : unread}
+                      </span>
+                    )}
+                    {item.attentionBadge && attention > 0 && (
+                      <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#f59e0b] text-white text-[10.5px] font-bold leading-[18px] text-center" title="오늘 확인할 일">
+                        {attention > 99 ? "99+" : attention}
                       </span>
                     )}
                   </span>

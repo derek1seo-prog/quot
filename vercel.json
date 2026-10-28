@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/exchange-rate",
       "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/cron/container-alerts",
+      "schedule": "30 23 * * *"
     }
   ]
 }

@@ -12,7 +12,8 @@ export interface NavItemDef {
     | "settings"
     | "rates"
     | "inquiries"
-    | "vessels";
+    | "vessels"
+    | "containers";
   /** ISO-ish country code (Country.id, e.g. "CN") for icon: "region" items -
    * rendered as that country's flag instead of a generic icon, since 요율
    * 관리 already groups regions by country and more countries keep getting
@@ -26,6 +27,8 @@ export interface NavItemDef {
   legacy?: boolean;
   /** Shows the admin's unread 문의 count next to the label. */
   unreadBadge?: boolean;
+  /** Shows how many 컨테이너 현황 items need action today. */
+  attentionBadge?: boolean;
 }
 
 export interface NavSectionDef {
@@ -45,6 +48,12 @@ export const navSections: NavSectionDef[] = [
       { href: "/quick-quote", label: "빠른 견적 만들기", icon: "quick-quote" },
       { href: "/quotes/new", label: "새 견적 만들기", icon: "new-quote", legacy: true },
       { href: "/quotes", label: "견적 목록", icon: "quote-list" },
+    ],
+  },
+  {
+    title: "운송 관리",
+    items: [
+      { href: "/containers", label: "컨테이너 현황", icon: "containers", attentionBadge: true },
       { href: "/vessels", label: "선박 스케줄", icon: "vessels" },
     ],
   },

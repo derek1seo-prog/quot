@@ -366,9 +366,13 @@ export interface VesselPortCall {
   /** "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm", Korea time. */
   eta?: string;
   etd?: string;
+  /** Confirmed actual times (ATD / ATA, "YYYY-MM-DD[THH:mm]") - set by
+   * "출항 확인" / "입항 확인", or later by an automatic tracking feed. */
+  actual?: { departed?: string; arrived?: string };
   /** Every change to eta/etd, oldest first - the first `from` is the
-   * originally announced date the delay badge compares against. */
-  history: { at: string; field: "eta" | "etd"; from?: string; to?: string; by?: string }[];
+   * originally announced date the delay badge compares against. Actual
+   * departure / arrival confirmations are logged here too ("atd" / "ata"). */
+  history: { at: string; field: "eta" | "etd" | "atd" | "ata"; from?: string; to?: string; by?: string }[];
 }
 
 /** A shipment whose vessel schedule the team is following (선박 스케줄). */
@@ -384,6 +388,34 @@ export interface VesselWatch {
   /** Where the dates come from - only "manual" for now; an automatic feed
    * (e.g. a Port-MIS API) can write its own source later. */
   source: "manual";
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One container in 컨테이너 현황 - the sheet's "선복 진행 예정 일정" row.
+ * 선적지 / 양하지 / 출항일 / 입항일 aren't stored here: they're the linked
+ * vessel's (VesselWatch) POL / POD calls, so a schedule change on the
+ * vessel moves every container on it at once. */
+export interface ContainerShipment {
+  id: string;
+  vesselWatchId: string;
+  /** 수입자 (usually a registered 화주) */
+  importer: string;
+  /** 수출자 */
+  exporter: string;
+  size: "20" | "40";
+  /** CTNS NO - container number, e.g. "FDCU5640124" */
+  containerNo: string;
+  hbl: string;
+  /** Last free day at the destination ("YYYY-MM-DD"). */
+  freeTimeUntil?: string;
+  /** 운송일 - the day the container is trucked out (배차). */
+  deliveryDate?: string;
+  /** 운송시간, e.g. "06:00" */
+  deliveryTime?: string;
+  surrendered: boolean;
+  settled: boolean;
+  memo?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,4 +1,5 @@
 import {
+  Boxes,
   Contact,
   FilePlus2,
   Inbox,
@@ -53,6 +54,8 @@ export function NavIcon({
       return <Users size={size} />;
     case "vessels":
       return <Ship size={size} />;
+    case "containers":
+      return <Boxes size={size} />;
     case "sales-reps":
       return <Contact size={size} />;
     case "settings":

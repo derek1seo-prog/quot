@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { QuoteTrendSparkline } from "@/components/dashboard/QuoteTrendSparkline";
 import { ExchangeRateEditor } from "@/components/rates/ExchangeRateEditor";
+import { AlertSettings } from "@/components/settings/AlertSettings";
+import { alertChannels } from "@/lib/notify";
 import { getCompany, getCurrentExchangeRate } from "@/lib/data-store";
 import { EXCHANGE_TREND_DAYS, getUsdKrwTrend, rateChange, shortDate } from "@/lib/exchange-rate-history";
 
@@ -85,6 +87,18 @@ export default async function SettingsPage() {
               </p>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="animate-dashboard-fade-up" style={{ animationDelay: "110ms" }}>
+        <CardHeader>
+          <CardTitle>알림</CardTitle>
+          <CardDescription>
+            컨테이너 현황의 출항 확인·배차·프리타임·서렌더 등 확인할 일을 매일 아침 메신저로 보내요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertSettings slackConnected={alertChannels().slack} />
         </CardContent>
       </Card>
 

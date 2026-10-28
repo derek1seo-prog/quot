@@ -45,10 +45,13 @@ export function VesselBoard({
   salesReps,
   portNames,
   today,
+  containerCounts = {},
 }: {
   /** Korea-time calendar date, from the server (keeps render pure). */
   today: string;
   initialWatches: VesselWatch[];
+  /** 컨테이너 현황 boxes on each voyage, by vessel id. */
+  containerCounts?: Record<string, number>;
   customers: Customer[];
   salesReps: SalesRep[];
   portNames: string[];
@@ -137,6 +140,20 @@ export function VesselBoard({
     );
   }
 
+  /** 출항 / 입항 확인 (or undo) on the voyage's POL / POD call. */
+  async function setActual(w: VesselWatch, callId: string, key: "departed" | "arrived", on: boolean) {
+    const call = w.calls.find((c) => c.id === callId);
+    if (!call) return;
+    const planned = key === "departed" ? call.etd : call.eta;
+    const date = planned && planned.slice(0, 10) <= today ? planned : today;
+    const saved = await put({
+      id: w.id,
+      calls: w.calls.map((c) => (c.id === callId ? { ...c, actual: { ...c.actual, [key]: on ? date : undefined } } : c)),
+    });
+    if (!saved) return notify("저장하지 못했어요. 다시 시도해 주세요.");
+    notify(on ? `${call.portName} ${key === "departed" ? "출항" : "입항"} 확인했어요` : "확인을 취소했어요");
+  }
+
   async function toggleDone(w: VesselWatch) {
     const saved = await put({ id: w.id, status: w.status === "done" ? "active" : "done" });
     if (saved) notify(saved.status === "done" ? `${w.vesselName} 완료 처리했어요` : `${w.vesselName} 다시 추적해요`);
@@ -223,6 +240,8 @@ export function VesselBoard({
               key={w.id}
               watch={w}
               today={today}
+              containerCount={containerCounts[w.id] ?? 0}
+              onActual={(callId, key, on) => setActual(w, callId, key, on)}
               onEdit={() => setDialog({ watch: w })}
               onToggleDone={() => toggleDone(w)}
               onDelete={() => setPendingDelete(w)}
@@ -263,6 +282,8 @@ export function VesselBoard({
 function VesselCard({
   watch: w,
   today,
+  containerCount,
+  onActual,
   onEdit,
   onToggleDone,
   onDelete,
@@ -270,6 +291,8 @@ function VesselCard({
 }: {
   watch: VesselWatch;
   today: string;
+  containerCount: number;
+  onActual: (callId: string, key: "departed" | "arrived", on: boolean) => void;
   onEdit: () => void;
   onToggleDone: () => void;
   onDelete: () => void;
@@ -301,7 +324,16 @@ function VesselCard({
             )}
           </div>
           <p className="mt-1 text-[12.5px] text-[var(--muted)] truncate">
-            {[w.carrier, w.customerName && `화주 ${w.customerName}`, w.memo].filter(Boolean).join(" · ") || " "}
+            {[w.carrier, w.customerName && `화주 ${w.customerName}`, w.memo].filter(Boolean).join(" · ") ||
+              (containerCount > 0 ? "" : " ")}
+            {containerCount > 0 && (
+              <a
+                href="/containers"
+                className={`${w.carrier || w.customerName || w.memo ? "ml-2 " : ""}inline-flex items-center gap-0.5 font-medium text-[var(--accent)] hover:underline`}
+              >
+                컨테이너 {containerCount}대 <ArrowRight size={11} />
+              </a>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
@@ -339,6 +371,13 @@ function VesselCard({
                 {fieldsOf(c).map((f) => (
                   <DateChip key={f} call={c} field={f} today={today} onSave={(v) => onChangeDate(c.id, f, v)} />
                 ))}
+                {c.kind !== "VIA" && (
+                  <ActualChip
+                    call={c}
+                    today={today}
+                    onToggle={(on) => onActual(c.id, c.kind === "POL" ? "departed" : "arrived", on)}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -359,7 +398,15 @@ function VesselCard({
               {changes.map((h, i) => (
                 <li key={i} className="text-[12.5px] text-[var(--foreground)] tabular-nums">
                   <span className="text-[var(--muted)]">{shortScheduleDate(h.at.slice(0, 10))}</span>{" "}
-                  {h.port} {FIELD_LABEL[h.field]} {shortScheduleDate(h.from)} → {shortScheduleDate(h.to)}
+                  {h.field === "atd" || h.field === "ata" ? (
+                    <>
+                      {h.port} {h.field === "atd" ? "출항" : "입항"} {h.to ? `확인 ${shortScheduleDate(h.to)}` : "확인 취소"}
+                    </>
+                  ) : (
+                    <>
+                      {h.port} {FIELD_LABEL[h.field]} {shortScheduleDate(h.from)} → {shortScheduleDate(h.to)}
+                    </>
+                  )}
                   {h.by && <span className="text-[var(--muted)]"> · {h.by}</span>}
                 </li>
               ))}
@@ -469,5 +516,37 @@ function DateChip({
         </div>
       )}
     </div>
+  );
+}
+
+/** 출항함 / 입항함 once confirmed (click to undo), or a 확인 button once the
+ * scheduled date is near - the same confirmation 컨테이너 현황 uses. */
+function ActualChip({ call, today, onToggle }: { call: VesselPortCall; today: string; onToggle: (on: boolean) => void }) {
+  const key = call.kind === "POL" ? "departed" : "arrived";
+  const label = call.kind === "POL" ? "출항" : "입항";
+  const confirmed = call.actual?.[key];
+  const planned = call.kind === "POL" ? call.etd : call.eta;
+  if (confirmed) {
+    return (
+      <button
+        type="button"
+        onClick={() => onToggle(false)}
+        title={`${label} 확인됨 (${shortScheduleDate(confirmed)}) · 클릭하면 취소`}
+        className="inline-flex items-center gap-0.5 rounded-full bg-green-50 px-1.5 py-0.5 text-[10.5px] font-semibold text-[var(--success)]"
+      >
+        <CheckCircle2 size={11} /> {label}함
+      </button>
+    );
+  }
+  const near = planned && Date.parse(planned.slice(0, 10)) - Date.parse(today) <= 2 * 86_400_000;
+  if (!near) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(true)}
+      className="inline-flex items-center rounded-full border border-[var(--accent)]/40 bg-white px-1.5 py-0.5 text-[10.5px] font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+    >
+      {label} 확인
+    </button>
   );
 }
