@@ -104,13 +104,30 @@ export async function POST(req: NextRequest) {
 }
 
 /** `{ id, ...fields }` edits one container; `{ hbl, surrendered | settled }`
- * flips that flag on every container of the HB/L (the sheet's merged cell). */
+ * flips that flag on every container of the HB/L (the sheet's merged cell);
+ * `{ updates: [{ id, ...fields }] }` applies many edits in one write (the
+ * spreadsheet editor's paste / clear). */
 export async function PUT(req: NextRequest) {
   const forbidden = requireAdmin(req);
   if (forbidden) return forbidden;
   const body = ((await req.json().catch(() => null)) ?? {}) as Record<string, unknown>;
   const containers = await getContainers();
   const now = new Date().toISOString();
+
+  if (Array.isArray(body.updates)) {
+    const vesselIds = new Set((await getVesselWatches()).map((v) => v.id));
+    const changed: ContainerShipment[] = [];
+    for (const raw of (body.updates as Record<string, unknown>[]).slice(0, 2000)) {
+      const index = containers.findIndex((c) => c.id === raw?.id);
+      if (index < 0) continue;
+      const next: ContainerShipment = { ...containers[index], ...fields(raw), updatedAt: now };
+      if (typeof raw.vesselWatchId === "string" && vesselIds.has(raw.vesselWatchId)) next.vesselWatchId = raw.vesselWatchId;
+      containers[index] = next;
+      changed.push(next);
+    }
+    await saveContainers(containers);
+    return NextResponse.json({ containers: changed });
+  }
 
   if (typeof body.hbl === "string" && !body.id) {
     const hbl = body.hbl.trim().toUpperCase();
@@ -138,8 +155,11 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const forbidden = requireAdmin(req);
   if (forbidden) return forbidden;
-  const id = req.nextUrl.searchParams.get("id");
+  // ?id=a or ?ids=a,b (the editor's 행 삭제)
+  const ids = new Set(
+    [req.nextUrl.searchParams.get("id"), ...(req.nextUrl.searchParams.get("ids")?.split(",") ?? [])].filter(Boolean),
+  );
   const containers = await getContainers();
-  await saveContainers(containers.filter((c) => c.id !== id));
+  await saveContainers(containers.filter((c) => !ids.has(c.id)));
   return NextResponse.json({ ok: true });
 }

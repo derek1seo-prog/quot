@@ -46,7 +46,8 @@ import {
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { ContainerDialog, type ContainerDraft } from "./ContainerDialog";
-import { ContainerSheet, splitVsl, type SheetDraft, type SheetHandlers } from "./ContainerSheet";
+import { ContainerSheet } from "./ContainerSheet";
+import { SheetEditor, type SheetOps } from "./SheetEditor";
 import { DateTimePopover } from "./InlinePopover";
 
 /** Pipeline columns - the stages folded into what the user tracks daily. */
@@ -297,68 +298,77 @@ export function ContainerBoard({
 
   // ---- 시트 보기 ------------------------------------------------------------
 
-  const sheetHandlers: SheetHandlers = {
-    async onContainer(c, patch) {
-      // Absent / cleared values go as "" so the server clears them.
-      const body: Record<string, unknown> = { id: c.id };
-      for (const [key, value] of Object.entries(patch)) body[key] = value ?? "";
-      await putContainers(body);
+  const [editor, setEditor] = useState<{ focus?: string } | null>(null);
+
+  /** What the full-screen sheet editor saves through. */
+  const sheetOps: SheetOps = {
+    async updateContainers(updates) {
+      const res = await fetch("/api/containers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates: updates.map((u) => ({ id: u.id, ...u.patch })) }),
+      });
+      if (!res.ok) throw new Error("저장하지 못했어요");
+      const { containers: saved } = (await res.json()) as { containers: ContainerShipment[] };
+      const byId = new Map(saved.map((c) => [c.id, c]));
+      setContainers((cs) => cs.map((c) => byId.get(c.id) ?? c));
+      window.dispatchEvent(new Event("containers:changed"));
     },
-    onFlag: toggleFlag,
-    async onVessel(v, patch) {
+    async updateVessel(v, patch) {
       const { pol, pod } = voyageEnds(v);
       const calls = v.calls.map((c) => {
-        if (c.id === pol?.id) return { ...c, ...(patch.pol !== undefined && { portName: patch.pol }), ...("etd" in patch && { etd: patch.etd }) };
-        if (c.id === pod?.id) return { ...c, ...(patch.pod !== undefined && { portName: patch.pod }), ...("eta" in patch && { eta: patch.eta }) };
+        if (c.id === pol?.id)
+          return { ...c, ...(patch.pol !== undefined && { portName: patch.pol || c.portName }), ...("etd" in patch && { etd: patch.etd || undefined }) };
+        if (c.id === pod?.id)
+          return { ...c, ...(patch.pod !== undefined && { portName: patch.pod || c.portName }), ...("eta" in patch && { eta: patch.eta || undefined }) };
         return c;
       });
-      await putVessel(v, calls, patch.vsl !== undefined ? splitVsl(patch.vsl) : undefined);
+      const saved = await putVessel(v, calls);
+      if (!saved) throw new Error("선박 일정을 저장하지 못했어요");
+      return saved;
     },
-    async onCreate(d: SheetDraft) {
-      const res = await fetch("/api/containers", {
+    async createVessel(spec) {
+      const res = await fetch("/api/vessels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          vessel: { ...splitVsl(d.vsl), pol: d.pol, pod: d.pod, etd: d.etd || undefined, eta: d.eta || undefined },
-          containers: [
-            {
-              importer: d.importer,
-              exporter: d.exporter,
-              size: d.size,
-              containerNo: d.containerNo,
-              hbl: d.hbl,
-              freeTimeUntil: d.freeTimeUntil,
-              deliveryDate: d.deliveryDate,
-              deliveryTime: d.deliveryDate ? d.deliveryTime : "",
-              surrendered: d.surrendered,
-              settled: d.settled,
-              memo: d.memo,
-            },
+          vesselName: spec.vesselName,
+          voyage: spec.voyage,
+          calls: [
+            { portName: spec.pol || "선적지", kind: "POL", etd: spec.etd },
+            { portName: spec.pod || "양하지", kind: "POD", eta: spec.eta },
           ],
         }),
       });
-      if (!res.ok) throw new Error("save failed");
-      const { containers: created, vessel } = (await res.json()) as { containers: ContainerShipment[]; vessel: VesselWatch | null };
-      if (vessel) setVessels((vs) => [vessel, ...vs]);
+      if (!res.ok) throw new Error("선박을 만들지 못했어요");
+      const created = (await res.json()) as VesselWatch;
+      setVessels((vs) => [created, ...vs]);
+      return created;
+    },
+    async createContainers(vesselWatchId, rows) {
+      const res = await fetch("/api/containers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vesselWatchId, containers: rows }),
+      });
+      if (!res.ok) throw new Error("행을 저장하지 못했어요");
+      const { containers: created } = (await res.json()) as { containers: ContainerShipment[] };
       setContainers((cs) => [...cs, ...created]);
       window.dispatchEvent(new Event("containers:changed"));
-      notify(`${d.containerNo || "컨테이너"} 행을 추가했어요${vessel ? ` · ${vesselLabel(vessel)} 선박 일정도 만들었어요` : ""}`);
+      return created;
     },
-    onDelete: setPendingDelete,
+    async deleteContainers(ids) {
+      const res = await fetch(`/api/containers?ids=${ids.map(encodeURIComponent).join(",")}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("삭제하지 못했어요");
+      const gone = new Set(ids);
+      setContainers((cs) => cs.filter((c) => !gone.has(c.id)));
+      window.dispatchEvent(new Event("containers:changed"));
+    },
   };
 
-  // Sheet order: by departure, then ship, HB/L and box - so a ship's rows
-  // (and an HB/L's) sit together and can merge like the original sheet.
-  const sheetRows = [...visible].sort((a, b) => {
-    const va = summaryOf(a.c.vesselWatchId);
-    const vb = summaryOf(b.c.vesselWatchId);
-    return (
-      (va.etd ?? "9999").localeCompare(vb.etd ?? "9999") ||
-      a.c.vesselWatchId.localeCompare(b.c.vesselWatchId) ||
-      a.c.hbl.localeCompare(b.c.hbl) ||
-      a.c.createdAt.localeCompare(b.c.createdAt)
-    );
-  });
+  // Sheet preview: entry order (the sheet's NO), numbered as in the editor.
+  const order = new Map(containers.map((c, i) => [c.id, i]));
+  const sheetRows = [...visible].sort((a, b) => (order.get(a.c.id) ?? 0) - (order.get(b.c.id) ?? 0));
 
   // ---- render -------------------------------------------------------------
 
@@ -519,7 +529,12 @@ export function ContainerBoard({
       </div>
 
       {view === "sheet" ? (
-        <ContainerSheet rows={sheetRows} vessels={vessels} today={today} handlers={sheetHandlers} />
+        <ContainerSheet
+          rows={sheetRows.map((r) => ({ ...r, no: (order.get(r.c.id) ?? 0) + 1 }))}
+          vessels={vessels}
+          today={today}
+          onOpen={(id) => setEditor({ focus: id })}
+        />
       ) : groups.length === 0 ? (
         <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--border)] bg-white py-16 px-6 text-center">
           <span className="mx-auto w-12 h-12 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
@@ -566,6 +581,15 @@ export function ContainerBoard({
         portNames={portNames}
         onClose={() => setDialog(null)}
         onSubmit={handleDialogSubmit}
+      />
+      <SheetEditor
+        open={editor !== null}
+        onClose={() => setEditor(null)}
+        containers={containers}
+        vessels={vessels}
+        today={today}
+        ops={sheetOps}
+        focusContainerId={editor?.focus}
       />
       <ConfirmDialog
         open={pendingDelete !== null}
