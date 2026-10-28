@@ -100,7 +100,11 @@ export function PublicQuoteForm({
   const [quickCustomerName, setQuickCustomerName] = useState("");
   const [quickContactName, setQuickContactName] = useState(DEFAULT_QUICK_CONTACT_NAME);
   const [quickSalesRepId, setQuickSalesRepId, autoFillQuickSalesRepId] = useRememberedSalesRepId(salesReps);
+  // 견적일 (admin can back/forward-date it); 유효기간 follows it to the end
+  // of that month until edited by hand.
+  const [quickQuoteDate, setQuickQuoteDate] = useState(TODAY);
   const [quickValidUntil, setQuickValidUntil] = useState(endOfMonthIso(TODAY));
+  const [validUntilTouched, setValidUntilTouched] = useState(false);
   // Admin sessions can actually use this editor (auto-fill + rate
   // resolution), so it starts already open for them rather than making
   // every visit start with an extra click just to reach it - isAdmin
@@ -251,7 +255,7 @@ export function PublicQuoteForm({
       preparedBy: mode === "quick" ? (isAdmin ? (quickRep?.name ?? "") : "") : (preparedBy ?? ""),
       preparedByEmail: mode === "quick" ? (isAdmin ? quickRep?.email : undefined) : preparedByEmail,
       preparedByPhone: mode === "quick" ? (isAdmin ? quickRep?.phone : undefined) : preparedByPhone,
-      quoteDate: TODAY,
+      quoteDate: mode === "quick" && isAdmin ? quickQuoteDate : TODAY,
       validUntil: mode === "quick" ? quickValidUntil : endOfMonthIso(TODAY),
       transportMode: "FCL",
       originCountryId: originPort?.countryId ?? "",
@@ -500,8 +504,8 @@ export function PublicQuoteForm({
                   <p className="text-[13px] font-medium text-[var(--foreground)] mb-3">
                     견적서 수신/발신 정보
                   </p>
-                  <div className="grid sm:grid-cols-4 gap-4">
-                    <FieldGroup>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <FieldGroup className="max-sm:col-span-2">
                       <FieldLabel>화주</FieldLabel>
                       {isAdmin ? (
                         <>
@@ -532,7 +536,7 @@ export function PublicQuoteForm({
                         />
                       )}
                     </FieldGroup>
-                    <FieldGroup>
+                    <FieldGroup className="max-sm:col-span-2">
                       <FieldLabel>담당자</FieldLabel>
                       <Input
                         value={quickContactName}
@@ -540,16 +544,31 @@ export function PublicQuoteForm({
                         placeholder={DEFAULT_QUICK_CONTACT_NAME}
                       />
                     </FieldGroup>
-                    <FieldGroup>
+                    <FieldGroup className="max-sm:col-span-2">
                       <FieldLabel>견적 담당자 (발신)</FieldLabel>
                       <SalesRepCombobox value={quickSalesRepId} onChange={setQuickSalesRepId} options={salesReps} />
+                    </FieldGroup>
+                    <FieldGroup>
+                      <FieldLabel hint={quickQuoteDate !== TODAY ? "오늘 아님" : undefined}>견적일</FieldLabel>
+                      <DatePicker
+                        value={quickQuoteDate}
+                        onChange={(d) => {
+                          const next = d || TODAY;
+                          setQuickQuoteDate(next);
+                          if (!validUntilTouched || quickValidUntil < next) setQuickValidUntil(endOfMonthIso(next));
+                        }}
+                        aria-label="견적일"
+                      />
                     </FieldGroup>
                     <FieldGroup>
                       <FieldLabel>유효기간</FieldLabel>
                       <DatePicker
                         value={quickValidUntil}
-                        onChange={setQuickValidUntil}
-                        min={TODAY}
+                        onChange={(d) => {
+                          setQuickValidUntil(d);
+                          setValidUntilTouched(true);
+                        }}
+                        min={quickQuoteDate}
                         aria-label="유효기간"
                       />
                     </FieldGroup>
