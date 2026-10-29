@@ -379,10 +379,21 @@ export function PublicQuoteForm({
   // Mirrors the admin wizard's own handleRateOverride (quotes/new/page.tsx)
   // exactly - editing a 단가 recalculates through the same /api/calculate
   // engine call as every other field, then commits the override so it
-  // persists across later recalculations (route/incoterms/container
-  // changes) via buildInput()'s own default param.
+  // persists across later recalculations (incoterms / VAT / charge edits)
+  // via buildInput()'s own default param. A new route or container type
+  // starts over from the rate sheet (resetRateEdits) - a 단가 typed for one
+  // lane must never silently follow the quote to another.
   // `side` picks which sheet's 단가 changed in 20FT+40HQ mode ("paired" =
   // the second container); only that side is recalculated.
+  /** Drops typed 단가 when the route changes, saying so if there were any. */
+  function resetRateEdits() {
+    if (Object.keys(rateOverrides).length || Object.keys(pairedRateOverrides).length) {
+      notify("구간이 바뀌어 직접 고친 단가를 운임표 기준으로 되돌렸어요");
+    }
+    setRateOverrides({});
+    setPairedRateOverrides({});
+  }
+
   async function handleRateOverride(chargeTypeId: string, rate: number, side: "main" | "paired" = "main") {
     setPendingRateEdits((n) => n + 1);
     try {
@@ -582,13 +593,21 @@ export function PublicQuoteForm({
         <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
           <FieldGroup>
             <FieldLabel>출발항 (POL)</FieldLabel>
-            <PortCombobox value={originPortId} onChange={setOriginPortId} options={polOptions} />
+            <PortCombobox
+              value={originPortId}
+              onChange={(id) => {
+                if (id !== originPortId) resetRateEdits();
+                setOriginPortId(id);
+              }}
+              options={polOptions}
+            />
           </FieldGroup>
           <FieldGroup>
             <FieldLabel>도착항 (POD)</FieldLabel>
             <PortCombobox
               value={destinationPortId}
               onChange={(id) => {
+                if (id !== destinationPortId) resetRateEdits();
                 setDestinationPortId(id);
                 setAllInChoice(null);
               }}
