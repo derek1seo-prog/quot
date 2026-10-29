@@ -17,6 +17,7 @@ import { matchesSearch } from "@/lib/hangul";
 import {
   emptyValues,
   formatCell,
+  formatSheetDate,
   parseCell,
   parseTsv,
   SHEET_COLS,
@@ -509,9 +510,22 @@ export function SheetEditor({
   const activeCol: SheetCol = SHEET_COLS[sel.fc];
   const activeRow = rows[sel.fr];
 
+  /** Free time as shown: the typed date, else 입항일 + 10 days (auto). */
+  function freeTimeOf(row: SavedRow, v: SheetValues | null) {
+    return freeTimeStatus(
+      { ...row.c, freeTimeUntil: v?.freeTimeUntil || undefined, deliveryDate: v?.deliveryDate || undefined },
+      today,
+      { ...row.voyage, eta: v?.eta || row.voyage.eta },
+    );
+  }
+
   function displayOf(row: GridRow, col: SheetCol, rowNo: number | null): string {
     const v = rowValues(row);
-    if (!v) return col.key === "no" ? "" : "";
+    if (!v) return "";
+    if (col.key === "freeTimeUntil" && row.kind === "saved" && !v.freeTimeUntil) {
+      const ft = freeTimeOf(row, v);
+      return ft.date ? formatSheetDate(ft.date) : "";
+    }
     return formatCell(col, v, rowNo);
   }
 
@@ -535,7 +549,9 @@ export function SheetEditor({
     const text = input.value;
     setEditing(false);
     input.value = "";
-    if (activeCol.kind !== "readonly" && activeCol.key !== "no") {
+    // Text left as it was shown (e.g. an auto 프리타임) isn't an edit.
+    const unchanged = activeRow && activeRow.kind !== "blank" && text.trim() === displayOf(activeRow, activeCol, null).trim();
+    if (activeCol.kind !== "readonly" && activeCol.key !== "no" && !unchanged) {
       const parsed = parseCell(activeCol, text, today);
       const current = activeRow ? cellValue(activeRow, activeCol.key) : undefined;
       if (!parsed.ok) notify(parsed.message);
@@ -930,16 +946,17 @@ export function SheetEditor({
             {rows.map((row, r) => {
               const v = rowValues(row);
               const saved = row.kind === "saved" ? row : null;
-              const ft = saved ? freeTimeStatus({ ...saved.c, freeTimeUntil: v?.freeTimeUntil || undefined, deliveryDate: v?.deliveryDate || undefined }, today) : null;
+              const ft = saved ? freeTimeOf(saved, v) : null;
               return (
                 <tr key={row.key} style={{ height: ROW_H }}>
                   {SHEET_COLS.map((col, c) => {
                     const selected = inRange(r, c);
-                    const text = row.kind === "blank" ? "" : formatCell(col, v!, row.kind === "saved" ? r + 1 : null);
+                    const autoFreeTime = col.key === "freeTimeUntil" && ft?.auto && ft.date;
+                    const text = row.kind === "blank" ? "" : autoFreeTime ? formatSheetDate(ft.date!) : formatCell(col, v!, row.kind === "saved" ? r + 1 : null);
                     let badge: React.ReactNode = null;
                     if (saved && col.key === "etd") badge = <DateBadges delay={saved.voyage.etdDelay} confirmed={Boolean(saved.voyage.departed)} />;
                     if (saved && col.key === "eta") badge = <DateBadges delay={saved.voyage.etaDelay} confirmed={Boolean(saved.voyage.arrived)} />;
-                    if (saved && col.key === "freeTimeUntil" && ft && ft.days !== null && v?.freeTimeUntil) {
+                    if (saved && col.key === "freeTimeUntil" && ft && ft.days !== null && ft.date) {
                       badge =
                         ft.state === "safe" ? (
                           <span className="text-[var(--success)] text-[10.5px] font-bold">✓</span>
@@ -1016,8 +1033,8 @@ export function SheetEditor({
                             </button>
                           )
                         ) : badge ? (
-                          <span className="flex items-center justify-between gap-1">
-                            <span className="truncate tabular-nums">{text}</span>
+                          <span className="flex items-center justify-between gap-1" title={autoFreeTime ? "입항일 + 10일 자동 계산 (입력하면 그 날짜로 바뀌어요)" : undefined}>
+                            <span className={cn("truncate tabular-nums", autoFreeTime && "text-[var(--muted)]")}>{text}</span>
                             {badge}
                           </span>
                         ) : (

@@ -276,7 +276,7 @@ export function ContainerDialog({
                 <Input value={hbl} onChange={(e) => setHbl(e.target.value)} placeholder="예: SQ202608036" className="uppercase" />
               </FieldGroup>
               <FieldGroup>
-                <FieldLabel hint="선택">프리타임 (마지막 무료일)</FieldLabel>
+                <FieldLabel hint="비우면 입항일 + 10일">프리타임 (마지막 무료일)</FieldLabel>
                 <input type="date" value={freeTimeUntil} onChange={(e) => setFreeTimeUntil(e.target.value)} aria-label="프리타임" className={dateInput} />
               </FieldGroup>
               {editing && (

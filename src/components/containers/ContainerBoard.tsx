@@ -12,6 +12,7 @@ import {
   containerStage,
   dDay,
   daysUntil,
+  FREE_TIME_DAYS,
   freeTimeStatus,
   hasArrived,
   inThisWeek,
@@ -883,7 +884,7 @@ function VesselGroup({
                     </td>
                   )}
                   <td className="px-2 py-2.5 whitespace-nowrap">
-                    <FreeTimeCell c={r.c} actions={actions} />
+                    <FreeTimeCell c={r.c} voyage={v} actions={actions} />
                   </td>
                   <td className="px-2 py-2.5 whitespace-nowrap">
                     <DeliveryCell c={r.c} stage={r.stage} actions={actions} />
@@ -933,7 +934,7 @@ function VesselGroup({
               </button>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <FreeTimeCell c={r.c} actions={actions} />
+              <FreeTimeCell c={r.c} voyage={v} actions={actions} />
               <DeliveryCell c={r.c} stage={r.stage} actions={actions} />
               <FlagToggle on={r.c.surrendered} label="서렌더" compact onClick={() => actions.onToggle(r.c, "surrendered")} />
               <FlagToggle on={r.c.settled} label="정산" compact onClick={() => actions.onToggle(r.c, "settled")} />
@@ -1039,8 +1040,8 @@ function ContainerNo({ c }: { c: ContainerShipment }) {
   );
 }
 
-function FreeTimeCell({ c, actions }: { c: ContainerShipment; actions: RowActions }) {
-  const ft = freeTimeStatus(c, actions.today);
+function FreeTimeCell({ c, voyage, actions }: { c: ContainerShipment; voyage: VoyageSummary; actions: RowActions }) {
+  const ft = freeTimeStatus(c, actions.today, voyage);
   const tone =
     ft.state === "over" || ft.state === "willExceed"
       ? "bg-red-50 text-[var(--danger)] border-red-100"
@@ -1051,21 +1052,30 @@ function FreeTimeCell({ c, actions }: { c: ContainerShipment; actions: RowAction
           : "bg-white text-[var(--foreground)] border-[var(--border-subtle)]";
   return (
     <DateTimePopover
-      title="프리타임 (마지막 무료일)"
-      date={c.freeTimeUntil}
+      title={`프리타임 (마지막 무료일)${ft.auto ? ` · 비우면 입항일 + ${FREE_TIME_DAYS}일` : ""}`}
+      date={ft.date}
       onSave={(d) => actions.onFreeTime(c, d)}
       trigger={(p) => (
         <button
           type="button"
           {...p}
-          title={ft.state === "willExceed" ? "운송일이 프리타임보다 늦어요" : ft.state === "safe" ? "프리타임 안에 운송 예정" : undefined}
-          className={cn("inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[12px] tabular-nums transition-colors hover:brightness-[0.97]", c.freeTimeUntil ? tone : "border-dashed border-[var(--border)] text-[var(--muted)]")}
+          title={
+            ft.state === "willExceed"
+              ? "운송일이 프리타임보다 늦어요"
+              : ft.state === "safe"
+                ? "프리타임 안에 운송 예정"
+                : ft.auto && ft.date
+                  ? `입항일 + ${FREE_TIME_DAYS}일로 자동 계산 (눌러서 직접 지정)`
+                  : undefined
+          }
+          className={cn("inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[12px] tabular-nums transition-colors hover:brightness-[0.97]", ft.date ? tone : "border-dashed border-[var(--border)] text-[var(--muted)]")}
         >
-          {c.freeTimeUntil ? (
+          {ft.date ? (
             <>
-              <span className="font-medium">{shortDate(c.freeTimeUntil)}</span>
+              <span className="font-medium">{shortDate(ft.date)}</span>
               {ft.days !== null && ft.state !== "safe" && <span className="font-semibold">{dDay(ft.days)}</span>}
               {ft.state === "safe" && <Check size={12} strokeWidth={3} />}
+              {ft.auto && <span className="text-[10px] font-medium opacity-60">자동</span>}
             </>
           ) : (
             "프리타임"

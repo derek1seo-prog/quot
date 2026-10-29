@@ -129,7 +129,7 @@ export function ContainerSheet({
               const s = voyageSummary(v);
               const vSpan = span(i, sameVessel);
               const hSpan = r.c.hbl ? span(i, sameHbl) : 1;
-              const ft = freeTimeStatus(r.c, today);
+              const ft = freeTimeStatus(r.c, today, s);
               return (
                 <tr key={r.c.id} onClick={() => onOpen(r.c.id)} className="hover:[&>td]:bg-[#f8fafc]">
                   <td className={cn(CELL, "sticky left-0 z-[5] bg-white text-center text-[var(--muted)] tabular-nums")} title={STAGE_META[r.stage].label}>
@@ -165,9 +165,9 @@ export function ContainerSheet({
                     </>
                   )}
                   <td className={cn(CELL, "tabular-nums")}>
-                    {r.c.freeTimeUntil && (
-                      <span className="flex items-center justify-between gap-1">
-                        {formatSheetDate(r.c.freeTimeUntil)}
+                    {ft.date && (
+                      <span className="flex items-center justify-between gap-1" title={ft.auto ? "입항일 + 10일 자동 계산" : undefined}>
+                        <span className={ft.auto ? "text-[var(--muted)]" : undefined}>{formatSheetDate(ft.date)}</span>
                         {ft.state === "safe" ? (
                           <Check size={11} strokeWidth={3} className="text-[var(--success)]" />
                         ) : (

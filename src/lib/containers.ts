@@ -97,21 +97,38 @@ export function containerStage(c: ContainerShipment, v: VoyageSummary, today: st
 
 export type FreeTimeState = "none" | "safe" | "ok" | "soon" | "over" | "willExceed";
 
+/** Free time runs this many days from the 입항일 unless a date is typed. */
+export const FREE_TIME_DAYS = 10;
+
+export function addDays(iso: string, n: number): string {
+  return new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** The container's last free day: the date typed for it, else 입항일 +
+ * FREE_TIME_DAYS (auto - it follows the vessel's ETA when that moves). */
+export function effectiveFreeTime(c: ContainerShipment, v: VoyageSummary): { date?: string; auto: boolean } {
+  if (c.freeTimeUntil) return { date: c.freeTimeUntil, auto: false };
+  if (v.eta) return { date: addDays(v.eta, FREE_TIME_DAYS), auto: true };
+  return { auto: true };
+}
+
 /** Free time against today: only a concern until the container is trucked
  * out on or before its last free day. */
 export function freeTimeStatus(
   c: ContainerShipment,
   today: string,
-): { state: FreeTimeState; days: number | null } {
-  if (!c.freeTimeUntil) return { state: "none", days: null };
-  const days = daysUntil(c.freeTimeUntil, today);
+  v: VoyageSummary,
+): { state: FreeTimeState; days: number | null; date?: string; auto: boolean } {
+  const { date, auto } = effectiveFreeTime(c, v);
+  if (!date) return { state: "none", days: null, auto };
+  const days = daysUntil(date, today);
   if (c.deliveryDate) {
     // Already planned / done: fine if it leaves in time, a warning if not.
-    return { state: c.deliveryDate <= c.freeTimeUntil ? "safe" : "willExceed", days };
+    return { state: c.deliveryDate <= date ? "safe" : "willExceed", days, date, auto };
   }
-  if (days < 0) return { state: "over", days };
-  if (days <= FREE_TIME_WARN_DAYS) return { state: "soon", days };
-  return { state: "ok", days };
+  if (days < 0) return { state: "over", days, date, auto };
+  if (days <= FREE_TIME_WARN_DAYS) return { state: "soon", days, date, auto };
+  return { state: "ok", days, date, auto };
 }
 
 /** "D-3", "D-day", "D+2" */
@@ -183,7 +200,7 @@ export function attentionItems(
         hbl: c.hbl,
       });
     }
-    const ft = freeTimeStatus(c, today);
+    const ft = freeTimeStatus(c, today, v);
     if ((ft.state === "soon" || ft.state === "over" || ft.state === "willExceed") && hasArrivedOrSoon(v, today)) {
       items.push({
         key: `ft:${c.id}`,
@@ -192,10 +209,10 @@ export function attentionItems(
         title: `${c.containerNo || `${c.size}FT`} 프리타임 ${ft.days !== null ? dDay(ft.days) : ""}`,
         detail:
           ft.state === "willExceed"
-            ? `운송일 ${shortDate(c.deliveryDate!)}이 프리타임 ${shortDate(c.freeTimeUntil!)}보다 늦어요`
+            ? `운송일 ${shortDate(c.deliveryDate!)}이 프리타임 ${shortDate(ft.date!)}보다 늦어요`
             : ft.state === "over"
-              ? `프리타임 ${shortDate(c.freeTimeUntil!)} 지남 · ${c.importer}`
-              : `프리타임 ${shortDate(c.freeTimeUntil!)}까지 · ${c.importer}`,
+              ? `프리타임 ${shortDate(ft.date!)} 지남 · ${c.importer}`
+              : `프리타임 ${shortDate(ft.date!)}까지 · ${c.importer}`,
         vesselWatchId: c.vesselWatchId,
         containerIds: [c.id],
         hbl: c.hbl,
