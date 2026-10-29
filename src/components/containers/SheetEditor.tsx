@@ -387,7 +387,7 @@ export function SheetEditor({
       const prev = cellValue(row, key);
       if (prev === value) continue;
       if (key === "vsl" && !String(value).trim()) {
-        notify("VSL은 비울 수 없어요");
+        notify("VSL(선박)은 비워둘 수 없어요 · 행을 지우려면 NO 칸을 누르고 Delete");
         continue;
       }
       entry.cells.push({ id: row.c.id, key, value: prev as SheetValues[SheetKey] });
@@ -416,7 +416,13 @@ export function SheetEditor({
       }
     }
 
-    if (touchedDrafts) setDrafts(nextDrafts);
+    // A draft typed and then wiped out again is just a blank row.
+    if (touchedDrafts) {
+      const blank = emptyValues();
+      const isBlank = (v: SheetValues) => (Object.keys(blank) as SheetKey[]).every((k) => k === "size" || v[k] === blank[k]);
+      for (let i = nextDrafts.length - 1; i >= 0; i--) if (isBlank(nextDrafts[i].values)) nextDrafts.splice(i, 1);
+      setDrafts(nextDrafts);
+    }
     if (newOverrides.size !== overrides.size || savedChanges.length) setOverrides(newOverrides);
 
     const ready = nextDrafts.filter((d) => !d.saving && draftReady(d.values));
@@ -583,6 +589,16 @@ export function SheetEditor({
 
   function clearRange() {
     const { r0, r1, c0, c1 } = rangeOf();
+    // Whole rows selected (NO column, or every column): Delete removes the
+    // rows themselves - a saved container can't be an empty row.
+    if (c0 <= 1 && c1 === lastCol) {
+      const picked = rows.slice(r0, r1 + 1);
+      const draftKeys = new Set(picked.flatMap((r) => (r.kind === "draft" ? [r.key] : [])));
+      if (draftKeys.size) setDrafts((ds) => ds.filter((d) => !draftKeys.has(d.key)));
+      const ids = picked.flatMap((r) => (r.kind === "saved" ? [r.c.id] : []));
+      if (ids.length) setConfirmDelete(ids);
+      return;
+    }
     const changes: CellChange[] = [];
     let skipped = false;
     for (let r = r0; r <= r1; r++) {
@@ -598,8 +614,9 @@ export function SheetEditor({
         changes.push({ row: r, key: col.key, value: col.kind === "flag" ? false : "" });
       }
     }
-    if (skipped) notify("VSL은 비울 수 없어서 그대로 두었어요");
     if (changes.length) applyChanges(changes);
+    // After applyChanges, so this note isn't replaced by its own toast.
+    if (skipped) notify("VSL(선박)은 비워둘 수 없어서 그대로 두었어요 · 행을 지우려면 NO 칸을 누르고 Delete");
   }
 
   // ---- clipboard ---------------------------------------------------------------
@@ -1205,7 +1222,7 @@ function ShortcutHelp({ onClose }: { onClose: () => void }) {
     ["Delete", "선택한 칸 지우기"],
     ["Ctrl/⌘ + Z", "되돌리기"],
     ["Space (서렌더·정산)", "완료 ↔ 미완료"],
-    ["NO 칸 클릭", "행 전체 선택 → 행 삭제"],
+    ["NO 칸 클릭 → Delete", "행 삭제"],
   ];
   return (
     <div className="absolute right-0 top-full mt-2 z-40 w-[300px] rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-white p-3 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.28)] animate-dropdown-panel">
