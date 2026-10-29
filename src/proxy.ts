@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCustomerByAccessToken } from "@/lib/data-store";
-import { getSessionFromRequest, setSessionCookie, type Role } from "@/lib/session";
+import { getSessionFromRequest, SESSION_EXPIRED_BODY, setSessionCookie, shouldRenewSession, type Role } from "@/lib/session";
 
 /** Paths that render the quick-quote lookup experience with no PIN
  * required - "/" itself (the default homepage for anyone not logged in as
@@ -69,20 +69,42 @@ export async function proxy(request: NextRequest) {
     return res;
   }
 
+  // An expired / missing login: a fetch() caller gets JSON it can act on
+  // (SessionGuard shows the inline re-login) instead of following a
+  // redirect into the unlock page's HTML and failing to parse it.
   if (!session) {
-    const url = new URL("/unlock", request.url);
-    url.searchParams.set("next", pathname + search);
-    return NextResponse.redirect(url);
+    if (pathname.startsWith("/api/")) return NextResponse.json(SESSION_EXPIRED_BODY, { status: 401 });
+    return NextResponse.redirect(unlockUrl(request, pathname, search));
   }
 
-  if (pathname.startsWith("/api/")) return NextResponse.next();
+  // Sliding expiry: keep an active session alive.
+  const pass = () => {
+    const res = NextResponse.next();
+    if (shouldRenewSession(session)) setSessionCookie(res, { role: session.role, customerId: session.customerId });
+    return res;
+  };
+
+  if (pathname.startsWith("/api/")) return pass();
 
   if (!isAllowedForRole(pathname, session.role)) {
-    const home = session.role === "customer" ? "/my" : "/";
-    return NextResponse.redirect(new URL(home, request.url));
+    // A guest on an admin page is usually an admin whose login ran out
+    // (visiting "/" quietly issued a guest session) - send them to log in
+    // and come back, not to the guest home.
+    if (session.role === "guest") return NextResponse.redirect(unlockUrl(request, pathname, search));
+    return NextResponse.redirect(new URL("/my", request.url));
   }
 
-  return NextResponse.next();
+  return pass();
+}
+
+/** /unlock?next=<this page>, without Next's own client-navigation params. */
+function unlockUrl(request: NextRequest, pathname: string, search: string): URL {
+  const url = new URL("/unlock", request.url);
+  const params = new URLSearchParams(search);
+  params.delete("_rsc");
+  const query = params.toString();
+  url.searchParams.set("next", pathname + (query ? `?${query}` : ""));
+  return url;
 }
 
 export const config = {

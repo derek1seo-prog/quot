@@ -14,6 +14,8 @@ export type Role = "admin" | "guest" | "customer";
 export interface Session {
   role: Role;
   customerId?: string;
+  /** When the cookie was issued (ms) - see shouldRenewSession. */
+  iat?: number;
 }
 
 export const SESSION_COOKIE_NAME = "quot_session";
@@ -22,6 +24,15 @@ export const SESSION_COOKIE_NAME = "quot_session";
 // admin PIN - kept the same everywhere rather than inventing a separate
 // policy per role.
 export const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 1;
+
+// Sliding renewal: a session in use is re-issued once it's this old, so
+// someone working through the day isn't logged out mid-task - only a day
+// of inactivity ends it.
+const SESSION_RENEW_AFTER_MS = 6 * 60 * 60 * 1000;
+
+/** The JSON a fetch() caller gets when there's no valid session left -
+ * SessionGuard (client) turns it into the inline re-login prompt. */
+export const SESSION_EXPIRED_BODY = { error: "로그인이 만료되었어요. 다시 로그인해 주세요.", code: "session_expired" } as const;
 
 // Derived from SITE_PASSWORD rather than a separate env var, so rotating
 // the site password also rotates the signing key (and invalidates every
@@ -34,7 +45,7 @@ function sign(payload: string): string {
 }
 
 export function encodeSession(session: Session): string {
-  const payload = Buffer.from(JSON.stringify({ ...session, iat: Date.now() })).toString(
+  const payload = Buffer.from(JSON.stringify({ role: session.role, customerId: session.customerId, iat: Date.now() })).toString(
     "base64url",
   );
   return `${payload}.${sign(payload)}`;
@@ -54,6 +65,7 @@ export function decodeSession(cookieValue: string | undefined | null): Session |
     const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8")) as {
       role?: unknown;
       customerId?: unknown;
+      iat?: unknown;
     };
     if (parsed.role !== "admin" && parsed.role !== "guest" && parsed.role !== "customer") {
       return null;
@@ -61,6 +73,7 @@ export function decodeSession(cookieValue: string | undefined | null): Session |
     return {
       role: parsed.role,
       customerId: typeof parsed.customerId === "string" ? parsed.customerId : undefined,
+      iat: typeof parsed.iat === "number" ? parsed.iat : undefined,
     };
   } catch {
     return null;
@@ -87,6 +100,7 @@ export function decodeSessionCookie(store: { get(name: string): { value: string 
 export function requireAdmin(req: NextRequest): NextResponse | null {
   const session = getSessionFromRequest(req);
   if (session?.role === "admin") return null;
+  if (!session) return NextResponse.json(SESSION_EXPIRED_BODY, { status: 401 });
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
@@ -98,4 +112,9 @@ export function setSessionCookie(res: NextResponse, session: Session): void {
     path: "/",
     maxAge: SESSION_COOKIE_MAX_AGE,
   });
+}
+
+/** True once a session is old enough to re-issue (sliding expiry). */
+export function shouldRenewSession(session: Session): boolean {
+  return session.iat === undefined || Date.now() - session.iat > SESSION_RENEW_AFTER_MS;
 }

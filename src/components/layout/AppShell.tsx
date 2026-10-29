@@ -10,6 +10,7 @@ import { MobileSidebarContent } from "./MobileSidebarContent";
 import { MenuToggleIcon } from "./MenuToggleIcon";
 import { RoleSwitchButton } from "./RoleSwitchButton";
 import { ChatWidget } from "@/components/inquiry/ChatWidget";
+import { SessionGuard } from "./SessionGuard";
 
 export function AppShell({
   children,
@@ -120,6 +121,8 @@ export function AppShell({
 
       {/* Visitors (guest / 화주) can message the team; admins answer in 문의함. */}
       {role !== "admin" && <ChatWidget companyName={companyName} />}
+      {/* Admin: an expired login asks for the PIN in place, keeping the page. */}
+      {role === "admin" && <SessionGuard />}
     </div>
   );
 }
