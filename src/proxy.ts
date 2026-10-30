@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCustomerByAccessToken } from "@/lib/data-store";
+import { isClosedPath } from "@/lib/nav";
 import { getSessionFromRequest, SESSION_EXPIRED_BODY, setSessionCookie, shouldRenewSession, type Role } from "@/lib/session";
 
 /** Paths that render the quick-quote lookup experience with no PIN
@@ -58,6 +59,13 @@ export async function proxy(request: NextRequest) {
   }
 
   const session = getSessionFromRequest(request);
+
+  // Paused pages (nav shows them greyed out): a typed / bookmarked URL
+  // lands on the closest live page instead.
+  if (isClosedPath(pathname)) {
+    const to = session?.role === "customer" ? "/my" : session?.role === "admin" && pathname.startsWith("/vessels") ? "/containers" : "/";
+    return NextResponse.redirect(new URL(to, request.url));
+  }
 
   // "/", "/quick-quote", and "/my/rates" need no PIN at all - visiting any
   // of them for the first time silently issues a guest session and renders

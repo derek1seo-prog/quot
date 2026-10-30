@@ -29,6 +29,9 @@ export interface NavItemDef {
   unreadBadge?: boolean;
   /** Shows how many 컨테이너 현황 items need action today. */
   attentionBadge?: boolean;
+  /** A paused page: still listed (greyed, with a lock) but not clickable,
+   * and proxy.ts turns a typed URL away (see CLOSED_PATHS). */
+  closed?: boolean;
 }
 
 export interface NavSectionDef {
@@ -37,6 +40,13 @@ export interface NavSectionDef {
 }
 
 export type Role = "admin" | "guest" | "customer";
+
+/** Pages closed for now (nav items marked `closed`). */
+export const CLOSED_PATHS = ["/vessels", "/my/rates"];
+
+export function isClosedPath(pathname: string): boolean {
+  return CLOSED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
 
 export const navSections: NavSectionDef[] = [
   {
@@ -54,7 +64,7 @@ export const navSections: NavSectionDef[] = [
     title: "운송 관리",
     items: [
       { href: "/containers", label: "컨테이너 현황", icon: "containers", attentionBadge: true },
-      { href: "/vessels", label: "선박 스케줄", icon: "vessels" },
+      { href: "/vessels", label: "선박 스케줄", icon: "vessels", closed: true },
     ],
   },
   {
@@ -64,7 +74,7 @@ export const navSections: NavSectionDef[] = [
       { href: "/rates/south-china", label: "남중국", icon: "region", countryId: "CN" },
       { href: "/rates/vietnam", label: "베트남", icon: "region", countryId: "VN" },
       { href: "/rates/thailand", label: "태국", icon: "region", countryId: "TH" },
-      { href: "/my/rates", label: "운임표 보기", icon: "rates" },
+      { href: "/my/rates", label: "운임표 보기", icon: "rates", closed: true },
     ],
   },
   {
@@ -86,7 +96,7 @@ export const guestNavSections: NavSectionDef[] = [
   {
     items: [
       { href: "/", label: "빠른 견적 만들기", icon: "quick-quote" },
-      { href: "/my/rates", label: "운임표 보기", icon: "rates" },
+      { href: "/my/rates", label: "운임표 보기", icon: "rates", closed: true },
     ],
   },
 ];
@@ -95,7 +105,7 @@ export const customerNavSections: NavSectionDef[] = [
   {
     items: [
       { href: "/my", label: "견적 조회", icon: "new-quote" },
-      { href: "/my/rates", label: "운임표 보기", icon: "rates" },
+      { href: "/my/rates", label: "운임표 보기", icon: "rates", closed: true },
     ],
   },
 ];

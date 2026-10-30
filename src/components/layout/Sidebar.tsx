@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import { getActiveHref, getNavSections, type Role } from "@/lib/nav";
+import { Lock } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -60,6 +61,24 @@ export function Sidebar({ role }: { role: Role }) {
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const active = item.href === activeHref;
+                if (item.closed) {
+                  return (
+                    <div
+                      key={item.href}
+                      aria-disabled="true"
+                      title="지금은 사용하지 않는 메뉴예요"
+                      className="relative z-10 flex items-center gap-2.5 px-3 h-9 short:h-8 rounded-[var(--radius-sm)] text-[13.5px] font-medium text-[var(--muted)]/50 cursor-not-allowed select-none"
+                    >
+                      <span className="opacity-60 grayscale">
+                        <NavIcon icon={item.icon} countryId={item.countryId} active={false} />
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        {item.label}
+                        <Lock size={11} className="text-[var(--muted)]/60" />
+                      </span>
+                    </div>
+                  );
+                }
                 return (
                   <Link
                     key={item.href}

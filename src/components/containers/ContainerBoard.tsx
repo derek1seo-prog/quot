@@ -278,7 +278,7 @@ export function ContainerBoard({
       setTab("active");
       setPipe(null);
       window.dispatchEvent(new Event("containers:changed"));
-      notify(`컨테이너 ${created.length}대를 등록했어요${vessel ? ` · ${vesselLabel(vessel)} 선박 스케줄도 만들었어요` : ""}`);
+      notify(`컨테이너 ${created.length}대를 등록했어요${vessel ? ` · ${vesselLabel(vessel)} 선박 일정도 만들었어요` : ""}`);
     }
     setDialog(null);
   }

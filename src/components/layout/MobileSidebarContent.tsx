@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import { getActiveHref, getNavSections, type Role } from "@/lib/nav";
+import { Lock } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavIcon } from "./nav-icons";
@@ -39,6 +40,24 @@ export function MobileSidebarContent({
             {section.items.map((item) => {
               const active = item.href === activeHref;
               const delay = itemIndex++ * 30;
+              if (item.closed) {
+                return (
+                  <div
+                    key={item.href}
+                    aria-disabled="true"
+                    className="flex items-center gap-2.5 px-3 h-10 rounded-[var(--radius-sm)] text-[14px] font-medium text-[var(--muted)]/50 cursor-not-allowed select-none animate-menu-item"
+                    style={{ animationDelay: `${delay}ms` }}
+                  >
+                    <span className="opacity-60 grayscale">
+                      <NavIcon icon={item.icon} countryId={item.countryId} active={false} />
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      {item.label}
+                      <Lock size={11} className="text-[var(--muted)]/60" />
+                    </span>
+                  </div>
+                );
+              }
               return (
                 <Link
                   key={item.href}
