@@ -7,10 +7,12 @@ import {
   containerStage,
   dDay,
   freeTimeStatus,
+  sheetOrder,
   STAGE_META,
   vesselLabel,
   voyageSummary,
   type ContainerStage,
+  type SheetSort,
   type VoyageSummary,
 } from "@/lib/containers";
 import { matchesSearch } from "@/lib/hangul";
@@ -27,10 +29,10 @@ import {
   type SheetValues,
 } from "@/lib/sheet-format";
 import type { ContainerShipment, VesselWatch } from "@/lib/types";
-import { CalendarDays, Check, CircleHelp, Keyboard, Loader2, Search, Table2, Trash2, X } from "lucide-react";
+import { ArrowDownUp, CalendarDays, Check, CircleHelp, Keyboard, Loader2, Search, Table2, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { splitVsl } from "./ContainerSheet";
+import { SortToggle, splitVsl } from "./ContainerSheet";
 
 /** What the editor needs from the board to persist changes. */
 export interface SheetOps {
@@ -106,6 +108,8 @@ export function SheetEditor({
   today,
   ops,
   focusContainerId,
+  sort,
+  onSortChange,
 }: {
   open: boolean;
   onClose: () => void;
@@ -114,6 +118,8 @@ export function SheetEditor({
   today: string;
   ops: SheetOps;
   focusContainerId?: string | null;
+  sort: SheetSort;
+  onSortChange: (sort: SheetSort) => void;
 }) {
   const [query, setQuery] = useState("");
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -140,9 +146,22 @@ export function SheetEditor({
   // ---- rows ---------------------------------------------------------------
 
   const vesselById = useMemo(() => new Map(vessels.map((v) => [v.id, v])), [vessels]);
+  const summaries = useMemo(() => new Map(vessels.map((v) => [v.id, voyageSummary(v)])), [vessels]);
+  // Row order is fixed while the editor is open (rows don't jump while you
+  // type); it's taken when it opens or the sort changes, and "정렬 다시
+  // 하기" re-takes it. Containers saved since then go at the bottom.
+  const [orderIds, setOrderIds] = useState<string[]>([]);
+  const freshOrder = useMemo(() => sheetOrder(containers, summaries, sort).map((c) => c.id), [containers, summaries, sort]);
+  const ordered = useMemo(() => {
+    const pos = new Map(orderIds.map((id, i) => [id, i]));
+    const known = containers.filter((c) => pos.has(c.id)).sort((a, b) => pos.get(a.id)! - pos.get(b.id)!);
+    return [...known, ...containers.filter((c) => !pos.has(c.id))];
+  }, [containers, orderIds]);
+  const orderStale = ordered.some((c, i) => c.id !== freshOrder[i]);
+
   const savedRows: SavedRow[] = useMemo(() => {
     const q = query.trim();
-    return containers
+    return ordered
       .map((c): SavedRow => {
         const v = vesselById.get(c.vesselWatchId);
         const s = voyageSummary(v);
@@ -156,7 +175,7 @@ export function SheetEditor({
             q,
           ),
       );
-  }, [containers, vesselById, today, query]);
+  }, [ordered, vesselById, today, query]);
 
   const rows: GridRow[] = useMemo(
     () => [
@@ -193,11 +212,12 @@ export function SheetEditor({
   // ---- open / close ---------------------------------------------------------
 
   const [openedFor, setOpenedFor] = useState<string | null>(null);
-  const openKey = open ? `open:${focusContainerId ?? ""}` : null;
+  const openKey = open ? `open:${focusContainerId ?? ""}:${sort}` : null;
   if (openKey !== openedFor) {
     setOpenedFor(openKey);
     if (open) {
-      const r = Math.max(0, containers.findIndex((c) => c.id === focusContainerId));
+      setOrderIds(freshOrder);
+      const r = Math.max(0, freshOrder.indexOf(focusContainerId ?? ""));
       setSel({ ar: r, ac: 1, fr: r, fc: 1 });
       setEditing(false);
       setQuery("");
@@ -488,6 +508,18 @@ export function SheetEditor({
       applyChanges(changes, { undo: false, label: "undo" });
     }
     notify("되돌렸어요");
+  }
+
+  /** Re-sorts (입항일순) keeping the selection on the same container. */
+  function resort() {
+    const active = rows[sel.fr];
+    setOrderIds(freshOrder);
+    if (active?.kind === "saved") {
+      const visibleIds = freshOrder.filter((id) => savedRows.some((r) => r.c.id === id));
+      const r = Math.max(0, visibleIds.indexOf(active.c.id));
+      setSel((s) => ({ ar: r, ac: s.fc, fr: r, fc: s.fc }));
+    }
+    notify("입항일순으로 다시 정렬했어요");
   }
 
   // ---- selection helpers ------------------------------------------------------
@@ -861,7 +893,20 @@ export function SheetEditor({
             </>
           )}
         </span>
-        <div className="relative ml-auto hidden md:block w-[240px]">
+        <div className="ml-auto hidden sm:flex items-center gap-1.5">
+          {sort === "eta" && orderStale && (
+            <button
+              type="button"
+              onClick={resort}
+              title="입항일이 바뀐 행이 있어요 - 입항일순으로 다시 줄 세워요"
+              className="inline-flex items-center gap-1 h-8 px-2.5 rounded-full bg-[var(--accent-soft)] text-[12px] font-medium text-[var(--accent)] hover:bg-[var(--accent-soft)]/70 animate-dropdown-panel"
+            >
+              <ArrowDownUp size={13} /> 정렬 다시 하기
+            </button>
+          )}
+          <SortToggle value={sort} onChange={onSortChange} />
+        </div>
+        <div className="relative hidden md:block w-[240px]">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
           <input
             value={query}

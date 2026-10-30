@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { dDay, freeTimeStatus, STAGE_META, vesselLabel, voyageSummary, type ContainerStage } from "@/lib/containers";
+import { dDay, freeTimeStatus, STAGE_META, vesselLabel, voyageSummary, type ContainerStage, type SheetSort } from "@/lib/containers";
 import { formatSheetDate, formatSheetTime } from "@/lib/sheet-format";
 import type { ContainerShipment, VesselWatch } from "@/lib/types";
 import { Check, Maximize2, Table2 } from "lucide-react";
@@ -51,11 +51,15 @@ export function ContainerSheet({
   rows,
   vessels,
   today,
+  sort,
+  onSortChange,
   onOpen,
 }: {
   rows: SheetRow[];
   vessels: VesselWatch[];
   today: string;
+  sort: SheetSort;
+  onSortChange: (sort: SheetSort) => void;
   onOpen: (containerId?: string) => void;
 }) {
   const byId = new Map(vessels.map((v) => [v.id, v]));
@@ -78,10 +82,11 @@ export function ContainerSheet({
           <p className="text-[14px] font-semibold text-[var(--foreground)]">선복 진행 예정 일정</p>
           <p className="text-[12px] text-[var(--muted)] truncate">엑셀처럼 복사·붙여넣기, 방향키 이동, 바로 입력이 돼요</p>
         </div>
+        <SortToggle value={sort} onChange={onSortChange} className="ml-auto" />
         <button
           type="button"
           onClick={() => onOpen()}
-          className="ml-auto inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-[var(--foreground)] text-white text-[13px] font-medium hover:bg-black shrink-0"
+          className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-[var(--foreground)] text-white text-[13px] font-medium hover:bg-black shrink-0"
         >
           <Maximize2 size={14} /> <span className="max-sm:hidden">전체 화면으로 </span>편집
         </button>
@@ -250,5 +255,33 @@ function Flag({ on }: { on: boolean }) {
     </span>
   ) : (
     <span className="text-[11px] text-[#c7c7cc]">미완료</span>
+  );
+}
+
+/** 입항일순 / 입력순 - shared by the preview and the full-screen editor. */
+export function SortToggle({ value, onChange, className }: { value: SheetSort; onChange: (sort: SheetSort) => void; className?: string }) {
+  return (
+    <div role="radiogroup" aria-label="시트 정렬" className={cn("inline-flex shrink-0 p-0.5 rounded-full bg-[var(--sidebar-bg)] text-[12.5px] font-medium", className)}>
+      {(
+        [
+          ["eta", "입항일순"],
+          ["entry", "입력순"],
+        ] as const
+      ).map(([v, label]) => (
+        <button
+          key={v}
+          type="button"
+          role="radio"
+          aria-checked={value === v}
+          onClick={() => onChange(v)}
+          className={cn(
+            "px-2.5 sm:px-3 h-8 rounded-full whitespace-nowrap transition-colors",
+            value === v ? "bg-white shadow-sm text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }

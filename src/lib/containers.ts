@@ -287,3 +287,24 @@ export function attentionDigest(items: AttentionItem[], siteUrl: string): string
     .filter(Boolean)
     .join("\n");
 }
+
+export type SheetSort = "eta" | "entry";
+
+/** 컨테이너 시트 row order. "entry" = as entered; "eta" = earliest 입항일
+ * first (no ETA last), keeping a ship's boxes - and an HB/L's - together. */
+export function sheetOrder(
+  containers: ContainerShipment[],
+  summaries: Map<string, VoyageSummary>,
+  sort: SheetSort,
+): ContainerShipment[] {
+  if (sort === "entry") return containers;
+  const index = new Map(containers.map((c, i) => [c.id, i]));
+  const eta = (c: ContainerShipment) => summaries.get(c.vesselWatchId)?.eta?.slice(0, 10) ?? "9999-99-99";
+  return [...containers].sort(
+    (a, b) =>
+      eta(a).localeCompare(eta(b)) ||
+      a.vesselWatchId.localeCompare(b.vesselWatchId) ||
+      a.hbl.localeCompare(b.hbl) ||
+      (index.get(a.id) ?? 0) - (index.get(b.id) ?? 0),
+  );
+}

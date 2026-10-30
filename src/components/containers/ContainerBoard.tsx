@@ -16,6 +16,7 @@ import {
   freeTimeStatus,
   hasArrived,
   inThisWeek,
+  sheetOrder,
   shortDate,
   STAGE_META,
   vesselLabel,
@@ -26,7 +27,7 @@ import {
   type VoyageSummary,
 } from "@/lib/containers";
 import { matchesSearch } from "@/lib/hangul";
-import { useRememberedSalesRepId } from "@/lib/hooks";
+import { useRememberedSalesRepId, useSheetSort } from "@/lib/hooks";
 import type { ContainerShipment, Customer, SalesRep, VesselWatch } from "@/lib/types";
 import {
   AlertTriangle,
@@ -96,6 +97,7 @@ export function ContainerBoard({
   const [tab, setTab] = useState<Tab>("active");
   // 현황 (grouped by vessel) or 시트 (the team's spreadsheet, editable).
   const [view, setView] = useState<"board" | "sheet">("board");
+  const [sheetSort, setSheetSort] = useSheetSort();
   const [pipe, setPipe] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [dialog, setDialog] = useState<{ editing: ContainerShipment | null } | null>(null);
@@ -367,8 +369,8 @@ export function ContainerBoard({
     },
   };
 
-  // Sheet preview: entry order (the sheet's NO), numbered as in the editor.
-  const order = new Map(containers.map((c, i) => [c.id, i]));
+  // Sheet preview: 입항일순 or 입력순 (sheetSort), NO = position shown.
+  const order = new Map(sheetOrder(containers, summaries, sheetSort).map((c, i) => [c.id, i]));
   const sheetRows = [...visible].sort((a, b) => (order.get(a.c.id) ?? 0) - (order.get(b.c.id) ?? 0));
 
   // ---- render -------------------------------------------------------------
@@ -531,9 +533,11 @@ export function ContainerBoard({
 
       {view === "sheet" ? (
         <ContainerSheet
-          rows={sheetRows.map((r) => ({ ...r, no: (order.get(r.c.id) ?? 0) + 1 }))}
+          rows={sheetRows.map((r, i) => ({ ...r, no: i + 1 }))}
           vessels={vessels}
           today={today}
+          sort={sheetSort}
+          onSortChange={setSheetSort}
           onOpen={(id) => setEditor({ focus: id })}
         />
       ) : groups.length === 0 ? (
@@ -591,6 +595,8 @@ export function ContainerBoard({
         today={today}
         ops={sheetOps}
         focusContainerId={editor?.focus}
+        sort={sheetSort}
+        onSortChange={setSheetSort}
       />
       <ConfirmDialog
         open={pendingDelete !== null}

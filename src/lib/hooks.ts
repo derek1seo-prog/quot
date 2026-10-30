@@ -81,3 +81,32 @@ export function useRememberedSalesRepId(reps: { id: string }[] | undefined) {
   // without overwriting the remembered "last picked by hand" default.
   return [salesRepId, setSalesRepId, setSalesRepIdState] as const;
 }
+
+const SHEET_SORT_KEY = "quot:containerSheetSort";
+
+/** 컨테이너 시트 order - "eta" (입항일 빠른 순, the default) or "entry"
+ * (입력순) - remembered in this browser. */
+export function useSheetSort() {
+  const [sort, setSortState] = useState<"eta" | "entry">("eta");
+
+  useEffect(() => {
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(SHEET_SORT_KEY);
+    } catch {
+      // storage blocked - keep the default
+    }
+    if (stored === "entry") requestAnimationFrame(() => setSortState("entry"));
+  }, []);
+
+  const setSort = useCallback((next: "eta" | "entry") => {
+    setSortState(next);
+    try {
+      localStorage.setItem(SHEET_SORT_KEY, next);
+    } catch {
+      // ignore - remembering is best-effort
+    }
+  }, []);
+
+  return [sort, setSort] as const;
+}
