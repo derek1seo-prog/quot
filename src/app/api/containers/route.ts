@@ -14,8 +14,9 @@ const time = (v: unknown) => (typeof v === "string" && /^\d{2}:\d{2}$/.test(v) ?
  * a PUT only touches what it sends. */
 function fields(raw: Record<string, unknown>): Partial<ContainerShipment> {
   const out: Partial<ContainerShipment> = {};
-  if ("importer" in raw) out.importer = text(raw.importer, 60);
-  if ("exporter" in raw) out.exporter = text(raw.exporter, 80);
+  // English is kept in capitals, like the team's Excel sheet.
+  if ("importer" in raw) out.importer = text(raw.importer, 60).toUpperCase();
+  if ("exporter" in raw) out.exporter = text(raw.exporter, 80).toUpperCase();
   if ("size" in raw) out.size = raw.size === "20" ? "20" : "40";
   if ("containerNo" in raw) out.containerNo = text(raw.containerNo, 20).toUpperCase();
   if ("hbl" in raw) out.hbl = text(raw.hbl, 30).toUpperCase();
@@ -24,7 +25,7 @@ function fields(raw: Record<string, unknown>): Partial<ContainerShipment> {
   if ("deliveryTime" in raw) out.deliveryTime = time(raw.deliveryTime);
   if ("surrendered" in raw) out.surrendered = raw.surrendered === true;
   if ("settled" in raw) out.settled = raw.settled === true;
-  if ("memo" in raw) out.memo = opt(raw.memo, 200);
+  if ("memo" in raw) out.memo = opt(raw.memo, 200)?.toUpperCase();
   return out;
 }
 

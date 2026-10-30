@@ -106,7 +106,7 @@ export function formatCell(col: SheetCol, v: SheetValues, rowNo: number | null):
     case "flag":
       return value ? "완료" : "";
     default:
-      return String(value ?? "");
+      return String(value ?? "").toUpperCase();
   }
 }
 
@@ -233,10 +233,12 @@ export function parseCell(col: SheetCol, raw: string, today: string): ParsedCell
       const v = parseSheetFlag(raw);
       return v === null ? { ok: false, message: `완료 / 미완료로 적어 주세요: "${raw}"` } : { ok: true, value: v };
     }
+    // Every text cell reads like the team's Excel: English in capitals
+    // (Korean is unaffected by toUpperCase).
     case "upper":
       return { ok: true, value: raw.trim().replace(/\s+/g, " ").toUpperCase() };
     default:
-      return { ok: true, value: raw.trim() };
+      return { ok: true, value: raw.trim().toUpperCase() };
   }
 }
 

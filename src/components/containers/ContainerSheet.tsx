@@ -98,7 +98,7 @@ export function ContainerSheet({
         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen())}
         className="group relative overflow-x-auto cursor-zoom-in focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[var(--accent-soft)]"
       >
-        <table className="table-fixed border-separate border-spacing-0 text-[12.5px]" style={{ width: COLS.reduce((s, c) => s + c.w, 0) }}>
+        <table className="table-fixed border-separate border-spacing-0 text-[12.5px] uppercase" style={{ width: COLS.reduce((s, c) => s + c.w, 0) }}>
           <colgroup>
             {COLS.map((c, i) => (
               <col key={i} style={{ width: c.w }} />
