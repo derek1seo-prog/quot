@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { NavIcon } from "./nav-icons";
 import { useContainerAttention } from "@/lib/useContainerAttention";
 import { useInquiryUnread } from "@/lib/useInquiryUnread";
+import { useState } from "react";
 
 export function MobileSidebarContent({
   role,
@@ -21,7 +22,9 @@ export function MobileSidebarContent({
   const navSections = getNavSections(role);
   const unread = useInquiryUnread(role === "admin");
   const attention = useContainerAttention(role === "admin");
-  const activeHref = getActiveHref(pathname, navSections);
+  const [pending, setPending] = useState<{ href: string; from: string } | null>(null);
+  const routeHref = getActiveHref(pathname, navSections);
+  const activeHref = pending && pending.from === pathname ? pending.href : routeHref;
   let itemIndex = 0;
 
   return (
@@ -62,7 +65,10 @@ export function MobileSidebarContent({
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={onNavigate}
+                  onClick={(e) => {
+                    if (!(e.metaKey || e.ctrlKey || e.shiftKey) && item.href !== routeHref) setPending({ href: item.href, from: pathname });
+                    onNavigate();
+                  }}
                   className={cn(
                     "group flex items-center gap-2.5 px-3 h-10 rounded-[var(--radius-sm)] text-[14px] font-medium transition-colors animate-menu-item",
                     active

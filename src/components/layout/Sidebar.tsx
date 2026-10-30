@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
 import { BrandMark } from "./BrandMark";
 import { NavIcon } from "./nav-icons";
+import { NavPending } from "./NavPending";
 import { RoleSwitchButton } from "./RoleSwitchButton";
 import { useContainerAttention } from "@/lib/useContainerAttention";
 import { useInquiryUnread } from "@/lib/useInquiryUnread";
@@ -18,7 +19,11 @@ export function Sidebar({ role }: { role: Role }) {
   const navSections = getNavSections(role);
   const unread = useInquiryUnread(role === "admin");
   const attention = useContainerAttention(role === "admin");
-  const activeHref = getActiveHref(pathname, navSections);
+  // The clicked item lights up at once (the route may take a moment to
+  // render); it only applies while still on the page it was clicked from.
+  const [pending, setPending] = useState<{ href: string; from: string } | null>(null);
+  const routeHref = getActiveHref(pathname, navSections);
+  const activeHref = pending && pending.from === pathname ? pending.href : routeHref;
   const activeRef = useRef<HTMLAnchorElement>(null);
   const [indicatorTop, setIndicatorTop] = useState<number | null>(null);
 
@@ -84,6 +89,10 @@ export function Sidebar({ role }: { role: Role }) {
                     key={item.href}
                     href={item.href}
                     ref={active ? activeRef : undefined}
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey || item.href === routeHref) return;
+                      setPending({ href: item.href, from: pathname });
+                    }}
                     className={cn(
                       "group relative z-10 flex items-center gap-2.5 px-3 h-9 short:h-8 rounded-[var(--radius-sm)] text-[13.5px] font-medium transition-colors",
                       active
@@ -116,6 +125,7 @@ export function Sidebar({ role }: { role: Role }) {
                         </span>
                       )}
                     </span>
+                    <NavPending />
                   </Link>
                 );
               })}
