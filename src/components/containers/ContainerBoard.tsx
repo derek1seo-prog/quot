@@ -910,7 +910,7 @@ function VesselGroup({
                   </td>
                   {firstOfHbl && (
                     <td rowSpan={rowSpan} className="px-2 py-2.5 whitespace-nowrap align-middle border-l border-dashed border-[var(--border-subtle)]">
-                      <span className="font-mono text-[12.5px] tracking-tight text-[var(--foreground)]">{r.c.hbl || "-"}</span>
+                      <span className="text-[12.5px] tabular-nums tracking-[0.02em] text-[var(--foreground)]">{r.c.hbl || "-"}</span>
                     </td>
                   )}
                   <td className="px-2 py-2.5 whitespace-nowrap">
@@ -957,7 +957,7 @@ function VesselGroup({
             <div className="mt-1 flex items-center justify-between gap-2">
               <p className="min-w-0 truncate text-[13.5px] font-medium text-[var(--foreground)]">
                 {r.c.importer || "-"}
-                {r.c.hbl && <span className="ml-1.5 font-mono text-[12px] font-normal text-[var(--muted)]">{r.c.hbl}</span>}
+                {r.c.hbl && <span className="ml-1.5 text-[12px] font-normal tabular-nums tracking-[0.02em] text-[var(--muted)]">{r.c.hbl}</span>}
               </p>
               <button type="button" onClick={() => actions.onEdit(r.c)} aria-label="수정" className="w-8 h-8 -mr-1.5 shrink-0 inline-flex items-center justify-center rounded-full text-[var(--muted)] active:bg-[var(--sidebar-bg)]">
                 <Pencil size={14} />
@@ -1076,7 +1076,11 @@ function ContainerNo({ c }: { c: ContainerShipment }) {
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className="inline-flex h-5 items-center rounded-[5px] bg-[var(--foreground)] px-1.5 text-[10.5px] font-bold tracking-wide text-white">{c.size}FT</span>
-      <span className="font-mono text-[13px] tracking-tight text-[var(--foreground)]">{c.containerNo || "번호 미입력"}</span>
+      {c.containerNo ? (
+        <span className="text-[13px] font-medium tabular-nums tracking-[0.02em] text-[var(--foreground)]">{c.containerNo}</span>
+      ) : (
+        <span className="text-[12.5px] text-[#aeaeb2]">컨테이너 번호 없음</span>
+      )}
     </span>
   );
 }

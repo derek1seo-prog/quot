@@ -153,9 +153,9 @@ export function ContainerSheet({
                   )}
                   <td className={cn(CELL, "text-center font-semibold")}>{r.c.size}</td>
                   {vSpan > 0 && <td rowSpan={vSpan} className={cn(CELL, "bg-[#fbfcff]")}>{v ? vesselLabel(v) : ""}</td>}
-                  <td className={cn(CELL, "font-mono text-[12px]")}>{r.c.containerNo}</td>
+                  <td className={cn(CELL, "tabular-nums tracking-[0.02em]")}>{r.c.containerNo}</td>
                   {(hSpan > 0 || !r.c.hbl) && (
-                    <td rowSpan={r.c.hbl ? hSpan : 1} className={cn(CELL, "text-center font-mono text-[12px]")}>
+                    <td rowSpan={r.c.hbl ? hSpan : 1} className={cn(CELL, "text-center tabular-nums tracking-[0.02em]")}>
                       {r.c.hbl}
                     </td>
                   )}

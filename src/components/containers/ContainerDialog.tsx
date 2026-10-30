@@ -325,7 +325,7 @@ export function ContainerDialog({
                     onChange={(e) => setBoxes((bs) => bs.map((x, j) => (j === i ? { ...x, containerNo: e.target.value.toUpperCase() } : x)))}
                     placeholder="CTNS NO (예: FDCU5640124)"
                     aria-label={`${i + 1}번 컨테이너 번호`}
-                    className="flex-1 font-mono tracking-wide uppercase"
+                    className="flex-1 tabular-nums tracking-[0.02em] uppercase"
                   />
                   {!editing && boxes.length > 1 && (
                     <button

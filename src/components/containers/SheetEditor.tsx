@@ -1064,7 +1064,7 @@ export function SheetEditor({
                           c === 0 && "sticky left-0 z-10 text-center text-[12px] text-[var(--muted)] bg-[#f8f9fa] cursor-pointer",
                           c === 1 && "sticky left-[52px] z-10",
                           col.align === "center" && c !== 0 && "text-center",
-                          (col.kind === "upper" && (col.key === "containerNo" || col.key === "hbl")) && "font-mono text-[12.5px] tracking-tight",
+                          (col.kind === "upper" && (col.key === "containerNo" || col.key === "hbl")) && "tabular-nums tracking-[0.02em]",
                           col.kind === "size" && "font-semibold",
                           row.kind === "draft" ? "bg-[#fffbea]" : c === 1 ? "bg-white" : "",
                           saved && col.key === "deliveryDate" && saved.stage === "needsTrucking" && "bg-red-50/70",
