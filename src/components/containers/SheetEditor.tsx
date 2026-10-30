@@ -41,6 +41,8 @@ export interface SheetOps {
   createVessel: (spec: { vesselName: string; voyage: string; pol: string; pod: string; etd?: string; eta?: string }) => Promise<VesselWatch | null>;
   createContainers: (vesselWatchId: string, rows: Record<string, unknown>[]) => Promise<ContainerShipment[]>;
   deleteContainers: (ids: string[]) => Promise<void>;
+  /** "지연 표시 지우기" on a voyage's 출항일 / 입항일. */
+  resetDelay: (v: VesselWatch, which: "etd" | "eta") => Promise<void>;
 }
 
 type SavedRow = { kind: "saved"; key: string; c: ContainerShipment; values: SheetValues; stage: ContainerStage; voyage: VoyageSummary };
@@ -959,6 +961,23 @@ export function SheetEditor({
           {activeRow && activeRow.kind !== "blank" ? displayOf(activeRow, activeCol, activeRow.kind === "saved" ? sel.fr + 1 : null) || <span className="text-[#c7c7cc]">비어 있음</span> : <span className="text-[#c7c7cc]">빈 행 - 입력하거나 붙여넣으면 새 컨테이너가 돼요</span>}
         </span>
         {scopeNote && <span className="hidden sm:inline shrink-0 text-[11.5px] text-[#3b6fd8]">{scopeNote}</span>}
+        {activeRow?.kind === "saved" && (activeCol.key === "etd" || activeCol.key === "eta") && (() => {
+          const which = activeCol.key as "etd" | "eta";
+          const delay = which === "etd" ? activeRow.voyage.etdDelay : activeRow.voyage.etaDelay;
+          const v = vesselById.get(activeRow.c.vesselWatchId);
+          if (!delay || !v) return null;
+          return (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => enqueue(() => ops.resetDelay(v, which))}
+              title="잘못 입력해서 생긴 지연이라면 지금 날짜를 기준으로 바꿔요"
+              className="shrink-0 inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-red-50 text-[12px] font-medium text-[var(--danger)] hover:bg-red-100"
+            >
+              <X size={12} /> 지연 표시 지우기 ({delay > 0 ? `+${delay}일` : `${delay}일`})
+            </button>
+          );
+        })()}
         <button
           type="button"
           onClick={() => startEdit()}

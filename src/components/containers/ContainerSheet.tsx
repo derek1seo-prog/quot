@@ -172,7 +172,7 @@ export function ContainerSheet({
                   <td className={cn(CELL, "tabular-nums")}>
                     {ft.date && (
                       <span className="flex items-center justify-between gap-1" title={ft.auto ? "입항일 + 10일 자동 계산" : undefined}>
-                        <span className={ft.auto ? "text-[var(--muted)]" : undefined}>{formatSheetDate(ft.date)}</span>
+                        <span>{formatSheetDate(ft.date)}</span>
                         {ft.state === "safe" ? (
                           <Check size={11} strokeWidth={3} className="text-[var(--success)]" />
                         ) : (

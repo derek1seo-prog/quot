@@ -45,6 +45,7 @@ import {
   Table2,
   Trash2,
   Truck,
+  X,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { ContainerDialog, type ContainerDraft } from "./ContainerDialog";
@@ -217,6 +218,21 @@ export function ContainerBoard({
     notify(on ? `${vesselLabel(v)} ${label} 확인했어요` : `${label} 확인을 취소했어요`, on ? { label: "되돌리기", onClick: () => setActual(saved, which, false) } : undefined);
   }
 
+  /** "지연 표시 지우기": the current date becomes the one delay is measured
+   * from (for a mistyped / mis-pasted date, not a real delay). */
+  async function resetDelay(v: VesselWatch, which: "etd" | "eta") {
+    const { pol, pod } = voyageEnds(v);
+    const call = which === "etd" ? pol : pod;
+    if (!call) return;
+    const before = call.baseline ?? {};
+    const saved = await putVessel(v, v.calls.map((c) => (c.id === call.id ? { ...c, baseline: { ...c.baseline, [which]: c[which] } } : c)));
+    if (!saved) return;
+    notify(`${which === "etd" ? "출항" : "입항"}일 지연 표시를 지웠어요 · 지금 날짜가 기준이에요`, {
+      label: "되돌리기",
+      onClick: () => putVessel(saved, saved.calls.map((c) => (c.id === call.id ? { ...c, baseline: before } : c))),
+    });
+  }
+
   async function changeVesselDate(v: VesselWatch, which: "etd" | "eta", value: string | undefined) {
     const { pol, pod } = voyageEnds(v);
     const call = which === "etd" ? pol : pod;
@@ -359,6 +375,9 @@ export function ContainerBoard({
       setContainers((cs) => [...cs, ...created]);
       window.dispatchEvent(new Event("containers:changed"));
       return created;
+    },
+    async resetDelay(v, which) {
+      await resetDelay(v, which);
     },
     async deleteContainers(ids) {
       const res = await fetch(`/api/containers?ids=${ids.map(encodeURIComponent).join(",")}`, { method: "DELETE" });
@@ -570,6 +589,7 @@ export function ContainerBoard({
               today={today}
               actions={actions}
               onActual={(which, on) => g.vessel && setActual(g.vessel, which, on)}
+              onResetDelay={(which) => g.vessel && resetDelay(g.vessel, which)}
               onChangeDate={async (which, d) => {
                 if (g.vessel) await changeVesselDate(g.vessel, which, d);
               }}
@@ -750,6 +770,7 @@ function VesselGroup({
   actions,
   onActual,
   onChangeDate,
+  onResetDelay,
 }: {
   vessel: VesselWatch | undefined;
   summary: VoyageSummary;
@@ -758,6 +779,7 @@ function VesselGroup({
   actions: RowActions;
   onActual: (which: "departed" | "arrived", on: boolean) => void;
   onChangeDate: (which: "etd" | "eta", date: string | undefined) => Promise<void>;
+  onResetDelay: (which: "etd" | "eta") => void;
 }) {
   const arrived = hasArrived(v, today);
   // Voyage progress for the route line: 0 before departure, 100 on arrival.
@@ -801,6 +823,7 @@ function VesselGroup({
             canConfirm={Boolean(vessel && !v.departed && v.etd && daysUntil(v.etd, today) <= 2)}
             onConfirm={(on) => onActual("departed", on)}
             onChangeDate={(d) => onChangeDate("etd", d)}
+            onResetDelay={() => onResetDelay("etd")}
           />
           <div className="relative order-last sm:order-none basis-full sm:basis-auto sm:flex-1 h-6 min-w-[40px] mx-3" aria-hidden>
             <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-[var(--border-subtle)]" />
@@ -825,6 +848,7 @@ function VesselGroup({
             canConfirm={Boolean(vessel && v.departed && !v.arrived && v.eta && daysUntil(v.eta, today) <= 1)}
             onConfirm={(on) => onActual("arrived", on)}
             onChangeDate={(d) => onChangeDate("eta", d)}
+            onResetDelay={() => onResetDelay("eta")}
           />
         </div>
       </div>
@@ -961,6 +985,7 @@ function RouteEnd({
   canConfirm,
   onConfirm,
   onChangeDate,
+  onResetDelay,
   align = "left",
 }: {
   port: string;
@@ -971,6 +996,7 @@ function RouteEnd({
   canConfirm: boolean;
   onConfirm: (on: boolean) => void;
   onChangeDate: (date: string | undefined) => Promise<void>;
+  onResetDelay: () => void;
   align?: "left" | "right";
 }) {
   return (
@@ -985,15 +1011,24 @@ function RouteEnd({
             <button type="button" {...p} className="group/d inline-flex items-center gap-1 rounded-md px-1 -mx-1 text-[12.5px] tabular-nums hover:bg-[var(--sidebar-bg)]">
               <span className="text-[var(--muted)]">{label}</span>
               <span className="font-medium text-[var(--foreground)]">{date ? shortDate(date) : "미정"}</span>
-              {delay !== null && delay !== 0 && (
-                <span className={cn("rounded-full px-1.5 text-[10.5px] font-semibold", delay > 0 ? "bg-[var(--danger)]/[0.08] text-[var(--danger)]" : "bg-[var(--accent-soft)] text-[var(--accent)]")}>
-                  {delay > 0 ? `+${delay}일` : `${delay}일`}
-                </span>
-              )}
               <Pencil size={10} className="text-[var(--muted)] opacity-0 group-hover/d:opacity-100" />
             </button>
           )}
         />
+        {delay !== null && delay !== 0 && (
+          <button
+            type="button"
+            onClick={onResetDelay}
+            title="처음 날짜 대비 변경 - 잘못 입력해서 생긴 거라면 눌러서 지연 표시를 지워요"
+            className={cn(
+              "group/delay inline-flex items-center gap-0.5 rounded-full px-1.5 text-[10.5px] font-semibold",
+              delay > 0 ? "bg-[var(--danger)]/[0.08] text-[var(--danger)]" : "bg-[var(--accent-soft)] text-[var(--accent)]",
+            )}
+          >
+            {delay > 0 ? `+${delay}일` : `${delay}일`}
+            <X size={9} strokeWidth={3} className="opacity-50 group-hover/delay:opacity-100" />
+          </button>
+        )}
         {confirmed ? (
           <button
             type="button"
@@ -1081,7 +1116,6 @@ function FreeTimeCell({ c, voyage, actions }: { c: ContainerShipment; voyage: Vo
               <span className="font-medium">{shortDate(ft.date)}</span>
               {ft.days !== null && ft.state !== "safe" && <span className="font-semibold">{dDay(ft.days)}</span>}
               {ft.state === "safe" && <Check size={12} strokeWidth={3} />}
-              {ft.auto && <span className="text-[10px] font-medium opacity-60">자동</span>}
             </>
           ) : (
             "프리타임"

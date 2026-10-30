@@ -31,6 +31,11 @@ function buildCalls(raw: Body["calls"], existing: VesselPortCall[], by: string |
       etd: isScheduleDate(c.etd) ? c.etd : undefined,
       history: prev ? [...prev.history] : [],
     };
+    // 지연 기준일 (set by "지연 표시 지우기"); absent = keep as is.
+    const baseline = "baseline" in c ? c.baseline : prev?.baseline;
+    const bEta = isScheduleDate(baseline?.eta) ? baseline.eta : undefined;
+    const bEtd = isScheduleDate(baseline?.etd) ? baseline.etd : undefined;
+    if (bEta || bEtd) call.baseline = { eta: bEta, etd: bEtd };
     // Confirmed ATD / ATA ("출항 확인" / "입항 확인"); absent = keep as is.
     const actual = "actual" in c ? c.actual : prev?.actual;
     const departed = isScheduleDate(actual?.departed) ? actual.departed : undefined;

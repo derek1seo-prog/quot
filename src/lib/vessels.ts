@@ -15,6 +15,7 @@ function dayNumber(d: string): number {
 /** The first date ever announced for this call's eta/etd - the baseline a
  * delay is measured from. */
 export function originalDate(call: VesselPortCall, field: "eta" | "etd"): string | undefined {
+  if (call.baseline?.[field]) return call.baseline[field];
   for (const h of call.history) {
     if (h.field !== field) continue;
     if (h.from) return h.from;

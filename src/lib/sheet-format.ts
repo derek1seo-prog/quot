@@ -138,10 +138,24 @@ export function inferYear(month: number, day: number, today: string): number {
 }
 
 /** "08월 17일", "8월17일", "8/17", "08-17", "2026-08-17", "2026.08.17",
- * "2026/8/17", "26.08.17" -> "YYYY-MM-DD"; "" -> ""; null = unreadable. */
+ * "2026/8/17", "26.08.17", "261011", "20261011", "1011" -> "YYYY-MM-DD";
+ * "" -> ""; null = unreadable. */
 export function parseSheetDate(raw: string, today: string): string | null {
   const s = raw.trim().replace(/\s+/g, " ");
   if (!s) return "";
+  // Digits only: "261011" (YYMMDD), "20261011" (YYYYMMDD), "1011" (MMDD).
+  let d = s.match(/^(\d{2})(\d{2})(\d{2})$/) ?? s.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (d) {
+    const y = d[1].length === 2 ? 2000 + Number(d[1]) : Number(d[1]);
+    const [mo, dd] = [Number(d[2]), Number(d[3])];
+    return validYmd(y, mo, dd) ? `${y}-${pad(mo)}-${pad(dd)}` : null;
+  }
+  d = s.match(/^(\d{2})(\d{2})$/);
+  if (d) {
+    const [mo, dd] = [Number(d[1]), Number(d[2])];
+    const y = inferYear(mo, dd, today);
+    return validYmd(y, mo, dd) ? `${y}-${pad(mo)}-${pad(dd)}` : null;
+  }
   let m = s.match(/^(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?(\s*\(.+\))?$/);
   if (m) {
     const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];

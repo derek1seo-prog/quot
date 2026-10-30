@@ -369,6 +369,9 @@ export interface VesselPortCall {
   /** Confirmed actual times (ATD / ATA, "YYYY-MM-DD[THH:mm]") - set by
    * "출항 확인" / "입항 확인", or later by an automatic tracking feed. */
   actual?: { departed?: string; arrived?: string };
+  /** "지연 표시 지우기": the dates delay is measured from from now on,
+   * instead of the first announced ones (e.g. after a mistyped date). */
+  baseline?: { eta?: string; etd?: string };
   /** Every change to eta/etd, oldest first - the first `from` is the
    * originally announced date the delay badge compares against. Actual
    * departure / arrival confirmations are logged here too ("atd" / "ata"). */
