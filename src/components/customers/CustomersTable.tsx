@@ -9,8 +9,10 @@ import { cn } from "@/lib/cn";
 import { formatNumber } from "@/lib/format";
 import { matchesSearch } from "@/lib/hangul";
 import type { Customer, SalesRep } from "@/lib/types";
-import { Building2, Check, Link2, Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Building2, Check, Link2, Pencil, Percent, Plus, Search, Trash2 } from "lucide-react";
+import { Toast, type ToastMessage } from "@/components/ui/Toast";
+import { SafeRateAdjustDialog } from "./SafeRateAdjustDialog";
+import { useMemo, useRef, useState } from "react";
 import { compareToSafeRate, CustomerDialog, TRUCKING_PORTS, type CustomerDraft } from "./CustomerDialog";
 
 /** 화주 관리 list (same look as 사원 관리): headcount + search, then a
@@ -31,6 +33,30 @@ export function CustomersTable({
   const [pendingDelete, setPendingDelete] = useState<Customer | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [flashId, setFlashId] = useState<string | null>(null);
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const toastSeq = useRef(0);
+
+  /** After an 안전운임 % 조정 (or its undo): new list, changed cards lit. */
+  function applyBulk(next: Customer[], message: string, undoable: boolean) {
+    const before = new Map(customers.map((c) => [c.id, c]));
+    setCustomers(next);
+    const changed = next.find((c) => JSON.stringify(c) !== JSON.stringify(before.get(c.id)));
+    if (changed) flash(changed.id);
+    setToast({
+      id: ++toastSeq.current,
+      text: message,
+      action: undoable
+        ? {
+            label: "되돌리기",
+            onClick: async () => {
+              const res = await fetch("/api/customers/adjust", { method: "DELETE" });
+              if (res.ok) applyBulk(((await res.json()) as { customers: Customer[] }).customers, "마지막 조정을 되돌렸어요", false);
+            },
+          }
+        : undefined,
+    });
+  }
 
   // initialCustomers is a fresh array from the server component on every
   // router.refresh() - adjust state during render per React's guidance.
@@ -128,6 +154,9 @@ export function CustomersTable({
               className="pl-9"
             />
           </div>
+          <Button variant="secondary" icon={<Percent size={15} />} onClick={() => setAdjustOpen(true)} className="shrink-0" title="안전운임 인상·인하율로 모든 화주의 운송료·안전운임 조정">
+            <span className="max-sm:hidden">안전운임 </span>% 조정
+          </Button>
           <Button icon={<Plus size={16} />} onClick={() => setDialog({ customer: null })} className="shrink-0">
             화주 추가
           </Button>
@@ -304,6 +333,8 @@ export function CustomersTable({
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
+      <SafeRateAdjustDialog open={adjustOpen} customers={customers} onClose={() => setAdjustOpen(false)} onChanged={applyBulk} />
+      <Toast message={toast} onDismiss={() => setToast(null)} durationMs={5000} />
     </>
   );
 }

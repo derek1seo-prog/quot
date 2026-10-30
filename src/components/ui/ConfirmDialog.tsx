@@ -15,6 +15,8 @@ export function ConfirmDialog({
   confirmLabel = "삭제",
   cancelLabel = "취소",
   loading = false,
+  loadingLabel = "삭제 중...",
+  tone = "danger",
   onConfirm,
   onCancel,
 }: {
@@ -24,6 +26,9 @@ export function ConfirmDialog({
   confirmLabel?: string;
   cancelLabel?: string;
   loading?: boolean;
+  loadingLabel?: string;
+  /** "accent" for a non-destructive confirm (e.g. a bulk change). */
+  tone?: "danger" | "accent";
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -50,8 +55,8 @@ export function ConfirmDialog({
         aria-labelledby="confirm-dialog-title"
         className="relative w-full max-w-[380px] rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.15)] animate-modal-panel"
       >
-        <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
-          <AlertTriangle size={18} className="text-[var(--danger)]" />
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tone === "danger" ? "bg-red-50" : "bg-[var(--accent-soft)]"}`}>
+          <AlertTriangle size={18} className={tone === "danger" ? "text-[var(--danger)]" : "text-[var(--accent)]"} />
         </div>
         <h2 id="confirm-dialog-title" className="text-[16px] font-semibold text-[var(--foreground)] mt-4">
           {title}
@@ -63,8 +68,8 @@ export function ConfirmDialog({
           <Button variant="secondary" onClick={onCancel} autoFocus disabled={loading}>
             {cancelLabel}
           </Button>
-          <Button variant="danger-solid" onClick={onConfirm} disabled={loading}>
-            {loading ? "삭제 중..." : confirmLabel}
+          <Button variant={tone === "danger" ? "danger-solid" : "primary"} onClick={onConfirm} disabled={loading}>
+            {loading ? loadingLabel : confirmLabel}
           </Button>
         </div>
       </div>

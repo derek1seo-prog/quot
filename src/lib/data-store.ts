@@ -41,6 +41,8 @@ import type {
   ContainerShipment,
 } from "./types";
 
+import type { CustomerRateAdjustment } from "./trucking-adjust";
+
 const DATA_DIR = path.join(process.cwd(), "src", "data");
 
 function readSeedJson<T>(file: string): T {
@@ -359,6 +361,19 @@ export async function updateCustomer(customer: Customer): Promise<void> {
   if (idx >= 0) customers[idx] = customer;
   else customers.push(customer);
   await writeMutable("customers.json", customers);
+}
+
+/** Replaces the whole 화주 list in one write (bulk edits). */
+export async function saveCustomers(customers: Customer[]): Promise<void> {
+  await writeMutable("customers.json", customers);
+}
+
+export async function getCustomerRateAdjustment(): Promise<CustomerRateAdjustment> {
+  return readMutable<CustomerRateAdjustment>("customer-rate-adjustment.json");
+}
+
+export async function saveCustomerRateAdjustment(adjustment: CustomerRateAdjustment): Promise<void> {
+  await writeMutable("customer-rate-adjustment.json", adjustment);
 }
 
 export async function deleteCustomer(id: string): Promise<void> {
